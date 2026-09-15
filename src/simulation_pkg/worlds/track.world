@@ -71,7 +71,9 @@
             <specular>0.02 0.02 0.02 1</specular>
             <emissive>0.02 0.02 0.08 1</emissive>
           </material>
-          <transparency>0</transparency>
+          <!-- Keep the overview sensor active without its blue housing
+               obscuring the track in the dashboard's overhead view. -->
+          <transparency>1</transparency>
           <cast_shadows>0</cast_shadows>
         </visual>
         <collision name='collision'>

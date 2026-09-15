@@ -1,0 +1,64 @@
+{
+  "recovered_on": "2026-09-01",
+  "primary_source": "/home/autolab_sw/sunhong/nav-vla/data/lerobot/v6/meta/tasks.parquet",
+  "cross_check_source": "/home/autolab_sw/sunhong/nav-vla/data/packed_v6/*/meta.json",
+  "lerobot_metadata": {
+    "total_episodes": 406,
+    "total_frames": 93733,
+    "total_tasks": 388,
+    "fps": 10,
+    "state_width": 3,
+    "action_width": 3
+  },
+  "training_state_third_channel": {
+    "semantic_name_in_dataset": "steer_rad",
+    "min": 0.0,
+    "max": 0.0,
+    "mean": 0.0,
+    "std": 0.0,
+    "count": 93733
+  },
+  "episode_metadata_files": 406,
+  "unique_instructions": 388,
+  "sorted_inventory_file": "training_instruction_inventory.txt",
+  "sorted_inventory_sha256": "958df102190e4d8dbb15198ee6cc91a2a828a1023e6347dc5f46dd2ae1efea85",
+    "phrase_bank_commit": {
+        "git_sha": "9a1b61025a0d9e6197198fe32e56ddaeb0cbe610",
+        "author_date": "2026-08-03T17:41:38+09:00",
+        "evidence": "The committed heldout lists contain the Roam template, innermost/outermost lane terms, and regular-speed term.",
+        "v6_training_provenance": {
+            "source": "docs/ver/20260805_1640_v5-demo-speed-shaping-v6.md",
+            "recorded_status": "v6 60K training in progress on 2026-08-05 16:40 KST",
+            "ordering_conclusion": "The 2026-08-03 phrase-bank commit predates the documented v6 training run."
+        }
+    },
+  "factorial_evaluation_strings_present_verbatim": {
+    "Start driving in the inner lane, at a normal speed.": false,
+    "Start driving in the outer lane, at a normal speed.": false,
+    "Roam the track in the inner lane, at a normal speed.": false,
+    "Roam the track in the outer lane, at a normal speed.": false,
+    "Start driving in the innermost lane, at a normal speed.": false,
+    "Start driving in the outermost lane, at a normal speed.": false,
+    "Start driving in the inner lane, at a regular speed.": false,
+    "Start driving in the outer lane, at a regular speed.": false,
+    "Roam the track in the innermost lane, at a normal speed.": false,
+    "Roam the track in the outermost lane, at a normal speed.": false,
+    "Roam the track in the inner lane, at a regular speed.": false,
+    "Roam the track in the outer lane, at a regular speed.": false,
+    "Start driving in the innermost lane, at a regular speed.": false,
+    "Start driving in the outermost lane, at a regular speed.": false,
+    "Roam the track in the innermost lane, at a regular speed.": false,
+    "Roam the track in the outermost lane, at a regular speed.": false
+  },
+  "case_insensitive_component_occurrences": {
+    "Start driving": 22,
+    "inner lane": 25,
+    "outer lane": 32,
+    "normal speed": 22,
+    "Roam the track": 0,
+    "innermost": 0,
+    "outermost": 0,
+    "regular speed": 0
+  },
+  "selection_note": "The final symmetric test wording pair was selected after an exploratory offline probe. Its factorial analysis and closed-loop evaluation are therefore reported as characterization, not as an unbiased generalization estimate."
+}

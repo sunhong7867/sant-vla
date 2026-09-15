@@ -8,7 +8,7 @@ ROS 2 Jazzy와 Gazebo Harmonic(`ros-jazzy-ros-gz`)이 설치돼 있다고 가정
 ## 1. 저장소와 환경 준비
 
 ```bash
-git clone https://github.com/sunhong7867/nav-vla.git
+git clone https://github.com/sunhong7867/sant-vla.git
 cd nav-vla
 ./setup_smolvla_demo.sh --install-ros-deps
 ```

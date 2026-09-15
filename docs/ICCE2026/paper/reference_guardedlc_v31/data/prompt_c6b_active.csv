@@ -1,0 +1,4 @@
+capacity,P0,P1,P2,P3,range,c6a_non_driving_active_all_prompts,c6b_strict_change_all_prompts
+0.6B,1/10,3/10,0/10,1/10,0--3/10,0/15,0/10
+4B,3/10,3/10,3/10,3/10,3/10,0/15,0/10
+8B,6/10,5/10,4/10,3/10,3--6/10,0/15,0/10

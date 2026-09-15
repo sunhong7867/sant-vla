@@ -1,0 +1,451 @@
+parser,id,text,category,gold_intent,gold_target_lane,pred_intent,pred_target_lane,pred_source,fallback,intent_correct,target_correct,exact_match,lane_targeting_applicable,lane_targeting_correct,fp_oos_applicable,fp_oos,latency_ms_mean,latency_ms_min,latency_ms_max
+rule,u001,change to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018946000636788085,0.018946000636788085,0.018946000636788085
+rule,u002,change to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.4996820007363567,0.4996820007363567,0.4996820007363567
+rule,u003,switch to lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.02001799839490559,0.02001799839490559,0.02001799839490559
+rule,u004,switch to lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.1173210002889391,0.1173210002889391,0.1173210002889391
+rule,u005,move into lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.01695200080575887,0.01695200080575887,0.01695200080575887
+rule,u006,move into lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.022071999410400167,0.022071999410400167,0.022071999410400167
+rule,u007,merge into lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.01752299976942595,0.01752299976942595,0.01752299976942595
+rule,u008,merge into lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02253299862786662,0.02253299862786662,0.02253299862786662
+rule,u009,go to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.014818000636296347,0.014818000636296347,0.014818000636296347
+rule,u010,go to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02017800034082029,0.02017800034082029,0.02017800034082029
+rule,u011,take lane number one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018243999875267036,0.018243999875267036,0.018243999875267036
+rule,u012,take lane number two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.06191600004967768,0.06191600004967768,0.06191600004967768
+rule,u013,enter lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.01575900023453869,0.01575900023453869,0.01575900023453869
+rule,u014,enter lane 2,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.01915600114443805,0.01915600114443805,0.01915600114443805
+rule,u015,shift to lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.016631000107736327,0.016631000107736327,0.016631000107736327
+rule,u016,shift to lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02114999915647786,0.02114999915647786,0.02114999915647786
+rule,u017,transfer to lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.015659999917261302,0.015659999917261302,0.015659999917261302
+rule,u018,transfer to lane 2,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.020227998902555555,0.020227998902555555,0.020227998902555555
+rule,u019,get into lane number one,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.018554999769548886,0.018554999769548886,0.018554999769548886
+rule,u020,get into lane number two,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.02420599957986269,0.02420599957986269,0.02420599957986269
+rule,u021,move over to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018995000573340803,0.018995000573340803,0.018995000573340803
+rule,u022,move over to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.028863998522865586,0.028863998522865586,0.028863998522865586
+rule,u023,set lane one as the target,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.019736999092856422,0.019736999092856422,0.019736999092856422
+rule,u024,set lane two as the target,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.023734999558655545,0.023734999558655545,0.023734999558655545
+rule,u025,proceed to lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.015730000086477958,0.015730000086477958,0.015730000086477958
+rule,u026,could you move to the left lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.02222199873358477,0.02222199873358477,0.02222199873358477
+rule,u027,could you move to the right lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.1353759998892201,0.1353759998892201,0.1353759998892201
+rule,u028,please head over to lane 1,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.0186849993042415,0.0186849993042415,0.0186849993042415
+rule,u029,please head over to lane 2,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.023925000277813524,0.023925000277813524,0.023925000277813524
+rule,u030,would you switch to the inner lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.02250299985462334,0.02250299985462334,0.02250299985462334
+rule,u031,would you switch to the outer lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.09100200077227782,0.09100200077227782,0.09100200077227782
+rule,u032,can you take lane one please,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.020588000552379526,0.020588000552379526,0.020588000552379526
+rule,u033,can you take lane two please,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.025778999770409428,0.025778999770409428,0.025778999770409428
+rule,u034,i'd like you to merge into the left lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.024275999749079347,0.024275999749079347,0.024275999749079347
+rule,u035,i'd like you to merge into the right lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.029556000299635343,0.029556000299635343,0.029556000299635343
+rule,u036,"when convenient, move to lane 1",polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018845999875338748,0.018845999875338748,0.018845999875338748
+rule,u037,"when convenient, move to lane 2",polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02377499913563952,0.02377499913563952,0.02377499913563952
+rule,u038,please slide over to the inner lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.027761998353525996,0.027761998353525996,0.027761998353525996
+rule,u039,please slide over to the outer lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.037740999687230214,0.037740999687230214,0.037740999687230214
+rule,u040,could we go to lane number one,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.020559000404318795,0.020559000404318795,0.020559000404318795
+rule,u041,could we go to lane number two,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02603900065878406,0.02603900065878406,0.02603900065878406
+rule,u042,would it be possible to take the left side,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.024627001039334573,0.024627001039334573,0.024627001039334573
+rule,u043,would it be possible to take the right side,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02985600076499395,0.02985600076499395,0.02985600076499395
+rule,u044,please make your way to the first lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.021611000192933716,0.021611000192933716,0.021611000192933716
+rule,u045,please make your way to the second lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.026249999791616574,0.026249999791616574,0.026249999791616574
+rule,u046,can you bring us into lane one,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.02023799970629625,0.02023799970629625,0.02023799970629625
+rule,u047,can you bring us into lane two,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.02550799945311155,0.02550799945311155,0.02550799945311155
+rule,u048,please settle into the inner lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.022231999537325464,0.022231999537325464,0.022231999537325464
+rule,u049,please settle into the outer lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.02598899845906999,0.02598899845906999,0.02598899845906999
+rule,u050,could you line up with lane 2,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.025577999622328207,0.025577999622328207,0.025577999622328207
+rule,u051,take the inner lane,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.019196000721422024,0.019196000721422024,0.019196000721422024
+rule,u052,take the outer lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.023283999325940385,0.023283999325940385,0.023283999325940385
+rule,u053,merge to the left,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.02018799932557158,0.02018799932557158,0.02018799932557158
+rule,u054,merge to the right,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.23567400057800114,0.23567400057800114,0.23567400057800114
+rule,u055,move to the left side,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.02043899985437747,0.02043899985437747,0.02043899985437747
+rule,u056,move to the right side,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02566799958003685,0.02566799958003685,0.02566799958003685
+rule,u057,shift into the first lane,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018504999388824217,0.018504999388824217,0.018504999388824217
+rule,u058,shift into the second lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02309299998159986,0.02309299998159986,0.02309299998159986
+rule,u059,go to the inner one,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.019957000404247083,0.019957000404247083,0.019957000404247083
+rule,u060,go to the outer one,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.025268000172218308,0.025268000172218308,0.025268000172218308
+rule,u061,enter the left lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.018525000996305607,0.018525000996305607,0.018525000996305607
+rule,u062,enter the right lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.02360500002396293,0.02360500002396293,0.02360500002396293
+rule,u063,use the first lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.017053000192390755,0.017053000192390755,0.017053000192390755
+rule,u064,use the second lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.021179999748710543,0.021179999748710543,0.021179999748710543
+rule,u065,slide left,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.017853999452199787,0.017853999452199787,0.017853999452199787
+rule,u066,slide right,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.02196099922002759,0.02196099922002759,0.02196099922002759
+rule,u067,head into the inner lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.020329000108176842,0.020329000108176842,0.020329000108176842
+rule,u068,head into the outer lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.025056999220396392,0.025056999220396392,0.025056999220396392
+rule,u069,choose the left side,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.018635000742506236,0.018635000742506236,0.018635000742506236
+rule,u070,choose the right side,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.02354400021431502,0.02354400021431502,0.02354400021431502
+rule,u071,align with the first lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.020108000171603635,0.020108000171603635,0.020108000171603635
+rule,u072,align with the second lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.022882999473949894,0.022882999473949894,0.022882999473949894
+rule,u073,move toward the inner side,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.020618999769794755,0.020618999769794755,0.020618999769794755
+rule,u074,move toward the outer side,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02527699871279765,0.02527699871279765,0.02527699871279765
+rule,u075,get over to the left lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.02011800097534433,0.02011800097534433,0.02011800097534433
+rule,u076,change lanes,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03551699956005905,0.03551699956005905,0.03551699956005905
+rule,u077,switch lanes,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03476599886198528,0.03476599886198528,0.03476599886198528
+rule,u078,switch over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.033803999031079,0.033803999031079,0.033803999031079
+rule,u079,move over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03432499943301082,0.03432499943301082,0.03432499943301082
+rule,u080,slide over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03377400025783572,0.03377400025783572,0.03377400025783572
+rule,u081,merge over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03466599991952535,0.03466599991952535,0.03466599991952535
+rule,u082,go to the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.05257900011201855,0.05257900011201855,0.05257900011201855
+rule,u083,take the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04720900142274331,0.04720900142274331,0.04720900142274331
+rule,u084,get into the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.044845000957138836,0.044845000957138836,0.044845000957138836
+rule,u085,shift to the other side,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.040094999349093996,0.040094999349093996,0.040094999349093996
+rule,u086,move to the other one,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04076699951838236,0.04076699951838236,0.04076699951838236
+rule,u087,go to the other one,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04038599945488386,0.04038599945488386,0.04038599945488386
+rule,u088,leave this lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03641900002548937,0.03641900002548937,0.03641900002548937
+rule,u089,get out of this lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04021600034320727,0.04021600034320727,0.04021600034320727
+rule,u090,change over to a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04421399899001699,0.04421399899001699,0.04421399899001699
+rule,u091,move into a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04294099926482886,0.04294099926482886,0.04294099926482886
+rule,u092,switch to a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04090699985681567,0.04090699985681567,0.04090699985681567
+rule,u093,take another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03830300011031795,0.03830300011031795,0.03830300011031795
+rule,u094,shift lanes now,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.036778999856323935,0.036778999856323935,0.036778999856323935
+rule,u095,make a lane change,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03798199941229541,0.03798199941229541,0.03798199941229541
+rule,u096,adjust to another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.039825001294957474,0.039825001294957474,0.039825001294957474
+rule,u097,reposition to another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04040600106236525,0.04040600106236525,0.04040600106236525
+rule,u098,move over a bit,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.03758099956030492,0.03758099956030492,0.03758099956030492
+rule,u099,pick a lane,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,rule,False,False,True,False,False,False,False,False,0.026470001103007235,0.026470001103007235,0.026470001103007235
+rule,u100,get over there,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,rule,False,False,True,False,False,False,False,False,0.025748999178176746,0.025748999178176746,0.025748999178176746
+rule,u101,chnge to lane1,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.015519000953645445,0.015519000953645445,0.015519000953645445
+rule,u102,swich to lane2,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.019376999262021855,0.019376999262021855,0.019376999262021855
+rule,u103,lane1 plz,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.01336499917670153,0.01336499917670153,0.01336499917670153
+rule,u104,lane2 plz,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.01774300108081661,0.01774300108081661,0.01774300108081661
+rule,u105,go lft lane,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,,rule,False,True,False,False,True,False,False,False,0.03699899934872519,0.03699899934872519,0.03699899934872519
+rule,u106,go rght lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,rule,False,True,False,False,True,False,False,False,0.0314089993480593,0.0314089993480593,0.0314089993480593
+rule,u107,move 2 lane one,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.016660998880979605,0.016660998880979605,0.016660998880979605
+rule,u108,move 2 lane two,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.01936699845828116,0.01936699845828116,0.01936699845828116
+rule,u109,pls go to left lane,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.019025999790756032,0.019025999790756032,0.019025999790756032
+rule,u110,pls go to right lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02471699917805381,0.02471699917805381,0.02471699917805381
+rule,u111,take inner ln,typos_and_casual,CHANGE_LANE,lane1,UNKNOWN,,rule,False,False,False,False,True,False,False,False,0.026248999347444624,0.026248999347444624,0.026248999347444624
+rule,u112,take outer ln,typos_and_casual,CHANGE_LANE,lane2,UNKNOWN,,rule,False,False,False,False,True,False,False,False,0.024615999791421928,0.024615999791421928,0.024615999791421928
+rule,u113,chnge lanes to lane 1,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.019977998817921616,0.019977998817921616,0.019977998817921616
+rule,u114,chnge lanes to lane 2,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.021210000340943225,0.021210000340943225,0.021210000340943225
+rule,u115,swtich to first lane,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.01635999979043845,0.01635999979043845,0.01635999979043845
+rule,u116,swtich to second lane,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.021611000192933716,0.021611000192933716,0.021611000192933716
+rule,u117,go left pls,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018103999536833726,0.018103999536833726,0.018103999536833726
+rule,u118,go right pls,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.022431999241234735,0.022431999241234735,0.022431999241234735
+rule,u119,get in lane one pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.01867600076366216,0.01867600076366216,0.01867600076366216
+rule,u120,get in lane two pls,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.022371999875758775,0.022371999875758775,0.022371999875758775
+rule,u121,lane one now pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,rule,False,False,True,False,True,True,False,False,0.01621999945200514,0.01621999945200514,0.01621999945200514
+rule,u122,lane two now pls,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,rule,False,False,True,False,True,True,False,False,0.021060001017758623,0.021060001017758623,0.021060001017758623
+rule,u123,movee to lane 1,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.018825001461664215,0.018825001461664215,0.018825001461664215
+rule,u124,movee to lane 2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.019507000615703873,0.019507000615703873,0.019507000615703873
+rule,u125,go right lane lol,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.023193000743049197,0.023193000743049197,0.023193000743049197
+rule,u126,turn on the headlights,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.027893000151379965,0.027893000151379965,0.027893000151379965
+rule,u127,turn off the headlights,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02982600017276127,0.02982600017276127,0.02982600017276127
+rule,u128,open the window,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02462599877617322,0.02462599877617322,0.02462599877617322
+rule,u129,close the window,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.025036999431904405,0.025036999431904405,0.025036999431904405
+rule,u130,play some music,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.025598999854992144,0.025598999854992144,0.025598999854992144
+rule,u131,lower the volume,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02445599966449663,0.02445599966449663,0.02445599966449663
+rule,u132,set the cabin fan,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02580900036264211,0.02580900036264211,0.02580900036264211
+rule,u133,wipe the windshield,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.026049001462524757,0.026049001462524757,0.026049001462524757
+rule,u134,adjust the mirror,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02529700032027904,0.02529700032027904,0.02529700032027904
+rule,u135,dim the display,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02476699955877848,0.02476699955877848,0.02476699955877848
+rule,u136,sound the horn,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.028685000870609656,0.028685000870609656,0.028685000870609656
+rule,u137,save this route,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.026230000003124587,0.026230000003124587,0.026230000003124587
+rule,u138,show the map,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.023765000150888227,0.023765000150888227,0.023765000150888227
+rule,u139,lock the doors,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.0245060000452213,0.0245060000452213,0.0245060000452213
+rule,u140,unlock the doors,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,rule,False,True,True,True,False,False,True,False,0.02496699926268775,0.02496699926268775,0.02496699926268775
+rule,u141,don't change lanes,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.016510999557795003,0.016510999557795003,0.016510999557795003
+rule,u142,do not switch lanes,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.015780000467202626,0.015780000467202626,0.015780000467202626
+rule,u143,stay in this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.026059999072458595,0.026059999072458595,0.026059999072458595
+rule,u144,keep this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.022542999431607313,0.022542999431607313,0.022542999431607313
+rule,u145,hold the current lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.02408500040473882,0.02408500040473882,0.02408500040473882
+rule,u146,remain where you are,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.02470700019330252,0.02470700019330252,0.02470700019330252
+rule,u147,no lane change,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.016571000742260367,0.016571000742260367,0.016571000742260367
+rule,u148,keep going in the same lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.028233000193722546,0.028233000193722546,0.028233000193722546
+rule,u149,do not move to another lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.017272999684792012,0.017272999684792012,0.017272999684792012
+rule,u150,maintain this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.02349399983359035,0.02349399983359035,0.02349399983359035
+llm,u001,change to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,484.32391099959204,484.32391099959204,484.32391099959204
+llm,u002,change to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,515.9447380010533,515.9447380010533,515.9447380010533
+llm,u003,switch to lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,489.6058169997559,489.6058169997559,489.6058169997559
+llm,u004,switch to lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,470.98661200107017,470.98661200107017,470.98661200107017
+llm,u005,move into lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,514.4594150006014,514.4594150006014,514.4594150006014
+llm,u006,move into lane 2,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,507.01017800020054,507.01017800020054,507.01017800020054
+llm,u007,merge into lane one,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,472.6120479990641,472.6120479990641,472.6120479990641
+llm,u008,merge into lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,478.8215640000999,478.8215640000999,478.8215640000999
+llm,u009,go to lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,496.20878400128277,496.20878400128277,496.20878400128277
+llm,u010,go to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,503.11477499963075,503.11477499963075,503.11477499963075
+llm,u011,take lane number one,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,529.6252700009063,529.6252700009063,529.6252700009063
+llm,u012,take lane number two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,478.9056409990735,478.9056409990735,478.9056409990735
+llm,u013,enter lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,517.2008740009915,517.2008740009915,517.2008740009915
+llm,u014,enter lane 2,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,500.661793999825,500.661793999825,500.661793999825
+llm,u015,shift to lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,462.93294099996274,462.93294099996274,462.93294099996274
+llm,u016,shift to lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,446.98204999986046,446.98204999986046,446.98204999986046
+llm,u017,transfer to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,470.5012300000817,470.5012300000817,470.5012300000817
+llm,u018,transfer to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,454.9670670003252,454.9670670003252,454.9670670003252
+llm,u019,get into lane number one,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,512.8301240001747,512.8301240001747,512.8301240001747
+llm,u020,get into lane number two,direct_imperative,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,509.5275309995486,509.5275309995486,509.5275309995486
+llm,u021,move over to lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,493.1182069994975,493.1182069994975,493.1182069994975
+llm,u022,move over to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,479.31713400066656,479.31713400066656,479.31713400066656
+llm,u023,set lane one as the target,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,478.01249099939014,478.01249099939014,478.01249099939014
+llm,u024,set lane two as the target,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,503.9473689994338,503.9473689994338,503.9473689994338
+llm,u025,proceed to lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,509.1709759999503,509.1709759999503,509.1709759999503
+llm,u026,could you move to the left lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,483.42642600073304,483.42642600073304,483.42642600073304
+llm,u027,could you move to the right lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,523.5898129994894,523.5898129994894,523.5898129994894
+llm,u028,please head over to lane 1,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,474.9924909992842,474.9924909992842,474.9924909992842
+llm,u029,please head over to lane 2,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,469.36046299924783,469.36046299924783,469.36046299924783
+llm,u030,would you switch to the inner lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,454.83249799872283,454.83249799872283,454.83249799872283
+llm,u031,would you switch to the outer lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,459.84706099989126,459.84706099989126,459.84706099989126
+llm,u032,can you take lane one please,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,444.92940100099077,444.92940100099077,444.92940100099077
+llm,u033,can you take lane two please,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,563.9562309988833,563.9562309988833,563.9562309988833
+llm,u034,i'd like you to merge into the left lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,480.54751999916334,480.54751999916334,480.54751999916334
+llm,u035,i'd like you to merge into the right lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,471.95004700006393,471.95004700006393,471.95004700006393
+llm,u036,"when convenient, move to lane 1",polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,513.9660799995909,513.9660799995909,513.9660799995909
+llm,u037,"when convenient, move to lane 2",polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,500.19058500038227,500.19058500038227,500.19058500038227
+llm,u038,please slide over to the inner lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,482.79906700008723,482.79906700008723,482.79906700008723
+llm,u039,please slide over to the outer lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,464.7207840007468,464.7207840007468,464.7207840007468
+llm,u040,could we go to lane number one,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,608.8655389994528,608.8655389994528,608.8655389994528
+llm,u041,could we go to lane number two,polite_indirect,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,492.2159660000034,492.2159660000034,492.2159660000034
+llm,u042,would it be possible to take the left side,polite_indirect,CHANGE_LANE,lane1,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,495.6296360014676,495.6296360014676,495.6296360014676
+llm,u043,would it be possible to take the right side,polite_indirect,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,495.5291860005673,495.5291860005673,495.5291860005673
+llm,u044,please make your way to the first lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,484.13030600022466,484.13030600022466,484.13030600022466
+llm,u045,please make your way to the second lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,472.34025900070264,472.34025900070264,472.34025900070264
+llm,u046,can you bring us into lane one,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,461.2853680009721,461.2853680009721,461.2853680009721
+llm,u047,can you bring us into lane two,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,460.8250790006423,460.8250790006423,460.8250790006423
+llm,u048,please settle into the inner lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,480.2399240015802,480.2399240015802,480.2399240015802
+llm,u049,please settle into the outer lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,521.6863410005317,521.6863410005317,521.6863410005317
+llm,u050,could you line up with lane 2,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,516.7377130001114,516.7377130001114,516.7377130001114
+llm,u051,take the inner lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,494.67515899959835,494.67515899959835,494.67515899959835
+llm,u052,take the outer lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,465.11275800003204,465.11275800003204,465.11275800003204
+llm,u053,merge to the left,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,456.85663699987344,456.85663699987344,456.85663699987344
+llm,u054,merge to the right,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,448.4993280002527,448.4993280002527,448.4993280002527
+llm,u055,move to the left side,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,480.5655750005826,480.5655750005826,480.5655750005826
+llm,u056,move to the right side,spatial_referential,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,571.4902859999711,571.4902859999711,571.4902859999711
+llm,u057,shift into the first lane,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,468.6381480005366,468.6381480005366,468.6381480005366
+llm,u058,shift into the second lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,457.8669540005649,457.8669540005649,457.8669540005649
+llm,u059,go to the inner one,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,510.39029200001096,510.39029200001096,510.39029200001096
+llm,u060,go to the outer one,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,477.0055369990587,477.0055369990587,477.0055369990587
+llm,u061,enter the left lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,487.6900760009448,487.6900760009448,487.6900760009448
+llm,u062,enter the right lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,463.29052500004764,463.29052500004764,463.29052500004764
+llm,u063,use the first lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,482.7347649988951,482.7347649988951,482.7347649988951
+llm,u064,use the second lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,541.7652630003431,541.7652630003431,541.7652630003431
+llm,u065,slide left,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,496.30907800019486,496.30907800019486,496.30907800019486
+llm,u066,slide right,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,488.7313700000959,488.7313700000959,488.7313700000959
+llm,u067,head into the inner lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,472.5323519996891,472.5323519996891,472.5323519996891
+llm,u068,head into the outer lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,474.9430410010973,474.9430410010973,474.9430410010973
+llm,u069,choose the left side,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,480.0282349988265,480.0282349988265,480.0282349988265
+llm,u070,choose the right side,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,601.6563810007938,601.6563810007938,601.6563810007938
+llm,u071,align with the first lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,481.8986039990705,481.8986039990705,481.8986039990705
+llm,u072,align with the second lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,482.5865220009291,482.5865220009291,482.5865220009291
+llm,u073,move toward the inner side,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,483.9621470000566,483.9621470000566,483.9621470000566
+llm,u074,move toward the outer side,spatial_referential,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,510.84200799959945,510.84200799959945,510.84200799959945
+llm,u075,get over to the left lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,497.78782399880583,497.78782399880583,497.78782399880583
+llm,u076,change lanes,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,476.90091199910967,476.90091199910967,476.90091199910967
+llm,u077,switch lanes,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,461.5248279988009,461.5248279988009,461.5248279988009
+llm,u078,switch over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,550.9875480001938,550.9875480001938,550.9875480001938
+llm,u079,move over,ambiguous_or_underspecified,CHANGE_LANE,,QUERY_STATE,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,514.9888800006011,514.9888800006011,514.9888800006011
+llm,u080,slide over,ambiguous_or_underspecified,CHANGE_LANE,,QUERY_STATE,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,515.5952940003772,515.5952940003772,515.5952940003772
+llm,u081,merge over,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,483.4700450010132,483.4700450010132,483.4700450010132
+llm,u082,go to the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,524.490337998941,524.490337998941,524.490337998941
+llm,u083,take the other lane,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,504.2674279993662,504.2674279993662,504.2674279993662
+llm,u084,get into the other lane,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,482.6547450011276,482.6547450011276,482.6547450011276
+llm,u085,shift to the other side,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,497.3393330001272,497.3393330001272,497.3393330001272
+llm,u086,move to the other one,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,497.9423919994588,497.9423919994588,497.9423919994588
+llm,u087,go to the other one,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,463.29817000150797,463.29817000150797,463.29817000150797
+llm,u088,leave this lane,ambiguous_or_underspecified,CHANGE_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,516.283339000438,516.283339000438,516.283339000438
+llm,u089,get out of this lane,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,480.32900499856623,480.32900499856623,480.32900499856623
+llm,u090,change over to a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,475.56310200161533,475.56310200161533,475.56310200161533
+llm,u091,move into a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,498.4145100006572,498.4145100006572,498.4145100006572
+llm,u092,switch to a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,459.8330099997838,459.8330099997838,459.8330099997838
+llm,u093,take another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,543.0128219995822,543.0128219995822,543.0128219995822
+llm,u094,shift lanes now,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,442.93109600039315,442.93109600039315,442.93109600039315
+llm,u095,make a lane change,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,499.424874999022,499.424874999022,499.424874999022
+llm,u096,adjust to another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,462.54658900033974,462.54658900033974,462.54658900033974
+llm,u097,reposition to another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,False,False,486.17583400118747,486.17583400118747,486.17583400118747
+llm,u098,move over a bit,ambiguous_or_underspecified,CHANGE_LANE,,QUERY_STATE,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,535.8944180006802,535.8944180006802,535.8944180006802
+llm,u099,pick a lane,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,499.994367999534,499.994367999534,499.994367999534
+llm,u100,get over there,ambiguous_or_underspecified,CHANGE_LANE,,QUERY_STATE,,ollama:qwen3:0.6b,False,False,True,False,False,False,False,False,508.7660790013615,508.7660790013615,508.7660790013615
+llm,u101,chnge to lane1,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,456.9489839996095,456.9489839996095,456.9489839996095
+llm,u102,swich to lane2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,468.71454500069376,468.71454500069376,468.71454500069376
+llm,u103,lane1 plz,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,457.10482700087596,457.10482700087596,457.10482700087596
+llm,u104,lane2 plz,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,546.2810749995697,546.2810749995697,546.2810749995697
+llm,u105,go lft lane,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,488.5026409992861,488.5026409992861,488.5026409992861
+llm,u106,go rght lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,471.9620300002134,471.9620300002134,471.9620300002134
+llm,u107,move 2 lane one,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,506.6206769988639,506.6206769988639,506.6206769988639
+llm,u108,move 2 lane two,typos_and_casual,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,514.018476000274,514.018476000274,514.018476000274
+llm,u109,pls go to left lane,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,486.4363010001398,486.4363010001398,486.4363010001398
+llm,u110,pls go to right lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,479.47677799857047,479.47677799857047,479.47677799857047
+llm,u111,take inner ln,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,504.30217099892616,504.30217099892616,504.30217099892616
+llm,u112,take outer ln,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,468.2600520009146,468.2600520009146,468.2600520009146
+llm,u113,chnge lanes to lane 1,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,476.22387999945204,476.22387999945204,476.22387999945204
+llm,u114,chnge lanes to lane 2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,474.65859499970975,474.65859499970975,474.65859499970975
+llm,u115,swtich to first lane,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,False,True,True,True,True,True,False,False,476.24677200110455,476.24677200110455,476.24677200110455
+llm,u116,swtich to second lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,461.11178299906896,461.11178299906896,461.11178299906896
+llm,u117,go left pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,492.1550590006518,492.1550590006518,492.1550590006518
+llm,u118,go right pls,typos_and_casual,CHANGE_LANE,lane2,START,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,501.40536300023086,501.40536300023086,501.40536300023086
+llm,u119,get in lane one pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,497.8251070006081,497.8251070006081,497.8251070006081
+llm,u120,get in lane two pls,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,481.5261420008028,481.5261420008028,481.5261420008028
+llm,u121,lane one now pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,501.61789300000237,501.61789300000237,501.61789300000237
+llm,u122,lane two now pls,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,458.9540790002502,458.9540790002502,458.9540790002502
+llm,u123,movee to lane 1,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,False,False,True,False,True,True,False,False,519.7152700002334,519.7152700002334,519.7152700002334
+llm,u124,movee to lane 2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,False,True,False,False,True,False,False,False,513.84038300057,513.84038300057,513.84038300057
+llm,u125,go right lane lol,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,False,False,True,False,False,False,486.48620799940545,486.48620799940545,486.48620799940545
+llm,u126,turn on the headlights,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,486.92705999928876,486.92705999928876,486.92705999928876
+llm,u127,turn off the headlights,out_of_scope_or_negative,UNKNOWN,,STOP,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,476.95329999987734,476.95329999987734,476.95329999987734
+llm,u128,open the window,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,480.67393000019365,480.67393000019365,480.67393000019365
+llm,u129,close the window,out_of_scope_or_negative,UNKNOWN,,STOP,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,503.8613920005446,503.8613920005446,503.8613920005446
+llm,u130,play some music,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,476.36166300071636,476.36166300071636,476.36166300071636
+llm,u131,lower the volume,out_of_scope_or_negative,UNKNOWN,,QUERY_STATE,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,462.677822999467,462.677822999467,462.677822999467
+llm,u132,set the cabin fan,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,468.27684700110694,468.27684700110694,468.27684700110694
+llm,u133,wipe the windshield,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,487.53510400092637,487.53510400092637,487.53510400092637
+llm,u134,adjust the mirror,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,527.3958569996466,527.3958569996466,527.3958569996466
+llm,u135,dim the display,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,504.6090810010355,504.6090810010355,504.6090810010355
+llm,u136,sound the horn,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,529.7238990006008,529.7238990006008,529.7238990006008
+llm,u137,save this route,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,514.4475540000712,514.4475540000712,514.4475540000712
+llm,u138,show the map,out_of_scope_or_negative,UNKNOWN,,QUERY_STATE,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,479.3991709993861,479.3991709993861,479.3991709993861
+llm,u139,lock the doors,out_of_scope_or_negative,UNKNOWN,,STOP,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,540.5180960005964,540.5180960005964,540.5180960005964
+llm,u140,unlock the doors,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,489.9270850000903,489.9270850000903,489.9270850000903
+llm,u141,don't change lanes,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,537.1543769997515,537.1543769997515,537.1543769997515
+llm,u142,do not switch lanes,out_of_scope_or_negative,KEEP_CURRENT_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,458.3452730003046,458.3452730003046,458.3452730003046
+llm,u143,stay in this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,482.97416500099644,482.97416500099644,482.97416500099644
+llm,u144,keep this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,475.99561700008053,475.99561700008053,475.99561700008053
+llm,u145,hold the current lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,514.2923879993759,514.2923879993759,514.2923879993759
+llm,u146,remain where you are,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,554.6086180002021,554.6086180002021,554.6086180002021
+llm,u147,no lane change,out_of_scope_or_negative,KEEP_CURRENT_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,478.39474200009136,478.39474200009136,478.39474200009136
+llm,u148,keep going in the same lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,ollama:qwen3:0.6b,False,True,True,True,False,False,True,False,486.3444820002769,486.3444820002769,486.3444820002769
+llm,u149,do not move to another lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,UNKNOWN,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,False,496.71863699950336,496.71863699950336,496.71863699950336
+llm,u150,maintain this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,FOLLOW_LANE,,ollama:qwen3:0.6b,False,False,True,False,False,False,True,True,471.5225540003303,471.5225540003303,471.5225540003303
+hybrid,u001,change to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.027341000532032922,0.027341000532032922,0.027341000532032922
+hybrid,u002,change to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.0297759997920366,0.0297759997920366,0.0297759997920366
+hybrid,u003,switch to lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.0199269998120144,0.0199269998120144,0.0199269998120144
+hybrid,u004,switch to lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02431599932606332,0.02431599932606332,0.02431599932606332
+hybrid,u005,move into lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.017303000277024694,0.017303000277024694,0.017303000277024694
+hybrid,u006,move into lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02302399843756575,0.02302399843756575,0.02302399843756575
+hybrid,u007,merge into lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.01887600046757143,0.01887600046757143,0.01887600046757143
+hybrid,u008,merge into lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.023513999622082338,0.023513999622082338,0.023513999622082338
+hybrid,u009,go to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.016400999811594374,0.016400999811594374,0.016400999811594374
+hybrid,u010,go to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.021159999960218556,0.021159999960218556,0.021159999960218556
+hybrid,u011,take lane number one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.01899599919852335,0.01899599919852335,0.01899599919852335
+hybrid,u012,take lane number two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.024836999727995135,0.024836999727995135,0.024836999727995135
+hybrid,u013,enter lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,518.760666000162,518.760666000162,518.760666000162
+hybrid,u014,enter lane 2,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,491.70512499949837,491.70512499949837,491.70512499949837
+hybrid,u015,shift to lane one,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.05309000152919907,0.05309000152919907,0.05309000152919907
+hybrid,u016,shift to lane two,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.042550000216579065,0.042550000216579065,0.042550000216579065
+hybrid,u017,transfer to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,True,True,True,True,True,True,False,False,467.02195099896926,467.02195099896926,467.02195099896926
+hybrid,u018,transfer to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,456.20699400024023,456.20699400024023,456.20699400024023
+hybrid,u019,get into lane number one,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,526.206884000203,526.206884000203,526.206884000203
+hybrid,u020,get into lane number two,direct_imperative,CHANGE_LANE,lane2,QUERY_STATE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,512.8498310004943,512.8498310004943,512.8498310004943
+hybrid,u021,move over to lane 1,direct_imperative,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.05587499981629662,0.05587499981629662,0.05587499981629662
+hybrid,u022,move over to lane 2,direct_imperative,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.056766999477986246,0.056766999477986246,0.056766999477986246
+hybrid,u023,set lane one as the target,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,483.51918700063834,483.51918700063834,483.51918700063834
+hybrid,u024,set lane two as the target,direct_imperative,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,508.7886569999682,508.7886569999682,508.7886569999682
+hybrid,u025,proceed to lane 1,direct_imperative,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,505.8689380002761,505.8689380002761,505.8689380002761
+hybrid,u026,could you move to the left lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.051857001380994916,0.051857001380994916,0.051857001380994916
+hybrid,u027,could you move to the right lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.05241899998509325,0.05241899998509325,0.05241899998509325
+hybrid,u028,please head over to lane 1,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,479.4294799994532,479.4294799994532,479.4294799994532
+hybrid,u029,please head over to lane 2,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,466.1221309997927,466.1221309997927,466.1221309997927
+hybrid,u030,would you switch to the inner lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.03946399920096155,0.03946399920096155,0.03946399920096155
+hybrid,u031,would you switch to the outer lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.034624999898369424,0.034624999898369424,0.034624999898369424
+hybrid,u032,can you take lane one please,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.02379500074312091,0.02379500074312091,0.02379500074312091
+hybrid,u033,can you take lane two please,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.029855998946004547,0.029855998946004547,0.029855998946004547
+hybrid,u034,i'd like you to merge into the left lane,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.027132000468554907,0.027132000468554907,0.027132000468554907
+hybrid,u035,i'd like you to merge into the right lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.031859999580774456,0.031859999580774456,0.031859999580774456
+hybrid,u036,"when convenient, move to lane 1",polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.020318999304436147,0.020318999304436147,0.020318999304436147
+hybrid,u037,"when convenient, move to lane 2",polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.025859000743366778,0.025859000743366778,0.025859000743366778
+hybrid,u038,please slide over to the inner lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,472.40260999933525,472.40260999933525,472.40260999933525
+hybrid,u039,please slide over to the outer lane,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,461.55786700001045,461.55786700001045,461.55786700001045
+hybrid,u040,could we go to lane number one,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.06308900083240587,0.06308900083240587,0.06308900083240587
+hybrid,u041,could we go to lane number two,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.08981999962998088,0.08981999962998088,0.08981999962998088
+hybrid,u042,would it be possible to take the left side,polite_indirect,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.06587499956367537,0.06587499956367537,0.06587499956367537
+hybrid,u043,would it be possible to take the right side,polite_indirect,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.08854699990479276,0.08854699990479276,0.08854699990479276
+hybrid,u044,please make your way to the first lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,495.0265580009727,495.0265580009727,495.0265580009727
+hybrid,u045,please make your way to the second lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,474.9102709993167,474.9102709993167,474.9102709993167
+hybrid,u046,can you bring us into lane one,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,458.7822800003778,458.7822800003778,458.7822800003778
+hybrid,u047,can you bring us into lane two,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,466.67011200042907,466.67011200042907,466.67011200042907
+hybrid,u048,please settle into the inner lane,polite_indirect,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,482.03110599934007,482.03110599934007,482.03110599934007
+hybrid,u049,please settle into the outer lane,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,526.3290589991811,526.3290589991811,526.3290589991811
+hybrid,u050,could you line up with lane 2,polite_indirect,CHANGE_LANE,lane2,FOLLOW_LANE,lane2,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,519.6606670015171,519.6606670015171,519.6606670015171
+hybrid,u051,take the inner lane,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.05448299998533912,0.05448299998533912,0.05448299998533912
+hybrid,u052,take the outer lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.047109000661293976,0.047109000661293976,0.047109000661293976
+hybrid,u053,merge to the left,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.0350560003425926,0.0350560003425926,0.0350560003425926
+hybrid,u054,merge to the right,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.04421300036483444,0.04421300036483444,0.04421300036483444
+hybrid,u055,move to the left side,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.03200000173819717,0.03200000173819717,0.03200000173819717
+hybrid,u056,move to the right side,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.05824999971082434,0.05824999971082434,0.05824999971082434
+hybrid,u057,shift into the first lane,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.04696800169767812,0.04696800169767812,0.04696800169767812
+hybrid,u058,shift into the second lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.027573001716518775,0.027573001716518775,0.027573001716518775
+hybrid,u059,go to the inner one,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.023544998839497566,0.023544998839497566,0.023544998839497566
+hybrid,u060,go to the outer one,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.02697099989745766,0.02697099989745766,0.02697099989745766
+hybrid,u061,enter the left lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,498.2757460002176,498.2757460002176,498.2757460002176
+hybrid,u062,enter the right lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,458.8448550002795,458.8448550002795,458.8448550002795
+hybrid,u063,use the first lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,494.08418600069126,494.08418600069126,494.08418600069126
+hybrid,u064,use the second lane,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,539.2359910001687,539.2359910001687,539.2359910001687
+hybrid,u065,slide left,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,498.41416600065713,498.41416600065713,498.41416600065713
+hybrid,u066,slide right,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,496.28422600108024,496.28422600108024,496.28422600108024
+hybrid,u067,head into the inner lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,470.8813140005077,470.8813140005077,470.8813140005077
+hybrid,u068,head into the outer lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,482.969171998775,482.969171998775,482.969171998775
+hybrid,u069,choose the left side,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,478.83245599950897,478.83245599950897,478.83245599950897
+hybrid,u070,choose the right side,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,605.0380569995468,605.0380569995468,605.0380569995468
+hybrid,u071,align with the first lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,474.4101910000609,474.4101910000609,474.4101910000609
+hybrid,u072,align with the second lane,spatial_referential,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,482.5947239987727,482.5947239987727,482.5947239987727
+hybrid,u073,move toward the inner side,spatial_referential,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.035877999835065566,0.035877999835065566,0.035877999835065566
+hybrid,u074,move toward the outer side,spatial_referential,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.033864000215544365,0.033864000215544365,0.033864000215544365
+hybrid,u075,get over to the left lane,spatial_referential,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,503.5203570005251,503.5203570005251,503.5203570005251
+hybrid,u076,change lanes,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.059332000091671944,0.059332000091671944,0.059332000091671944
+hybrid,u077,switch lanes,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.0421090007876046,0.0421090007876046,0.0421090007876046
+hybrid,u078,switch over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.042920999476336874,0.042920999476336874,0.042920999476336874
+hybrid,u079,move over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.050074000682798214,0.050074000682798214,0.050074000682798214
+hybrid,u080,slide over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.040687000364414416,0.040687000364414416,0.040687000364414416
+hybrid,u081,merge over,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.038643000152660534,0.038643000152660534,0.038643000152660534
+hybrid,u082,go to the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.0505560001329286,0.0505560001329286,0.0505560001329286
+hybrid,u083,take the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04635700133803766,0.04635700133803766,0.04635700133803766
+hybrid,u084,get into the other lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04911299947707448,0.04911299947707448,0.04911299947707448
+hybrid,u085,shift to the other side,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.046967999878688715,0.046967999878688715,0.046967999878688715
+hybrid,u086,move to the other one,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.048321000576834194,0.048321000576834194,0.048321000576834194
+hybrid,u087,go to the other one,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.047159001042018645,0.047159001042018645,0.047159001042018645
+hybrid,u088,leave this lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.043092000851174816,0.043092000851174816,0.043092000851174816
+hybrid,u089,get out of this lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04653799987863749,0.04653799987863749,0.04653799987863749
+hybrid,u090,change over to a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.05197799873712938,0.05197799873712938,0.05197799873712938
+hybrid,u091,move into a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04984400038665626,0.04984400038665626,0.04984400038665626
+hybrid,u092,switch to a different lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.048330999561585486,0.048330999561585486,0.048330999561585486
+hybrid,u093,take another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04374300078779925,0.04374300078779925,0.04374300078779925
+hybrid,u094,shift lanes now,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.041639001210569404,0.041639001210569404,0.041639001210569404
+hybrid,u095,make a lane change,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.043832998926518485,0.043832998926518485,0.043832998926518485
+hybrid,u096,adjust to another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.05227899964665994,0.05227899964665994,0.05227899964665994
+hybrid,u097,reposition to another lane,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04856099985772744,0.04856099985772744,0.04856099985772744
+hybrid,u098,move over a bit,ambiguous_or_underspecified,CHANGE_LANE,,CHANGE_LANE,,rule,False,True,True,True,False,False,False,False,0.04341200110502541,0.04341200110502541,0.04341200110502541
+hybrid,u099,pick a lane,ambiguous_or_underspecified,CHANGE_LANE,,UNKNOWN,,ollama:qwen3:0.6b,True,False,True,False,False,False,False,False,494.50773100033985,494.50773100033985,494.50773100033985
+hybrid,u100,get over there,ambiguous_or_underspecified,CHANGE_LANE,,QUERY_STATE,,ollama:qwen3:0.6b,True,False,True,False,False,False,False,False,506.753576999472,506.753576999472,506.753576999472
+hybrid,u101,chnge to lane1,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,True,True,True,True,True,True,False,False,462.03693300049054,462.03693300049054,462.03693300049054
+hybrid,u102,swich to lane2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,455.981155999325,455.981155999325,455.981155999325
+hybrid,u103,lane1 plz,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,449.2152390012052,449.2152390012052,449.2152390012052
+hybrid,u104,lane2 plz,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,548.0269620002218,548.0269620002218,548.0269620002218
+hybrid,u105,go lft lane,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,492.26392499986105,492.26392499986105,492.26392499986105
+hybrid,u106,go rght lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,480.3286049991584,480.3286049991584,480.3286049991584
+hybrid,u107,move 2 lane one,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.04516499939200003,0.04516499939200003,0.04516499939200003
+hybrid,u108,move 2 lane two,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.042550000216579065,0.042550000216579065,0.042550000216579065
+hybrid,u109,pls go to left lane,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.03470599949650932,0.03470599949650932,0.03470599949650932
+hybrid,u110,pls go to right lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.04576599894789979,0.04576599894789979,0.04576599894789979
+hybrid,u111,take inner ln,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,lane1,ollama:qwen3:0.6b,True,False,True,False,True,True,False,False,496.72019200079376,496.72019200079376,496.72019200079376
+hybrid,u112,take outer ln,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,491.23634500028857,491.23634500028857,491.23634500028857
+hybrid,u113,chnge lanes to lane 1,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,True,True,True,True,True,True,False,False,478.07435000140686,478.07435000140686,478.07435000140686
+hybrid,u114,chnge lanes to lane 2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,ollama:qwen3:0.6b,True,True,True,True,True,True,False,False,472.7566960009426,472.7566960009426,472.7566960009426
+hybrid,u115,swtich to first lane,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,ollama:qwen3:0.6b,True,True,True,True,True,True,False,False,471.2364669994713,471.2364669994713,471.2364669994713
+hybrid,u116,swtich to second lane,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,467.941509999946,467.941509999946,467.941509999946
+hybrid,u117,go left pls,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.048722000428824686,0.048722000428824686,0.048722000428824686
+hybrid,u118,go right pls,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.045585999032482505,0.045585999032482505,0.045585999032482505
+hybrid,u119,get in lane one pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,502.91132199890853,502.91132199890853,502.91132199890853
+hybrid,u120,get in lane two pls,typos_and_casual,CHANGE_LANE,lane2,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,487.04894199909177,487.04894199909177,487.04894199909177
+hybrid,u121,lane one now pls,typos_and_casual,CHANGE_LANE,lane1,FOLLOW_LANE,,ollama:qwen3:0.6b,True,False,False,False,True,False,False,False,495.82283700146945,495.82283700146945,495.82283700146945
+hybrid,u122,lane two now pls,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,,ollama:qwen3:0.6b,True,True,False,False,True,False,False,False,472.11524300109886,472.11524300109886,472.11524300109886
+hybrid,u123,movee to lane 1,typos_and_casual,CHANGE_LANE,lane1,CHANGE_LANE,lane1,rule,False,True,True,True,True,True,False,False,0.028915001166751608,0.028915001166751608,0.028915001166751608
+hybrid,u124,movee to lane 2,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.029556000299635343,0.029556000299635343,0.029556000299635343
+hybrid,u125,go right lane lol,typos_and_casual,CHANGE_LANE,lane2,CHANGE_LANE,lane2,rule,False,True,True,True,True,True,False,False,0.029355000151554123,0.029355000151554123,0.029355000151554123
+hybrid,u126,turn on the headlights,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,490.372791999107,490.372791999107,490.372791999107
+hybrid,u127,turn off the headlights,out_of_scope_or_negative,UNKNOWN,,STOP,,ollama:qwen3:0.6b,True,False,True,False,False,False,True,False,473.8509779999731,473.8509779999731,473.8509779999731
+hybrid,u128,open the window,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,477.9444810010318,477.9444810010318,477.9444810010318
+hybrid,u129,close the window,out_of_scope_or_negative,UNKNOWN,,STOP,,ollama:qwen3:0.6b,True,False,True,False,False,False,True,False,500.6535989996337,500.6535989996337,500.6535989996337
+hybrid,u130,play some music,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,483.13708800014865,483.13708800014865,483.13708800014865
+hybrid,u131,lower the volume,out_of_scope_or_negative,UNKNOWN,,QUERY_STATE,,ollama:qwen3:0.6b,True,False,True,False,False,False,True,False,465.00140900025144,465.00140900025144,465.00140900025144
+hybrid,u132,set the cabin fan,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,473.79170400017756,473.79170400017756,473.79170400017756
+hybrid,u133,wipe the windshield,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,478.84664199955296,478.84664199955296,478.84664199955296
+hybrid,u134,adjust the mirror,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,530.5827390002378,530.5827390002378,530.5827390002378
+hybrid,u135,dim the display,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,505.7076529992628,505.7076529992628,505.7076529992628
+hybrid,u136,sound the horn,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,528.1209129989293,528.1209129989293,528.1209129989293
+hybrid,u137,save this route,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,510.2729160007584,510.2729160007584,510.2729160007584
+hybrid,u138,show the map,out_of_scope_or_negative,UNKNOWN,,QUERY_STATE,,ollama:qwen3:0.6b,True,False,True,False,False,False,True,False,492.6785980005661,492.6785980005661,492.6785980005661
+hybrid,u139,lock the doors,out_of_scope_or_negative,UNKNOWN,,STOP,,ollama:qwen3:0.6b,True,False,True,False,False,False,True,False,537.8799150003033,537.8799150003033,537.8799150003033
+hybrid,u140,unlock the doors,out_of_scope_or_negative,UNKNOWN,,UNKNOWN,,ollama:qwen3:0.6b,True,True,True,True,False,False,True,False,480.80397299963806,480.80397299963806,480.80397299963806
+hybrid,u141,don't change lanes,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.05991299985907972,0.05991299985907972,0.05991299985907972
+hybrid,u142,do not switch lanes,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.023364000298897736,0.023364000298897736,0.023364000298897736
+hybrid,u143,stay in this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.034033999327220954,0.034033999327220954,0.034033999327220954
+hybrid,u144,keep this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.02680100078578107,0.02680100078578107,0.02680100078578107
+hybrid,u145,hold the current lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.02711100023589097,0.02711100023589097,0.02711100023589097
+hybrid,u146,remain where you are,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.025908999305102043,0.025908999305102043,0.025908999305102043
+hybrid,u147,no lane change,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.01817500015022233,0.01817500015022233,0.01817500015022233
+hybrid,u148,keep going in the same lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.029426000764942728,0.029426000764942728,0.029426000764942728
+hybrid,u149,do not move to another lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.01947599957929924,0.01947599957929924,0.01947599957929924
+hybrid,u150,maintain this lane,out_of_scope_or_negative,KEEP_CURRENT_LANE,,KEEP_CURRENT_LANE,,rule,False,True,True,True,False,False,True,False,0.02485699951648712,0.02485699951648712,0.02485699951648712

@@ -11,7 +11,7 @@ Two outputs:
 
 Usage::
 
-    python3 tools/review_reasoning.py src/nav_vla_pkg/data_v3y/packed_v3y \
+    python3 tools/review_reasoning.py src/sant_vla_pkg/data_v3y/packed_v3y \
         [more dirs...] [--n 60] [--out reasoning_review.html]
 
 Token lengths use the SmolVLM2 tokenizer when transformers is importable

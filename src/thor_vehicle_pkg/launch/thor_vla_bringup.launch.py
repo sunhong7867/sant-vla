@@ -2,7 +2,7 @@
 
 정책 서버/브리지는 시뮬과 동일하게 별도 기동한다 (LeRobot venv):
     vla_policy_server.py --checkpoint <ckpt> --endpoint ipc:///tmp/nav_vla.sock
-    ros2 run nav_vla_pkg vla_bridge_node --ros-args \
+    ros2 run sant_vla_pkg vla_bridge_node --ros-args \
         -p image_topic:=/image_raw/compressed -p speed_slew:=0.08 ...
 
 이 런치의 세 노드가 나머지 실차 경로다:

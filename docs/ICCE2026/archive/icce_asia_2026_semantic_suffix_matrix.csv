@@ -1,0 +1,11 @@
+study_id,condition_id,checkpoint,track_mode,refill_at,speed_word,seeds,targets_or_lanes,repeats_per_seed,closed_loop_rollouts,offline_queries,priority,feeds
+S0,bay_smoke,ckpt_v2b_40k,replay,0.30,slow,0,4,1,4,0,gate,smoke_only
+S1,anchor_counterfactual,ckpt_v2b_40k,offline,n/a,slow,0;1;2;3;4,4_instructions_x_4_anchors,1,0,80,core,Fig1
+S2,r093_replay,ckpt_v2b_40k,replay,0.93,slow,0;1;2;3;4,4_bays,1,20,0,core,Fig2;Fig3;TableII
+S2,r070_replay,ckpt_v2b_40k,replay,0.70,slow,0;1;2;3;4,4_bays,1,20,0,core,Fig2;Fig3;TableII
+S2,r030_replay,ckpt_v2b_40k,replay,0.30,slow,0;1;2;3;4,4_bays,1,20,0,core,Fig2;Fig3;TableII
+S3,r093_oracle,oracle_parking_extremes,replay,0.93,slow,0,2_bays,3,6,0,core,Fig3;TableII
+S3,r030_oracle,oracle_parking_extremes,replay,0.30,slow,0,2_bays,3,6,0,core,Fig3;TableII
+S4,r030_preview,ckpt_v2b_40k,preview,0.30,slow,0;1;2;3;4,4_bays,1,20,0,optional,TableII
+S5,ring_replay,ckpt_v6_60k,replay,0.30,normal,0;1;2;3;4,2_lanes,1,10,0,optional,Fig3
+S5,ring_preview,ckpt_v6_60k,preview_single,0.30,normal,0;1;2;3;4,2_lanes,1,10,0,optional,Fig3

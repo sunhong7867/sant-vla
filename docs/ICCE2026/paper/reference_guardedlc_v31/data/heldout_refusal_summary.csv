@@ -1,0 +1,13 @@
+set,parser,capacity,trusted,active_fp,strict_change,targeted_active,n
+H1,llm,0.6B,,1,0,0,15
+H1,GuardedLC,0.6B,15,0,0,0,15
+H1,llm,4B,,1,0,0,15
+H1,GuardedLC,4B,15,0,0,0,15
+H1,llm,8B,,7,1,2,15
+H1,GuardedLC,8B,15,0,0,0,15
+H2,llm,0.6B,,1,0,0,15
+H2,GuardedLC,0.6B,0,1,0,0,15
+H2,llm,4B,,1,0,0,15
+H2,GuardedLC,4B,0,1,0,0,15
+H2,llm,8B,,3,0,0,15
+H2,GuardedLC,8B,0,3,0,0,15

@@ -1,0 +1,4 @@
+capacity,conditions_completed,mean_l2_correct,std_l2_correct,min_l2_correct,max_l2_correct,mean_valid_reset_l2,mean_reset_fail_rate,full_set_nominal_l2,subset_reference_l2,worst_drop_vs_full_nominal,worst_drop_vs_subset_ref,cmd_fp_oos_total,beh_fp_oos_total,c6_total_trials
+0.6b,9,0.898,0.006,0.880,0.900,0.899,0.144,0.900,0.900,+0.020,+0.020,0,0,90
+4b,9,0.996,0.008,0.980,1.000,1.000,0.036,0.993,0.980,+0.013,+0.000,0,0,90
+8b,9,1.000,0.000,1.000,1.000,1.000,0.058,1.000,1.000,+0.000,+0.000,0,0,90

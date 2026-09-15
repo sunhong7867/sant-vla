@@ -4,7 +4,7 @@
 
 ## 여기 있는 것
 - `code/` — 서버에서 실행되는 것들: `train_smolvla.sh`(학습 진입점, GPU/배치/저장주기 env),
-  `to_lerobot.py`·`vla_policy_server.py`(배포 사본 — **원본은 `src/nav_vla_pkg/scripts/`**,
+  `to_lerobot.py`·`vla_policy_server.py`(배포 사본 — **원본은 `src/sant_vla_pkg/scripts/`**,
   체인이 scp로 밀어넣음), `track_paths.json`(존 좌표), `v8h_server_watch.sh`(체크포인트 실시간 프루닝),
   `ckpt_probe.py`
 - `*.sh` — 과거 변환/학습/재개 체인 기록 (v2~v21 시절; 현행 체인은 `tools/`)

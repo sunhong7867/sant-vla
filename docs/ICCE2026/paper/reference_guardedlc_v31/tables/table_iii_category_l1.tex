@@ -1,0 +1,23 @@
+% Sources: eval/results2/*/gpu/run1_results.csv; exact-match averaged over 25 utterances per category.
+% The GLC LLM-route column is computed from the hybrid fallback field and is identical across capacities because the rule gate is deterministic.
+\begin{table}[!t]
+\centering
+\caption{Category-Wise Layer-1 Exact Match and Routing}
+\label{tab:cat_l1}
+\scriptsize
+\setlength{\tabcolsep}{1.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Category & GLC LLM-route & Rule & 4B LLM & 4B GLC & 8B LLM & 8B GLC \\
+\midrule
+C1 Direct target & 9/25 & 0.64 & 0.92 & 0.92 & 1.00 & 1.00 \\
+C2 Polite/indirect & 11/25 & 0.56 & 0.80 & 0.96 & 0.96 & 0.96 \\
+C3 Spatial aliases & 13/25 & 0.48 & 0.72 & 0.88 & 0.88 & 0.88 \\
+C4 State-relative & 2/25 & 0.92 & 0.96 & 0.96 & 1.00 & 1.00 \\
+C5 Noisy/casual & 16/25 & 0.36 & 0.92 & 0.96 & 0.96 & 0.96 \\
+C6 OOS/refusal & 15/25 & 1.00 & 0.84 & 0.96 & 0.76 & 1.00 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

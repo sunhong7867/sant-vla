@@ -3,7 +3,7 @@
 > **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
 
 작성 2026-08-06. 근거 코드: `train/train_stage_a.py`, `scripts/collect_corpus.py`,
-`scripts/to_lerobot.py`, `scripts/vla_policy_server.py`, `nav_vla_pkg/vla_bridge_node.py`.
+`scripts/to_lerobot.py`, `scripts/vla_policy_server.py`, `sant_vla_pkg/vla_bridge_node.py`.
 측정치는 docs/ver/ 해당 일자 문서에서 가져옴.
 
 ---

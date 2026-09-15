@@ -1,0 +1,394 @@
+# Recovered v6 training instruction inventory
+# Primary source: remote v6 LeRobot meta/tasks.parquet; recovered 2026-09-01.
+# Cross-check: 406 packed_v6 episode meta.json files (same 388 strings).
+# Sorted unique UTF-8 strings: 388.
+# SHA-256 of the lines below (including one trailing newline):
+# 958df102190e4d8dbb15198ee6cc91a2a828a1023e6347dc5f46dd2ae1efea85
+Bring the car to M2 via the left lane, briskly.
+Bring the car to M2 via the outer lane, quickly.
+Bring the car to M3 via the inner driving lane, at a comfortable pace.
+Bring the car to Start via the inner driving lane, at a comfortable pace.
+Bring the car to T2 via the left lane, at a slow speed.
+Bring the car to T2 via the leftmost lane, at low speed.
+Bring the car to T4 via the inner lane, briskly.
+Bring the car to checkpoint M2 via the right lane, at low speed.
+Bring the car to checkpoint T2 via the left-hand lane, at high speed.
+Bring the car to checkpoint T2 via the outer lane, at high speed.
+Bring the car to checkpoint T3 via the left-hand lane, at your usual pace.
+Bring the car to checkpoint T3 via the rightmost lane, at your usual pace.
+Bring the car to checkpoint T4 via the inner driving lane, nice and slow.
+Bring the car to checkpoint T4 via the inside lane, at cruising speed.
+Bring the car to checkpoint T4 via the outer lane, at cruising speed.
+Bring the car to checkpoint T4 via the outer lane, at high speed.
+Continue in the inside lane until you reach T4, at a comfortable pace.
+Continue in the left-hand lane until you reach T4, steadily.
+Continue in the left-hand lane until you reach checkpoint T2, slowly.
+Continue in the left-hand lane until you reach checkpoint T3, steadily.
+Continue in the leftmost lane until you reach Start, at low speed.
+Continue in the leftmost lane until you reach Start, gently.
+Continue in the leftmost lane until you reach T3, at your usual pace.
+Continue in the leftmost lane until you reach checkpoint T4, at a comfortable pace.
+Continue in the outer driving lane until you reach checkpoint M3, at a slow speed.
+Continue in the outer driving lane until you reach the start line, keeping the speed down.
+Continue in the outside lane until you reach Start, gently.
+Continue in the outside lane until you reach T2, slowly.
+Continue in the right-hand lane until you reach the start line, nice and slow.
+Continue in the rightmost lane until you reach T4, at medium speed.
+Cruise in the inner driving lane, at a slow speed.
+Cruise in the left-hand lane, at a fast speed.
+Cruise in the left-hand lane, nice and slow.
+Cruise in the leftmost lane, at a slow speed.
+Cruise in the leftmost lane, briskly.
+Cruise in the outer driving lane, fast.
+Cruise in the outer driving lane, keeping the speed down.
+Cruise in the outer driving lane, slowly.
+Cruise in the outer lane, at medium speed.
+Cruise in the outer lane, nice and slow.
+Cruise in the right lane, gently.
+Cruise in the right lane, nice and slow.
+Cruise in the right lane, picking up the pace.
+Cruise in the right-hand lane, at a fast speed.
+Cruise in the right-hand lane, steadily.
+Cruise in the rightmost lane, at high speed.
+Drive along the inner driving lane and stop when you reach Start, fast.
+Drive along the inner driving lane and stop when you reach checkpoint T2, at high speed.
+Drive along the inner lane and stop when you reach checkpoint M3, at low speed.
+Drive along the inside lane and stop when you reach checkpoint M3, at a slow speed.
+Drive along the left-hand lane and stop when you reach Start, quickly.
+Drive along the leftmost lane and stop when you reach T2, quickly.
+Drive along the leftmost lane and stop when you reach T3, nice and slow.
+Drive along the leftmost lane and stop when you reach T4, quickly.
+Drive along the outer driving lane and stop when you reach T3, at a slow speed.
+Drive along the outer driving lane and stop when you reach checkpoint T2, at a comfortable pace.
+Drive along the outer lane and stop when you reach checkpoint M3, fast.
+Drive along the outer lane and stop when you reach the start line, at a comfortable pace.
+Drive along the outside lane and stop when you reach Start, at low speed.
+Drive along the outside lane and stop when you reach T2, briskly.
+Drive along the outside lane and stop when you reach T3, quickly.
+Drive along the outside lane and stop when you reach checkpoint T3, at medium speed.
+Drive along the right-hand lane and stop when you reach T3, at medium speed.
+Drive along the right-hand lane and stop when you reach checkpoint T3, briskly.
+Drive along the rightmost lane and stop when you reach M2, at a normal speed.
+Drive along the rightmost lane and stop when you reach checkpoint T3, quickly.
+Drive around in the inner driving lane, at low speed.
+Drive around in the inside lane, at a slow speed.
+Drive around in the inside lane, keeping the speed down.
+Drive around in the left-hand lane, at a normal speed.
+Drive around in the left-hand lane, at your usual pace.
+Drive around in the leftmost lane, at a normal speed.
+Drive around in the leftmost lane, briskly.
+Drive around in the outer driving lane, briskly.
+Drive around in the outer driving lane, gently.
+Drive around in the outer driving lane, steadily.
+Drive around in the outside lane, at a fast speed.
+Drive around in the outside lane, at a normal speed.
+Drive around in the outside lane, slowly.
+Drive around in the outside lane, steadily.
+Drive around in the right lane, at a fast speed.
+Drive around in the right lane, at a normal speed.
+Drive around in the right lane, at high speed.
+Drive around in the right lane, at your usual pace.
+Drive around in the right lane, briskly.
+Drive around in the right lane, gently.
+Drive around in the rightmost lane, at your usual pace.
+Drive around in the rightmost lane, briskly.
+Drive down the inner driving lane to Start, at medium speed.
+Drive down the inner lane to the start line, at cruising speed.
+Drive down the inside lane to checkpoint T3, at your usual pace.
+Drive down the left-hand lane to M3, at a slow speed.
+Drive down the left-hand lane to T4, nice and slow.
+Drive down the leftmost lane to checkpoint T4, at a normal speed.
+Drive down the outside lane to checkpoint T4, at your usual pace.
+Drive down the right lane to Start, at a normal speed.
+Drive down the right lane to Start, gently.
+Drive down the right lane to T4, at medium speed.
+Drive down the right-hand lane to checkpoint T3, at a slow speed.
+Drive to M2 in the outside lane, gently.
+Drive to M3 in the outside lane, at a normal speed.
+Drive to Start in the inside lane, at your usual pace.
+Drive to T2 in the leftmost lane, at a slow speed.
+Drive to T2 in the right lane, slowly.
+Drive to T3 in the left lane, at a normal speed.
+Drive to checkpoint M2 in the inside lane, slowly.
+Drive to checkpoint M2 in the leftmost lane, at low speed.
+Drive to checkpoint M3 in the outside lane, keeping the speed down.
+Drive to checkpoint T2 in the right lane, gently.
+Drive to checkpoint T3 in the inner lane, at cruising speed.
+Drive to checkpoint T3 in the rightmost lane, at a normal speed.
+Drive to checkpoint T4 in the inner lane, steadily.
+Drive to checkpoint T4 in the left lane, quickly.
+Drive to checkpoint T4 in the leftmost lane, briskly.
+Drive to checkpoint T4 in the rightmost lane, steadily.
+Drive to the start line in the outer lane, at your usual pace.
+Follow the inner lane and keep driving, quickly.
+Follow the inner lane to T2, nice and slow.
+Follow the inner lane to T4, at medium speed.
+Follow the inner lane to checkpoint M2, nice and slow.
+Follow the inside lane and keep driving, at a fast speed.
+Follow the inside lane and keep driving, at a slow speed.
+Follow the left lane and keep driving, at a fast speed.
+Follow the left lane and keep driving, at cruising speed.
+Follow the left lane and keep driving, at high speed.
+Follow the left lane to checkpoint T2, nice and slow.
+Follow the left-hand lane and keep driving, at cruising speed.
+Follow the left-hand lane and keep driving, picking up the pace.
+Follow the left-hand lane and keep driving, steadily.
+Follow the leftmost lane to T3, at low speed.
+Follow the leftmost lane to checkpoint T2, fast.
+Follow the outer driving lane to Start, at a normal speed.
+Follow the outer driving lane to T3, at a normal speed.
+Follow the outer lane and keep driving, picking up the pace.
+Follow the outer lane and keep driving, quickly.
+Follow the outer lane and keep driving, steadily.
+Follow the outer lane to M3, briskly.
+Follow the outer lane to T4, steadily.
+Follow the outside lane and keep driving, at low speed.
+Follow the outside lane and keep driving, at medium speed.
+Follow the right lane and keep driving, at a normal speed.
+Follow the right lane and keep driving, at a slow speed.
+Follow the right lane and keep driving, quickly.
+Follow the right lane to T4, picking up the pace.
+Follow the right-hand lane and keep driving, at cruising speed.
+Follow the right-hand lane to T4, at a slow speed.
+Follow the rightmost lane and keep driving, briskly.
+Go along the left-hand lane and halt at M3, at high speed.
+Go along the left-hand lane and halt at checkpoint M2, at low speed.
+Go along the leftmost lane and halt at Start, keeping the speed down.
+Go along the leftmost lane and halt at T4, at cruising speed.
+Go along the leftmost lane and halt at checkpoint M2, briskly.
+Go along the leftmost lane and halt at the start line, nice and slow.
+Go along the outer driving lane and halt at Start, at high speed.
+Go along the outer driving lane and halt at T3, keeping the speed down.
+Go along the outer driving lane and halt at T4, briskly.
+Go along the outer driving lane and halt at T4, gently.
+Go along the outer lane and halt at T4, keeping the speed down.
+Go along the outside lane and halt at checkpoint M3, quickly.
+Go along the right lane and halt at checkpoint T4, at low speed.
+Go to M3, staying in the leftmost lane, gently.
+Go to M3, staying in the outer driving lane, keeping the speed down.
+Go to T2, staying in the outer driving lane, at low speed.
+Go to T3, staying in the outer lane, at a slow speed.
+Go to T4, staying in the rightmost lane, nice and slow.
+Go to checkpoint M2, staying in the outer driving lane, fast.
+Go to checkpoint M3, staying in the outside lane, slowly.
+Go to checkpoint T3, staying in the right lane, fast.
+Go to checkpoint T3, staying in the right-hand lane, at your usual pace.
+Go to checkpoint T4, staying in the left-hand lane, gently.
+Go to checkpoint T4, staying in the outer driving lane, picking up the pace.
+Go to the start line, staying in the left lane, steadily.
+Head for M2 along the left-hand lane, fast.
+Head for T2 along the left-hand lane, at high speed.
+Head for T4 along the left-hand lane, steadily.
+Head for checkpoint M2 along the left lane, at a fast speed.
+Head for checkpoint T2 along the left-hand lane, at a fast speed.
+Head for checkpoint T2 along the outer driving lane, at high speed.
+Head for checkpoint T3 along the inner driving lane, quickly.
+Head for checkpoint T4 along the inner lane, at your usual pace.
+Head for checkpoint T4 along the outside lane, at a normal speed.
+Head for checkpoint T4 along the rightmost lane, at cruising speed.
+Head for the start line along the outer driving lane, nice and slow.
+Head for the start line along the right lane, picking up the pace.
+Head over to M2, keeping in the right lane, fast.
+Head over to M2, keeping in the rightmost lane, picking up the pace.
+Head over to T2, keeping in the inner lane, at low speed.
+Head over to T4, keeping in the outside lane, quickly.
+Head over to checkpoint T2, keeping in the left-hand lane, at a slow speed.
+Head over to checkpoint T3, keeping in the inner driving lane, quickly.
+Head over to checkpoint T4, keeping in the left-hand lane, picking up the pace.
+Head over to checkpoint T4, keeping in the outside lane, at cruising speed.
+Just drive around the track in the inner driving lane, at medium speed.
+Just drive around the track in the inner driving lane, at your usual pace.
+Just drive around the track in the inner lane, quickly.
+Just drive around the track in the left lane, fast.
+Just drive around the track in the left-hand lane, at cruising speed.
+Just drive around the track in the leftmost lane, slowly.
+Just drive around the track in the outer driving lane, at a fast speed.
+Just drive around the track in the outer driving lane, at medium speed.
+Just drive around the track in the outer driving lane, nice and slow.
+Just drive around the track in the outer driving lane, steadily.
+Just drive around the track in the outer lane, at cruising speed.
+Just drive around the track in the outer lane, nice and slow.
+Just drive around the track in the outside lane, at a slow speed.
+Just drive around the track in the right lane, at your usual pace.
+Just drive around the track in the right-hand lane, nice and slow.
+Just drive around the track in the rightmost lane, at a normal speed.
+Just drive around the track in the rightmost lane, at your usual pace.
+Keep driving along the inner lane, nice and slow.
+Keep driving along the inside lane, at a normal speed.
+Keep driving along the inside lane, at cruising speed.
+Keep driving along the inside lane, gently.
+Keep driving along the inside lane, picking up the pace.
+Keep driving along the left lane, at low speed.
+Keep driving along the left lane, briskly.
+Keep driving along the leftmost lane, at cruising speed.
+Keep driving along the leftmost lane, at medium speed.
+Keep driving along the leftmost lane, briskly.
+Keep driving along the outer driving lane, at a comfortable pace.
+Keep driving along the outer driving lane, at cruising speed.
+Keep driving along the outer driving lane, at your usual pace.
+Keep driving along the outer driving lane, nice and slow.
+Keep driving along the outer lane, at a normal speed.
+Keep driving along the outer lane, picking up the pace.
+Keep driving along the outer lane, quickly.
+Keep driving along the outside lane, at a fast speed.
+Keep driving along the outside lane, quickly.
+Keep driving along the right lane, at a normal speed.
+Keep driving along the right lane, at high speed.
+Keep driving along the right lane, fast.
+Keep driving along the right lane, slowly.
+Keep driving along the right-hand lane, at cruising speed.
+Keep driving along the right-hand lane, at low speed.
+Keep driving along the rightmost lane, at a comfortable pace.
+Keep driving along the rightmost lane, at a fast speed.
+Keep driving along the rightmost lane, keeping the speed down.
+Keep driving along the rightmost lane, nice and slow.
+Keep going in the inner driving lane, fast.
+Keep going in the inner lane, at your usual pace.
+Keep going in the inner lane, keeping the speed down.
+Keep going in the inside lane, keeping the speed down.
+Keep going in the left lane, gently.
+Keep going in the left lane, quickly.
+Keep going in the left-hand lane, at low speed.
+Keep going in the left-hand lane, at your usual pace.
+Keep going in the left-hand lane, nice and slow.
+Keep going in the outer driving lane, at medium speed.
+Keep going in the outer lane, at a slow speed.
+Keep going in the outer lane, keeping the speed down.
+Keep going in the outside lane, at high speed.
+Keep going in the outside lane, at your usual pace.
+Keep going in the right lane, at high speed.
+Keep going in the right lane, at low speed.
+Keep going in the right lane, fast.
+Keep going in the right lane, picking up the pace.
+Keep going in the right-hand lane, at a comfortable pace.
+Keep going in the right-hand lane, keeping the speed down.
+Keep going in the right-hand lane, steadily.
+Keep going in the rightmost lane, briskly.
+Keep going in the rightmost lane, keeping the speed down.
+Keep going in the rightmost lane, steadily.
+Start driving in the inner driving lane, nice and slow.
+Start driving in the inner lane, at cruising speed.
+Start driving in the inner lane, quickly.
+Start driving in the left lane, slowly.
+Start driving in the left-hand lane, at high speed.
+Start driving in the left-hand lane, at medium speed.
+Start driving in the left-hand lane, steadily.
+Start driving in the outer driving lane, at a fast speed.
+Start driving in the outer driving lane, at a normal speed.
+Start driving in the outer driving lane, briskly.
+Start driving in the outer driving lane, slowly.
+Start driving in the outer lane, gently.
+Start driving in the outside lane, briskly.
+Start driving in the right lane, at a slow speed.
+Start driving in the right lane, slowly.
+Start driving in the right-hand lane, at a normal speed.
+Start driving in the right-hand lane, at high speed.
+Start driving in the right-hand lane, at low speed.
+Start driving in the right-hand lane, fast.
+Start driving in the right-hand lane, picking up the pace.
+Start driving in the right-hand lane, slowly.
+Start driving in the rightmost lane, picking up the pace.
+Stay in the inner driving lane and drive up to T4, gently.
+Stay in the inner driving lane and drive up to checkpoint T2, steadily.
+Stay in the inner lane and drive up to checkpoint T3, gently.
+Stay in the left-hand lane and drive up to checkpoint T2, picking up the pace.
+Stay in the left-hand lane and drive up to checkpoint T4, briskly.
+Stay in the outer lane and drive up to checkpoint M2, keeping the speed down.
+Stay in the outer lane and drive up to checkpoint T3, at your usual pace.
+Stay in the outside lane and drive up to Start, at high speed.
+Stay in the right lane and drive up to Start, at a comfortable pace.
+Stay in the right-hand lane and drive up to checkpoint T4, at cruising speed.
+Stay in the right-hand lane and drive up to checkpoint T4, at low speed.
+Stay in the rightmost lane and drive up to checkpoint T2, gently.
+Take a lap in the inner driving lane, slowly.
+Take a lap in the inner lane, at a slow speed.
+Take a lap in the inner lane, at medium speed.
+Take a lap in the inside lane, at high speed.
+Take a lap in the inside lane, picking up the pace.
+Take a lap in the left lane, at a fast speed.
+Take a lap in the left lane, at a normal speed.
+Take a lap in the left lane, keeping the speed down.
+Take a lap in the left-hand lane, at a slow speed.
+Take a lap in the left-hand lane, fast.
+Take a lap in the left-hand lane, gently.
+Take a lap in the left-hand lane, nice and slow.
+Take a lap in the leftmost lane, steadily.
+Take a lap in the outer driving lane, at cruising speed.
+Take a lap in the outer lane, at low speed.
+Take a lap in the outer lane, gently.
+Take a lap in the outside lane, at your usual pace.
+Take a lap in the outside lane, briskly.
+Take a lap in the outside lane, nice and slow.
+Take a lap in the right lane, at high speed.
+Take a lap in the right lane, gently.
+Take a lap in the right lane, steadily.
+Take a lap in the right-hand lane, at a comfortable pace.
+Take a lap in the right-hand lane, at medium speed.
+Take a lap in the right-hand lane, quickly.
+Take a lap in the rightmost lane, at cruising speed.
+Take a lap in the rightmost lane, at low speed.
+Take a lap in the rightmost lane, keeping the speed down.
+Take the inner driving lane and stop at M3, gently.
+Take the inner driving lane and stop at checkpoint T4, gently.
+Take the inner lane and stop at M2, at a comfortable pace.
+Take the inner lane and stop at checkpoint T4, at cruising speed.
+Take the inside lane and stop at checkpoint M3, at a fast speed.
+Take the left lane all the way to Start, at medium speed.
+Take the left lane all the way to checkpoint M2, fast.
+Take the left lane all the way to checkpoint M3, nice and slow.
+Take the left lane and stop at T2, slowly.
+Take the left-hand lane all the way to checkpoint T2, at a fast speed.
+Take the left-hand lane all the way to checkpoint T3, picking up the pace.
+Take the left-hand lane and stop at Start, nice and slow.
+Take the left-hand lane and stop at T2, picking up the pace.
+Take the left-hand lane and stop at checkpoint T4, slowly.
+Take the leftmost lane all the way to Start, gently.
+Take the leftmost lane all the way to T3, steadily.
+Take the leftmost lane all the way to checkpoint T3, gently.
+Take the leftmost lane and stop at checkpoint M3, quickly.
+Take the outer driving lane and stop at T2, gently.
+Take the outer driving lane and stop at checkpoint T2, briskly.
+Take the outer lane all the way to checkpoint T3, fast.
+Take the outer lane all the way to checkpoint T4, at cruising speed.
+Take the outer lane and stop at the start line, slowly.
+Take the outside lane all the way to M2, gently.
+Take the outside lane all the way to checkpoint T4, at your usual pace.
+Take the right lane and stop at M3, at a slow speed.
+Take the right-hand lane all the way to M2, fast.
+Take the right-hand lane and stop at checkpoint M3, gently.
+Take the rightmost lane all the way to checkpoint T4, at a fast speed.
+Take the rightmost lane all the way to the start line, gently.
+Take the rightmost lane and stop at checkpoint M3, at a comfortable pace.
+Travel in the inner driving lane to checkpoint M2, at a fast speed.
+Travel in the inner lane to M3, picking up the pace.
+Travel in the inner lane to T3, at a fast speed.
+Travel in the inside lane to the start line, at high speed.
+Travel in the outer driving lane to T2, at a slow speed.
+Travel in the outer driving lane to T2, at low speed.
+Travel in the outside lane to M3, at a fast speed.
+Travel in the outside lane to Start, at medium speed.
+Travel in the outside lane to T2, at high speed.
+Travel in the outside lane to T2, briskly.
+Travel in the right-hand lane to T2, at a slow speed.
+Travel in the right-hand lane to T2, at high speed.
+Travel in the right-hand lane to checkpoint M2, fast.
+Travel in the rightmost lane to T2, at a fast speed.
+Travel in the rightmost lane to T4, keeping the speed down.
+Travel in the rightmost lane to checkpoint T4, at a comfortable pace.
+Travel in the rightmost lane to checkpoint T4, at low speed.
+Use the inner driving lane to reach Start, at medium speed.
+Use the inner lane to reach checkpoint M3, at a comfortable pace.
+Use the left lane to reach T3, fast.
+Use the left lane to reach T4, at low speed.
+Use the left lane to reach checkpoint T4, at a fast speed.
+Use the left lane to reach checkpoint T4, at medium speed.
+Use the outer driving lane to reach checkpoint T4, at your usual pace.
+Use the outer lane to reach M2, gently.
+Use the outside lane to reach M2, quickly.
+Use the outside lane to reach T4, briskly.
+Use the right lane to reach checkpoint T2, at a fast speed.
+Use the right-hand lane to reach M2, at low speed.
+Use the right-hand lane to reach Start, at a normal speed.
+Use the right-hand lane to reach checkpoint T3, at cruising speed.
+Use the rightmost lane to reach M3, quickly.
+Use the rightmost lane to reach T4, at a comfortable pace.

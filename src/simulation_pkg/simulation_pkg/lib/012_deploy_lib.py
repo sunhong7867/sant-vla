@@ -220,11 +220,41 @@ def load_model(entity_name, model_name, random_coordinates, skip_if_exists=True)
                 shutil.copy2(texture_file, meshes_dir / texture_file.name)
 
     if meshes_dir.exists():
+        # 재질명을 엔티티별로 고유화한다: hatchback 변형들이 전부 같은
+        # "Hatchback" 재질명을 쓰는데, 렌더 엔진이 재질을 이름으로 캐시해
+        # 먼저 스폰된 차의 텍스처가 이후 모든 차에 재사용됐다(카메라
+        # 프레임에서 빨강/파랑이 전부 초록으로 보인 원인, 2026-08-28).
+        # .mtl 안의 model:// 텍스처 URI도 로컬 파일명으로 치환한다
+        # (model.sdf만 고치던 기존 코드의 빈틈).
+        mat_suffix = "_" + re.sub(r"\W", "_", entity_name)
         for mtl_path in meshes_dir.glob("*.mtl"):
             mtl_text = mtl_path.read_text()
             mtl_text = mtl_text.replace("../materials/textures/", "")
             mtl_text = mtl_text.replace("..\\materials\\textures\\", "")
+            mtl_text = re.sub(r"model://[^/\s]+/materials/textures/", "",
+                              mtl_text)
+            mtl_text = re.sub(r"(?m)^(\s*newmtl\s+)(\S+)",
+                              lambda m: m.group(1) + m.group(2) + mat_suffix,
+                              mtl_text)
             mtl_path.write_text(mtl_text)
+        for obj_path in meshes_dir.glob("*.obj"):
+            obj_text = obj_path.read_text()
+            obj_text = re.sub(r"(?m)^(\s*usemtl\s+)(\S+)",
+                              lambda m: m.group(1) + m.group(2) + mat_suffix,
+                              obj_text)
+            obj_path.write_text(obj_text)
+        # .mtl이 다른 모델의 텍스처를 참조하기도 한다(hatchback 변형의
+        # wheels3.png는 base hatchback 소유). 치환 후 meshes/에 없는
+        # 텍스처는 이웃 모델 폴더에서 찾아 복사한다.
+        models_root = source_model_dir.parent
+        for mtl_path in meshes_dir.glob("*.mtl"):
+            for tex in re.findall(r"(?m)^\s*map_\w+\s+(\S+)",
+                                  mtl_path.read_text()):
+                if (meshes_dir / tex).exists() or "/" in tex:
+                    continue
+                for cand in models_root.glob(f"*/materials/textures/{tex}"):
+                    shutil.copy2(cand, meshes_dir / tex)
+                    break
 
     model_file = temp_model_dir / "model.sdf"
     model_text = model_file.read_text()

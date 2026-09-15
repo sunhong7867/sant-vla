@@ -1,0 +1,23 @@
+% Sources: eval/results2/*/gpu/run1_results.csv, STATS_L1_BOOTSTRAP.csv, STATS_L1_FPOOS_BINOMIAL.csv
+\begin{table}[!t]
+\centering
+\caption{Layer-1 Parser Results}
+\label{tab:l1}
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Cap. & Parser & Exact [95\% CI] & C6 active FP [95\% CI] & LLM call & Lat. ms \\
+\midrule
+any & rule & 0.660 [0.593, 0.727] & 0/25 [0.000, 0.137] & 0\% & 0 \\
+0.6B & LLM-only & 0.273 [0.213, 0.333] & 1/25 [0.001, 0.204] & 100\% & 492 \\
+0.6B & GuardedLC & 0.660 [0.593, 0.727] & 0/25 [0.000, 0.137] & 44\% & 216 \\
+4B & LLM-only & 0.860 [0.807, 0.913] & 3/25 [0.025, 0.312] & 100\% & 1482 \\
+4B & GuardedLC & 0.940 [0.900, 0.973] & 0/25 [0.000, 0.137] & 44\% & 643 \\
+8B & LLM-only & 0.927 [0.887, 0.967] & 6/25 [0.094, 0.451] & 100\% & 2336 \\
+8B & GuardedLC & 0.967 [0.933, 0.993] & 0/25 [0.000, 0.137] & 44\% & 1005 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

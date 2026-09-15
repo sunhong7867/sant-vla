@@ -4,7 +4,7 @@
   <name>thor_vehicle_pkg</name>
   <version>0.1.0</version>
   <description>
-    Thor real-vehicle I/O for nav-vla: USB camera publisher and Arduino serial
+    Thor real-vehicle I/O for SANT-VLA: USB camera publisher and Arduino serial
     sender (ported from VLA_AD), plus the cmd_vel -&gt; MotionCommand adapter that
     lets the unchanged sim serving stack (vla_bridge /cmd_vel) drive the real
     car. VLA_AD's own stack stays untouched as baseline/demonstrator.
