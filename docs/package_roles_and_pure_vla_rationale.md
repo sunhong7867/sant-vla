@@ -11,7 +11,7 @@
 
 | 패키지 | 역할 |
 |---|---|
-| `nav_vla_pkg` | 프로젝트 본체. VLA 브리지(`vla_bridge_node`), 정책 서버(`scripts/vla_policy_server.py`), 내비게이터, 채팅 GUI, 내레이터, 데이터 수집 엔진, 평가 프로브 전부 |
+| `sant_vla_pkg` | 프로젝트 본체. VLA 브리지(`vla_bridge_node`), 정책 서버(`scripts/vla_policy_server.py`), 내비게이터, 채팅 GUI, 내레이터, 데이터 수집 엔진, 평가 프로브 전부 |
 | `simulation_pkg` | Gazebo 트랙 시뮬 + 카메라. 데모의 `driving_sim.launch.py` 소속 |
 | `interfaces_pkg` | 패키지 간 공용 메시지 정의 (다른 패키지들이 의존) |
 

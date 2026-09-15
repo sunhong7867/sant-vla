@@ -156,7 +156,7 @@ ssh -p 1701 autolab04@115.145.135.218
 ```bash
 # 리샘플본만 전송 (rsync 권장 — 중단 후 재개 가능)
 rsync -avP --partial \
-  ~/ROS2_project/nav-vla/datasets/navvla-sim-v2/ \
+  ~/ROS2_project/sant-vla/datasets/navvla-sim-v2/ \
   autolab_sw@115.145.211.157:~/data/navvla-sim-v2/
 ```
 

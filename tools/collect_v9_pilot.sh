@@ -4,9 +4,9 @@
 #
 # 그룹당 3변형: v0 장애물 없음 / v1 내 차선(스크립트 회피) / v2 반대 차선.
 # 스택: 시뮬(카메라만) + route_oracle + episode_recorder + collector.
-WS=/home/sh/ROS2_project/nav-vla
+WS=/home/sh/ROS2_project/sant-vla
 OUT=$WS/eval_out/v9_pilot
-DATA=$WS/src/nav_vla_pkg/data_v9
+DATA=$WS/src/sant_vla_pkg/data_v9
 GROUPS=${V9_GROUPS:-4}
 PREFIX=${V9_PREFIX:-v9p_}
 SEED=${V9_SEED:-20260904}
@@ -46,14 +46,14 @@ done
 [ "${N:-0}" -ge 1 ] || { echo "[v9] SIM_FAIL"; exit 3; }
 
 echo "[v9] 오라클+레코더 기동..."
-setsid nohup ros2 run nav_vla_pkg route_oracle_node --ros-args \
+setsid nohup ros2 run sant_vla_pkg route_oracle_node --ros-args \
   -p use_sim_time:=true > "$OUT/oracle.log" 2>&1 < /dev/null &
-setsid nohup ros2 run nav_vla_pkg episode_recorder_node --ros-args \
+setsid nohup ros2 run sant_vla_pkg episode_recorder_node --ros-args \
   -p out_dir:="$DATA" -p use_sim_time:=true > "$OUT/recorder.log" 2>&1 < /dev/null &
 sleep 5
 
 echo "[v9] 수집 시작 ($(date +%H:%M)) — ${GROUPS}그룹..."
-python3 $WS/src/nav_vla_pkg/scripts/collect_corpus.py \
+python3 $WS/src/sant_vla_pkg/scripts/collect_corpus.py \
   --driver oracle --groups 0 --speed-groups 0 --floor-groups 0 \
   --ring-groups 0 --obstacle-groups "$GROUPS" \
   --group-prefix "$PREFIX" --seed "$SEED" \
@@ -72,7 +72,7 @@ rm -rf ~/.gz/sim/log
 SESS=$(ls -dt "$DATA"/session_* 2>/dev/null | head -1)
 if [ -n "$SESS" ] && [ "$RC" -eq 0 ]; then
   echo "[v9] finalize: $SESS"
-  PACK_OUT=$PACK bash $WS/src/nav_vla_pkg/scripts/finalize_corpus.sh "$SESS" \
+  PACK_OUT=$PACK bash $WS/src/sant_vla_pkg/scripts/finalize_corpus.sh "$SESS" \
     > "$OUT/finalize.log" 2>&1 \
     && echo "[v9] finalize 완료 -> $PACK" \
     || echo "[v9] finalize 실패 — $OUT/finalize.log 확인"

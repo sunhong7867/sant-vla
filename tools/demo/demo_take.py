@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """r6 watch-then-avoid live check: does the POLICY slow, hold, pass, narrate?"""
 import json, math, sys, time
-sys.path.insert(0, "/home/sh/ROS2_project/nav-vla/src/simulation_pkg")
-sys.path.insert(0, "/home/sh/ROS2_project/nav-vla/src/nav_vla_pkg")
+sys.path.insert(0, "/home/sh/ROS2_project/sant-vla/src/simulation_pkg")
+sys.path.insert(0, "/home/sh/ROS2_project/sant-vla/src/sant_vla_pkg")
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import (QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,
@@ -10,10 +10,10 @@ from rclpy.qos import (QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy,
 from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import Twist
-from nav_vla_pkg.gz_reset import SimResetter
+from sant_vla_pkg.gz_reset import SimResetter
 from simulation_pkg import basic
 
-TP = json.load(open("/home/sh/ROS2_project/nav-vla/src/nav_vla_pkg/config/track_paths.json"))
+TP = json.load(open("/home/sh/ROS2_project/sant-vla/src/sant_vla_pkg/config/track_paths.json"))
 LANE = "lane2"
 PTS = TP[LANE]; N = len(PTS)
 START_I, OB_I = 200, 275          # ~26 m ahead along lane2
@@ -27,7 +27,7 @@ sx, sy, syaw = pose_at(START_I)
 ox, oy, oyaw = pose_at(OB_I)
 basic.load_model("v9_demo_ob", "hatchback_red", (ox, oy, 0.01265, 0, 0, oyaw),
                  skip_if_exists=True)
-REG = "/home/sh/ROS2_project/nav-vla/eval_out/demo/obstacles.json"
+REG = "/home/sh/ROS2_project/sant-vla/eval_out/demo/obstacles.json"
 import os as _os; _os.makedirs(_os.path.dirname(REG), exist_ok=True)
 open(REG, "w").write(json.dumps([{"entity": "v9_demo_ob",
     "model": "hatchback_red", "x": ox, "y": oy, "lane": LANE}]))

@@ -1,4 +1,6 @@
-# nav-vla
+# SANT-VLA (formerly NAV-VLA)
+
+**Shared-backbone Action–Narration Training** for vision-based driving.
 
 ROS 2 Jazzy workspace for autonomous-driving simulation and vision-language navigation experiments.
 
@@ -31,7 +33,7 @@ Model files should be copied into the expected local paths after cloning.
 ## Setup
 
 ```bash
-cd ~/ROS2_project/nav-vla
+cd ~/ROS2_project/sant-vla
 sh install.sh
 source ~/.bashrc
 ```
@@ -48,7 +50,7 @@ PYTHONNOUSERSITE=1 rosdep install -i --from-path src --rosdistro jazzy -y
 ## Build
 
 ```bash
-cd ~/ROS2_project/nav-vla
+cd ~/ROS2_project/sant-vla
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/local_setup.bash
@@ -57,7 +59,7 @@ source install/local_setup.bash
 ## Run
 
 ```bash
-cd ~/ROS2_project/nav-vla
+cd ~/ROS2_project/sant-vla
 source /opt/ros/jazzy/setup.bash
 source install/local_setup.bash
 export ROS_DOMAIN_ID=32

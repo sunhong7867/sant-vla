@@ -522,7 +522,7 @@ ROS2 Jazzy의 시스템 Python 3.12(apt numpy/opencv)와 lerobot의 torch/transf
   컴파일 → **워밍업(reduce-overhead CUDA graph 30–120 s, 하네스가 world를 스텝하기 *전에* 완료)**
   → ZMQ REQ/REP `ipc:///tmp/nav_vla.sock`. msgpack `{jpeg, state:f32[3], task:str, seed:int}` →
   `{actions:f32[30,3]}`. **`seed`를 명시적으로 받는 것이 `D_same` 측정을 가능하게 한다.**
-- **`nav_vla_pkg/vla_bridge_node.py`** (~300 LOC) — ROS2 노드, `MultiThreadedExecutor(4)`:
+- **`sant_vla_pkg/vla_bridge_node.py`** (~300 LOC) — ROS2 노드, `MultiThreadedExecutor(4)`:
   - `sensor_cg`(Reentrant): 이미지/상태 → mutex 보호 `LatestObservation`. torch·인코딩 금지
   - `control_cg`(MutuallyExclusive): 10 Hz, `ActionQueue`에서 1개 pop → 발행. O(µs). GPU 접촉 금지
   - `instruction_cg`: `/vla/instruction` (RELIABLE + **TRANSIENT_LOCAL** depth 1 — 늦게 붙는

@@ -5,7 +5,7 @@
 ## 1. Install
 
 ```bash
-cd ~/ROS2_project/nav-vla
+cd ~/ROS2_project/sant-vla
 sh install.sh
 source ~/.bashrc
 ```
@@ -22,7 +22,7 @@ PYTHONNOUSERSITE=1 rosdep install -i --from-path src --rosdistro jazzy -y
 ## 2. Build
 
 ```bash
-cd ~/ROS2_project/nav-vla
+cd ~/ROS2_project/sant-vla
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/local_setup.bash
@@ -33,7 +33,7 @@ source install/local_setup.bash
 Run these in each terminal before launching:
 
 ```bash
-cd ~/ROS2_project/nav-vla
+cd ~/ROS2_project/sant-vla
 source /opt/ros/jazzy/setup.bash
 source install/local_setup.bash
 export ROS_DOMAIN_ID=32
