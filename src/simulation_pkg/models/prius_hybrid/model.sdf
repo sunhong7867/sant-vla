@@ -9,35 +9,35 @@
 
     <link name='chassis'>
       <inertial>
-        <mass>1326</mass>
-        <pose>0 -0.266 0.48 0 -0 0</pose>
+        <mass>814.3297499999999</mass>
+        <pose>0.0 -0.2261 0.408 0 -0 0</pose>
         <inertia>
-          <ixx>2581.13</ixx>
-          <ixy>0</ixy>
-          <iyy>591.308</iyy>
-          <ixz>0</ixz>
-          <iyz>0</iyz>
-          <izz>2681.95</izz>
+          <ixx>1145.261093253125</ixx>
+          <ixy>0.0</ixy>
+          <iyy>262.36650092375</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>1189.9954628593748</izz>
         </inertia>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
-      <pose>0 0 0 0 -0 0</pose>
+      <pose>0.0 0.0 0.0 0 -0 0</pose>
 
       <visual name='interior_visual'>
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/hybrid_body.obj</uri>
-            <scale>0.01 0.01 0.01</scale>
-            <!--<scale>0.02 0.02 0.02</scale>-->
+            <scale>0.0085 0.0085 0.0085</scale>
+            <!--<scale>0.017 0.017 0.017</scale>-->
             <submesh>
               <name>Hybrid_Interior</name>
               <center>0</center>
             </submesh>
           </mesh>
         </geometry>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
       </visual>
@@ -47,15 +47,15 @@
           <mesh>
             <uri>model://prius_hybrid/meshes/hybrid_body.obj</uri>
             <!-- hybrid_body.obj" scale="0.01 0.01 0.01"/> -->
-            <scale>0.01 0.01 0.01</scale>
-            <!--<scale>0.02 0.02 0.02</scale>-->
+            <scale>0.0085 0.0085 0.0085</scale>
+            <!--<scale>0.017 0.017 0.017</scale>-->
             <submesh>
               <name>Hybrid</name>
               <center>0</center>
             </submesh>
           </mesh>
         </geometry>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
       </visual>
@@ -63,10 +63,10 @@
       <collision name='chassis'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0.05 0.625 0 -0 0</pose>
+        <pose>0.0 0.0425 0.53125 0 -0 0</pose>
         <geometry>
           <box>
-            <size>1.7526 2.1 0.95</size>
+            <size>1.4897099999999999 1.785 0.8075</size>
           </box>
         </geometry>
         <surface>
@@ -119,10 +119,10 @@
       <collision name='front_bumper'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 -2 0.458488 0 -0 0</pose>
+        <pose>0.0 -1.7 0.3897148 0 -0 0</pose>
         <geometry>
           <box>
-            <size>1.33728 0.48 0.566691</size>
+            <size>1.136688 0.408 0.48168734999999996</size>
           </box>
         </geometry>
         <surface>
@@ -175,10 +175,10 @@
       <collision name='hood'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 -1.90084 0.676305 0.341247 -0 0</pose>
+        <pose>0.0 -1.615714 0.57485925 0.341247 -0 0</pose>
         <geometry>
           <box>
-            <size>1.59797 0.493107 0.265468</size>
+            <size>1.3582744999999998 0.41914095 0.22564779999999998</size>
           </box>
         </geometry>
         <surface>
@@ -231,10 +231,10 @@
       <collision name='windshield'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 -0.875105 1.03227 0.335476 -0 0</pose>
+        <pose>0.0 -0.74383925 0.8774295 0.335476 -0 0</pose>
         <geometry>
           <box>
-            <size>1.16838 1.65425 0.272347</size>
+            <size>0.993123 1.4061124999999999 0.23149495</size>
           </box>
         </geometry>
         <surface>
@@ -287,10 +287,10 @@
       <collision name='top_front'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0.161236 1.38604 0.13503 -0 0</pose>
+        <pose>0.0 0.1370506 1.178134 0.13503 -0 0</pose>
         <geometry>
           <box>
-            <size>1.27915 0.625988 0.171868</size>
+            <size>1.0872775 0.5320898 0.1460878</size>
           </box>
         </geometry>
         <surface>
@@ -343,10 +343,10 @@
       <collision name='top_rear'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0.817696 1.36007 -0.068997 0 0</pose>
+        <pose>0.0 0.6950415999999999 1.1560594999999998 -0.068997 0 0</pose>
         <geometry>
           <box>
-            <size>1.28513 0.771189 0.226557</size>
+            <size>1.0923605 0.65551065 0.19257345</size>
           </box>
         </geometry>
         <surface>
@@ -400,15 +400,15 @@
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/hybrid_body.obj</uri>
-            <scale>0.01 0.01 0.01</scale>
-            <!--<scale>0.02 0.02 0.02</scale>-->
+            <scale>0.0085 0.0085 0.0085</scale>
+            <!--<scale>0.017 0.017 0.017</scale>-->
             <submesh>
               <name>Hybrid_Windows</name>
               <center>0</center>
             </submesh>
           </mesh>
         </geometry>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
         <transparency>0</transparency>
         <cast_shadows>1</cast_shadows>
       </visual>
@@ -416,10 +416,10 @@
       <collision name='rear_window'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 1.64053 1.17513 -0.262017 0 0</pose>
+        <pose>0.0 1.3944505 0.9988604999999999 -0.262017 0 0</pose>
         <geometry>
           <box>
-            <size>1.26785 1.11634 0.244286</size>
+            <size>1.0776724999999998 0.9488890000000001 0.2076431</size>
           </box>
         </geometry>
         <surface>
@@ -472,10 +472,10 @@
       <collision name='trunk'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 1.63706 0.88818 0 -0 0</pose>
+        <pose>0.0 1.3915009999999999 0.754953 0 -0 0</pose>
         <geometry>
           <box>
-            <size>1.78806 1.13899 0.482746</size>
+            <size>1.5198509999999998 0.9681414999999999 0.4103341</size>
           </box>
         </geometry>
         <surface>
@@ -528,10 +528,10 @@
       <collision name='back_bumper'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 2.05445 0.57787 0 -0 0</pose>
+        <pose>0.0 1.7462825 0.4911895 0 -0 0</pose>
         <geometry>
           <box>
-            <size>1.78165 0.512093 0.581427</size>
+            <size>1.5144024999999999 0.43527905 0.49421295</size>
           </box>
         </geometry>
         <surface>
@@ -593,29 +593,29 @@
     <!--  -->
 
     <link name='front_left_wheel'>
-      <pose>0.759998 -1.41 0.3 0 -0 0</pose>
+      <pose>0.6459982999999999 -1.1985 0.255 0 -0 0</pose>
       <inertial>
-        <mass>11</mass>
+        <mass>6.755374999999999</mass>
         <inertia>
-          <ixx>0.586312</ixx>
-          <ixy>0</ixy>
-          <iyy>0.335529</iyy>
-          <ixz>0</ixz>
-          <iyz>0</iyz>
-          <izz>0.335529</izz>
+          <ixx>0.2601497491825</ixx>
+          <ixy>0.0</ixy>
+          <iyy>0.1488759997978125</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>0.1488759997978125</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>     
 
       <visual name='visual'>
-        <pose>0.04 0 0 0 -0 0</pose>
+        <pose>0.034 0.0 0.0 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/wheel.obj</uri> 
-            <scale>0.01 0.01 0.01</scale>
+            <scale>0.0085 0.0085 0.0085</scale>
           </mesh>
         </geometry>
       </visual>
@@ -623,10 +623,10 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0 3.14159 1.57079 3.14159</pose>
+        <pose>0.0 0.0 0.0 3.14159 1.57079 3.14159</pose>
         <geometry>
           <sphere>
-            <radius>0.31265</radius>
+            <radius>0.2657525</radius>
           </sphere>
         </geometry>
         <surface>
@@ -686,30 +686,30 @@
     </link>
 
     <link name='front_right_wheel'>
-      <pose>-0.760002 -1.41 0.3 0 -0 0</pose>
+      <pose>-0.6460016999999999 -1.1985 0.255 0 -0 0</pose>
       <inertial>
-        <mass>11</mass>
+        <mass>6.755374999999999</mass>
         <inertia>
-          <ixx>0.586312</ixx>
-          <ixy>0</ixy>
-          <iyy>0.335529</iyy>
-          <ixz>0</ixz>
-          <iyz>0</iyz>
-          <izz>0.335529</izz>
+          <ixx>0.2601497491825</ixx>
+          <ixy>0.0</ixy>
+          <iyy>0.1488759997978125</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>0.1488759997978125</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
 
       <visual name='visual'>
-        <pose>-0.04 0 0 0 -0 0</pose>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>-0.034 0.0 0.0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/wheel.obj</uri> 
-            <scale>0.01 0.01 0.01</scale>
+            <scale>0.0085 0.0085 0.0085</scale>
           </mesh>
         </geometry>
         <transparency>0</transparency>
@@ -719,10 +719,10 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0 3.14159 1.57079 3.14159</pose>
+        <pose>0.0 0.0 0.0 3.14159 1.57079 3.14159</pose>
         <geometry>
           <sphere>
-            <radius>0.31265</radius>
+            <radius>0.2657525</radius>
           </sphere>
         </geometry>
         <surface>
@@ -782,29 +782,29 @@
     </link>
 
     <link name='rear_left_wheel'>
-      <pose>0.785999 1.45 0.3 0 -0 0</pose>
+      <pose>0.66809915 1.2325 0.255 0 -0 0</pose>
       <inertial>
-        <mass>11</mass>
+        <mass>6.755374999999999</mass>
         <inertia>
-          <ixx>0.586312</ixx>
-          <ixy>0</ixy>
-          <iyy>0.335529</iyy>
-          <ixz>0</ixz>
-          <iyz>0</iyz>
-          <izz>0.335529</izz>
+          <ixx>0.2601497491825</ixx>
+          <ixy>0.0</ixy>
+          <iyy>0.1488759997978125</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>0.1488759997978125</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>      
 
       <visual name='visual'>
-        <pose>0.04 0 0 0 -0 0</pose>
+        <pose>0.034 0.0 0.0 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/wheel.obj</uri> 
-            <scale>0.01 0.01 0.01</scale>
+            <scale>0.0085 0.0085 0.0085</scale>
           </mesh>
         </geometry>
         <transparency>0</transparency>
@@ -814,10 +814,10 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0 3.14159 1.57079 3.14159</pose>
+        <pose>0.0 0.0 0.0 3.14159 1.57079 3.14159</pose>
         <geometry>
           <sphere>
-            <radius>0.31265</radius>
+            <radius>0.2657525</radius>
           </sphere>
         </geometry>
         <surface>
@@ -869,29 +869,29 @@
     </link>
 
     <link name='rear_right_wheel'>
-      <pose>-0.785995 1.45 0.3 0 -0 0</pose>
+      <pose>-0.66809575 1.2325 0.255 0 -0 0</pose>
       <inertial>
-        <mass>11</mass>
+        <mass>6.755374999999999</mass>
         <inertia>
-          <ixx>0.586312</ixx>
-          <ixy>0</ixy>
-          <iyy>0.335529</iyy>
-          <ixz>0</ixz>
-          <iyz>0</iyz>
-          <izz>0.335529</izz>
+          <ixx>0.2601497491825</ixx>
+          <ixy>0.0</ixy>
+          <iyy>0.1488759997978125</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>0.1488759997978125</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
 
       <visual name='visual'>
-        <pose>-0.04 0 0 0 -0 0</pose>
+        <pose>-0.034 0.0 0.0 0 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/wheel.obj</uri> 
-            <scale>0.01 0.01 0.01</scale>
+            <scale>0.0085 0.0085 0.0085</scale>
           </mesh>
         </geometry>
         <transparency>0</transparency>
@@ -901,10 +901,10 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0 3.14159 1.57079 3.14159</pose>
+        <pose>0.0 0.0 0.0 3.14159 1.57079 3.14159</pose>
         <geometry>
           <sphere>
-            <radius>0.31265</radius>
+            <radius>0.2657525</radius>
           </sphere>
         </geometry>
         <surface>
@@ -958,29 +958,29 @@
     <!--  -->
 
     <link name='steering_wheel'>
-      <pose>0.357735 -0.627868 0.988243 -1.3021 0 0</pose>
+      <pose>0.30407475 -0.5336877999999999 0.84000655 -1.3021 0 0</pose>
       <inertial>
-        <mass>1</mass>
+        <mass>0.6141249999999999</mass>
         <inertia>
-          <ixx>0.145833</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.145833</iyy>
-          <iyz>0</iyz>
-          <izz>0.125</izz>
+          <ixx>0.06470687683781248</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>0.06470687683781248</iyy>
+          <iyz>0.0</iyz>
+          <izz>0.055463164062499994</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
 
       <visual name='visual'>
-        <pose>0 0 0 1.3021 -0 0</pose>
+        <pose>0.0 0.0 0.0 1.3021 -0 0</pose>
         <geometry>
           <mesh>
             <uri>model://prius_hybrid/meshes/steering_wheel.obj</uri> 
-            <scale>0.01 0.01 0.01</scale>
+            <scale>0.0085 0.0085 0.0085</scale>
           </mesh>
         </geometry>
         <transparency>0</transparency>
@@ -990,11 +990,11 @@
       <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
         <geometry>
           <cylinder>
-            <radius>0.178172</radius>
-            <length>0.041845</length>
+            <radius>0.1514462</radius>
+            <length>0.03556825</length>
           </cylinder>
         </geometry>
         <surface>
@@ -1048,7 +1048,7 @@
     <joint name='steering_joint' type='revolute'>
       <parent>chassis</parent>
       <child>steering_wheel</child>
-      <pose>-0.002 0 0 0 -0 0</pose>
+      <pose>-0.0017 0.0 0.0 0 -0 0</pose>
       <axis>
         <xyz>0 -8.4e-05 0.999999</xyz>
         <limit>
@@ -1084,7 +1084,7 @@
     <joint name='front_left_combined_joint' type='universal'>
       <parent>chassis</parent>
       <child>front_left_wheel</child>
-      <pose>0 0 0 -0.087266 0 0</pose>
+      <pose>0.0 0.0 0.0 -0.087266 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -1120,7 +1120,7 @@
     <joint name='front_right_combined_joint' type='universal'>
       <parent>chassis</parent>
       <child>front_right_wheel</child>
-      <pose>0 0 0 -0.087266 0 0</pose>
+      <pose>0.0 0.0 0.0 -0.087266 0 0</pose>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
@@ -1156,29 +1156,29 @@
     <!--  -->
 
     <link name='rear_axle'>
-      <pose>-4e-06 1.45 0.3 0 -0 0</pose>
+      <pose>-3.3999999999999996e-06 1.2325 0.255 0 -0 0</pose>
       <inertial>
-        <mass>30</mass>
+        <mass>18.42375</mass>
         <inertia>
-          <ixx>0.084375</ixx>
-          <ixy>0</ixy>
-          <iyy>4.64581</iyy>
-          <ixz>0</ixz>
-          <iyz>0</iyz>
-          <izz>4.64581</izz>
+          <ixx>0.037437635742187496</ixx>
+          <ixy>0.0</ixy>
+          <iyy>2.061370577865625</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>2.061370577865625</izz>
         </inertia>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0.0 0.0 0.0 0 -0 0</pose>
       </inertial>
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>      
 
       <visual name='visual'>
-        <pose>0 0 0 3.14159 1.57079 3.14159</pose>
+        <pose>0.0 0.0 0.0 3.14159 1.57079 3.14159</pose>
         <geometry>
           <cylinder>
-            <length>1.357</length>
-            <radius>0.075</radius>
+            <length>1.1534499999999999</length>
+            <radius>0.06375</radius>
           </cylinder>
         </geometry>
         <material>
@@ -1196,7 +1196,7 @@
     <joint name='rear_axle_joint' type='revolute'> 
       <parent>chassis</parent>
       <child>rear_axle</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <pose>0.0 0.0 0.0 0 -0 0</pose>
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
@@ -1229,7 +1229,7 @@
     <joint name='rear_left_wheel_joint' type='revolute'> 
       <parent>rear_axle</parent> 
       <child>rear_left_wheel</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <pose>0.0 0.0 0.0 0 -0 0</pose>
       <axis>
         <xyz>1 0 0</xyz>
         <limit>
@@ -1262,7 +1262,7 @@
     <joint name='rear_right_wheel_joint' type='revolute'>
       <parent>rear_axle</parent>
       <child>rear_right_wheel</child>
-      <pose>0 0 0 0 -0 0</pose>
+      <pose>0.0 0.0 0.0 0 -0 0</pose>
       <axis>
         <xyz>1 0 0</xyz>
         <limit>
@@ -1838,8 +1838,8 @@
       name="gz::sim::systems::DiffDrive">
       <left_joint>rear_left_wheel_joint</left_joint>
       <right_joint>rear_right_wheel_joint</right_joint>
-      <wheel_separation>1.57</wheel_separation>
-      <wheel_radius>0.31265</wheel_radius>
+      <wheel_separation>1.3345</wheel_separation>
+      <wheel_radius>0.2657525</wheel_radius>
       <odom_publish_frequency>30</odom_publish_frequency>
       <max_linear_acceleration>5</max_linear_acceleration>
       <min_linear_acceleration>-5</min_linear_acceleration>

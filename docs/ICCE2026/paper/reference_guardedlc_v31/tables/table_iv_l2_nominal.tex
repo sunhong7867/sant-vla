@@ -1,0 +1,22 @@
+% Sources: L2_NOMINAL_TABLE.csv, STATS_L2_NOMINAL_BOOTSTRAP.csv, STATS_L2_FPOOS_BINOMIAL.csv
+\begin{table}[!t]
+\centering
+\caption{Nominal Layer-2 Closed-Loop Results}
+\label{tab:l2}
+\scriptsize
+\setlength{\tabcolsep}{1.55pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llcccccc@{}}
+\toprule
+Cap. & Parser & L1 & L2 [95\% CI] & Gap [95\% CI] & Call & Cmd FP [95\% CI] & Valid/Reset \\
+\midrule
+any & rule & 0.660 & 0.973 [0.947, 0.993] & +0.313 [0.247, 0.380] & 0\% & 0/25 [0.000, 0.137] & 149/1 \\
+0.6B & GuardedLC & 0.660 & 0.900 [0.853, 0.940] & +0.240 [0.180, 0.307] & 44\% & 0/25 [0.000, 0.137] & 146/4 \\
+4B & LLM-only & 0.860 & 0.987 [0.967, 1.000] & +0.127 [0.080, 0.180] & 100\% & 0/25 [0.000, 0.137] & 145/5 \\
+4B & GuardedLC & 0.940 & 0.993 [0.980, 1.000] & +0.053 [0.020, 0.093] & 44\% & 0/25 [0.000, 0.137] & 141/9 \\
+8B & LLM-only & 0.927 & 0.993 [0.980, 1.000] & +0.067 [0.033, 0.107] & 100\% & 1/25 [0.001, 0.204] & 136/14 \\
+8B & GuardedLC & 0.967 & 1.000 & +0.033 [0.007, 0.067] & 44\% & 0/25 [0.000, 0.137] & 138/12 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

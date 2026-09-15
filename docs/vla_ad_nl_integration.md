@@ -1,5 +1,7 @@
 # nav-vla 자연어 주행 로직 → VLA_AD(Thor) 통합 설계서
 
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+
 > 목표: nav-vla 시뮬에서 검증된 **자연어 기반 주행 명령**(차선변경 · 속도 증감 ·
 > 정지/출발 · 기준선 따라/무시 · 목적지(존) 이동)을, 실차 Thor의 **VLA_AD** 스택에
 > 이식해 실제 트랙에서 구동한다. 글로벌 측위는 **트랙 긴 변 중앙 고정 인프라 Hesai
@@ -276,7 +278,7 @@ VLA_AD엔 진짜 차선변경이 없다. 두 안:
 - VLA_AD: `src/decision_making_pkg/{lasa_node,motion_planner_node,behavior_manager_node,path_planner_node}.py`,
   `src/interfaces_pkg/msg/{VlaIR,IrApplied,MotionCommand,LaneInfo}.msg`,
   `src/vision_language_action_pkg/.../vla_control_node.py`, `src/serial_communication_pkg/...`
-- nav-vla: `src/nav_vla_pkg/nav_vla_pkg/{chat_gui_node,navigator_node,policy_node,speed_control,gz_pose}.py`,
+- nav-vla: `src/sant_vla_pkg/sant_vla_pkg/{chat_gui_node,navigator_node,policy_node,speed_control,gz_pose}.py`,
   `config/zone_map.yaml`
 - 라이다 정합: `0725_4점정합ver/{live_bev_intensity_viewer,track_map_align,pick_alignment_points}.py`,
   `track_map_aligned_homography.json`

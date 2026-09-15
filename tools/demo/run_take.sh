@@ -2,7 +2,7 @@
 # Reasoning demo (option B): r11 drives+narrates, supervisor makes the
 # discrete calls. Presets: pass (16m, full overtake+return) / watch (5.6m,
 # close safety stop). See docs/reasoning_project_report.md 6.1.
-WS=/home/sh/ROS2_project/nav-vla
+WS=/home/sh/ROS2_project/sant-vla
 PRESET=${1:-pass}
 source /opt/ros/jazzy/setup.bash; source $WS/install/setup.bash
 setsid nohup python3 $WS/tools/demo/avoid_supervisor.py --preset "$PRESET" \

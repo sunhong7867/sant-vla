@@ -5,7 +5,7 @@ Usage:
     compare_segments.py A_map.json TAG_A [B_map.json TAG_B]
 
 Reference line = per-ring-index median of the teacher corpus
-(src/nav_vla_pkg/data_v3y/packed_v3y). Deviation sign: + = outward.
+(src/sant_vla_pkg/data_v3y/packed_v3y). Deviation sign: + = outward.
 With two maps, prints A -> B per segment plus departure check
 (any point > 5 m from ring centre = left the track).
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 # Repo root from this file's location (tools/eval/ -> repo); NAVVLA_WS overrides
 # for runs against another checkout's data.
 REPO = os.environ.get("NAVVLA_WS") or str(Path(__file__).resolve().parents[2])
-paths = json.load(open(f"{REPO}/src/nav_vla_pkg/config/track_paths.json"))
+paths = json.load(open(f"{REPO}/src/sant_vla_pkg/config/track_paths.json"))
 C = paths["ring_center"]; N = len(C)
 ZONES = {name: z["lane2"]["index"] for name, z in paths["zones"].items()
          if isinstance(z, dict) and "lane2" in z}
@@ -32,7 +32,7 @@ def lat(x, y, i):
 
 def build_ref():
     bins = {"lane1": [[] for _ in range(N)], "lane2": [[] for _ in range(N)]}
-    for d in glob.glob(f"{REPO}/src/nav_vla_pkg/data_v3y/packed_v3y/*"):
+    for d in glob.glob(f"{REPO}/src/sant_vla_pkg/data_v3y/packed_v3y/*"):
         if not os.path.isdir(d):
             continue
         try:

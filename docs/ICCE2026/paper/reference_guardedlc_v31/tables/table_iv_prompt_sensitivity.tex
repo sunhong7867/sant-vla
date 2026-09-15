@@ -1,0 +1,17 @@
+% Source: prompt ablation audit from eval/results2/prompt_ablation/*/run1_results.csv, summarized in data/prompt_c6b_active.csv.
+\begin{table}[!t]
+\centering
+\caption{LLM-Only C6b Active-Intent FP-OOS Across Prompts}
+\label{tab:prompt_c6b}
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Cap. & P0 & P1 & P2 & P3 & Range \\
+\midrule
+0.6B & 1/10 & 3/10 & 0/10 & 1/10 & 0--3/10 \\
+4B & 3/10 & 3/10 & 3/10 & 3/10 & 3/10 \\
+8B & 6/10 & 5/10 & 4/10 & 3/10 & 3--6/10 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -37,9 +37,9 @@ from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
 from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 
-WS = os.path.expanduser("~/ROS2_project/nav-vla")
+WS = os.path.expanduser("~/ROS2_project/sant-vla")
 REGISTRY = os.path.join(WS, "eval_out", "demo", "obstacles.json")
-TRACK = os.path.join(WS, "src", "nav_vla_pkg", "config", "track_paths.json")
+TRACK = os.path.join(WS, "src", "sant_vla_pkg", "config", "track_paths.json")
 
 LANE_SENT = {"lane1": "inner", "lane2": "outer"}
 

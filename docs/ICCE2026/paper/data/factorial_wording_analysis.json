@@ -1,0 +1,944 @@
+{
+  "design": {
+    "checkpoint": "/home/autolab_sw/sunhong/nav-vla/runs/navvla_smolvla_v6/checkpoints/060000/pretrained_model",
+    "episodes_dir": "/home/autolab_sw/sunhong/nav-vla/data/packed_v6",
+    "frame_index": 5,
+    "observation_sample_seed": 20260901,
+    "observation_sample_seed_source": "probe script default used for the recorded run",
+    "seeds_per_mean": 4,
+    "n_observations": 20,
+    "observation_speed_range_mps": [
+      0.5618181081942095,
+      2.181032325285001
+    ],
+    "factors": {
+      "T": "Start driving -> Roam the track",
+      "L": "inner/outer -> innermost/outermost",
+      "S": "normal -> regular"
+    },
+    "floor_definition": "lane-1 same-instruction separation from disjoint seeds 4--7; the lane-2 stochastic floor was not logged in this run",
+    "primary_factorial_response": "log2(raw composed-path XY RMS language separation / 1 m)",
+    "secondary_factorial_responses": [
+      "log2 lane-1 same-instruction separation",
+      "log2 language/lane-1-reference ratio",
+      "the same three responses after the zero-initial-command bridge transform"
+    ],
+    "effect_definition": "mean response in effect-coded product-positive cells minus the mean response in product-negative cells, computed within each observation before aggregation",
+    "bootstrap": {
+      "unit": "matched counterfactual observation",
+      "repeats": 50000,
+      "seed": 20260901,
+      "interval": "pointwise percentile 95%"
+    },
+    "bridge_transform_contract": {
+      "dt_s": 0.1,
+      "speed_scale": 1.0,
+      "max_speed_mps": 2.25,
+      "speed_slew_mps_per_tick": 0.08,
+      "max_curvature_per_m": 0.23920867424534697,
+      "initial_previous_command_speed_mps": 0.0,
+      "lateral_dy_used": false,
+      "integration": "exact constant-twist unicycle"
+    }
+  },
+  "cells": [
+    {
+      "condition": "baseline",
+      "short_label": "Base",
+      "factors": {
+        "T": 0,
+        "L": 0,
+        "S": 0
+      },
+      "source": "eval_out/icce2026_factorial/baseline_template.json",
+      "instruction_lane1": "Start driving in the inner lane, at a normal speed.",
+      "instruction_lane2": "Start driving in the outer lane, at a normal speed.",
+      "raw_se2": {
+        "language_median_m": 0.6899127274487012,
+        "floor_lane1_median_m": 0.12475189095256461,
+        "per_observation_ratio_median": 5.2366899554788535,
+        "mean_log2_ratio": 2.3239563173342868,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.2208446540372649,
+        "floor_lane1_median_m": 0.031120449621592723,
+        "per_observation_ratio_median": 5.501872626487786,
+        "mean_log2_ratio": 2.3456501832747634,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      }
+    },
+    {
+      "condition": "template-only",
+      "short_label": "T",
+      "factors": {
+        "T": 1,
+        "L": 0,
+        "S": 0
+      },
+      "source": "eval_out/icce2026_factorial/baseline_template.json",
+      "instruction_lane1": "Roam the track in the inner lane, at a normal speed.",
+      "instruction_lane2": "Roam the track in the outer lane, at a normal speed.",
+      "raw_se2": {
+        "language_median_m": 0.8260004531892737,
+        "floor_lane1_median_m": 0.12346567953066769,
+        "per_observation_ratio_median": 6.1482810674467085,
+        "mean_log2_ratio": 2.5147682688529214,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.22108557303214812,
+        "floor_lane1_median_m": 0.028401255973674433,
+        "per_observation_ratio_median": 7.308229326393132,
+        "mean_log2_ratio": 2.794743697660926,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      }
+    },
+    {
+      "condition": "lane-only",
+      "short_label": "L",
+      "factors": {
+        "T": 0,
+        "L": 1,
+        "S": 0
+      },
+      "source": "eval_out/icce2026_factorial/lane_speed.json",
+      "instruction_lane1": "Start driving in the innermost lane, at a normal speed.",
+      "instruction_lane2": "Start driving in the outermost lane, at a normal speed.",
+      "raw_se2": {
+        "language_median_m": 0.09269938454911718,
+        "floor_lane1_median_m": 0.25041922677615336,
+        "per_observation_ratio_median": 0.520245172946833,
+        "mean_log2_ratio": -1.0570730443951615,
+        "language_above_lane1_floor": 1,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.021476699640291017,
+        "floor_lane1_median_m": 0.029998837875874828,
+        "per_observation_ratio_median": 0.7193805631701735,
+        "mean_log2_ratio": -0.431773898915819,
+        "language_above_lane1_floor": 6,
+        "n": 20
+      }
+    },
+    {
+      "condition": "speed-only",
+      "short_label": "S",
+      "factors": {
+        "T": 0,
+        "L": 0,
+        "S": 1
+      },
+      "source": "eval_out/icce2026_factorial/lane_speed.json",
+      "instruction_lane1": "Start driving in the inner lane, at a regular speed.",
+      "instruction_lane2": "Start driving in the outer lane, at a regular speed.",
+      "raw_se2": {
+        "language_median_m": 0.6717307450018077,
+        "floor_lane1_median_m": 0.1211892707864094,
+        "per_observation_ratio_median": 5.1430981458499545,
+        "mean_log2_ratio": 2.383642289145135,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.22703999791114093,
+        "floor_lane1_median_m": 0.03209349625573686,
+        "per_observation_ratio_median": 5.14199150653268,
+        "mean_log2_ratio": 2.3843126911279326,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      }
+    },
+    {
+      "condition": "template-lane",
+      "short_label": "T+L",
+      "factors": {
+        "T": 1,
+        "L": 1,
+        "S": 0
+      },
+      "source": "eval_out/icce2026_factorial/template_lane_speed.json",
+      "instruction_lane1": "Roam the track in the innermost lane, at a normal speed.",
+      "instruction_lane2": "Roam the track in the outermost lane, at a normal speed.",
+      "raw_se2": {
+        "language_median_m": 0.0615647691655576,
+        "floor_lane1_median_m": 0.20523503841534574,
+        "per_observation_ratio_median": 0.47018938607486765,
+        "mean_log2_ratio": -1.27722969250711,
+        "language_above_lane1_floor": 0,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.013557769475188464,
+        "floor_lane1_median_m": 0.036968374518430706,
+        "per_observation_ratio_median": 0.4544788410512648,
+        "mean_log2_ratio": -1.1624688417501066,
+        "language_above_lane1_floor": 2,
+        "n": 20
+      }
+    },
+    {
+      "condition": "template-speed",
+      "short_label": "T+S",
+      "factors": {
+        "T": 1,
+        "L": 0,
+        "S": 1
+      },
+      "source": "eval_out/icce2026_factorial/template_lane_speed.json",
+      "instruction_lane1": "Roam the track in the inner lane, at a regular speed.",
+      "instruction_lane2": "Roam the track in the outer lane, at a regular speed.",
+      "raw_se2": {
+        "language_median_m": 0.8226497974087592,
+        "floor_lane1_median_m": 0.12342462422935424,
+        "per_observation_ratio_median": 6.054400946681453,
+        "mean_log2_ratio": 2.5242804326280117,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.22162317042389745,
+        "floor_lane1_median_m": 0.02955861655062333,
+        "per_observation_ratio_median": 7.335983648935126,
+        "mean_log2_ratio": 2.791706243855852,
+        "language_above_lane1_floor": 20,
+        "n": 20
+      }
+    },
+    {
+      "condition": "lane-speed",
+      "short_label": "L+S",
+      "factors": {
+        "T": 0,
+        "L": 1,
+        "S": 1
+      },
+      "source": "eval_out/icce2026_factorial/lane_speed_all.json",
+      "instruction_lane1": "Start driving in the innermost lane, at a regular speed.",
+      "instruction_lane2": "Start driving in the outermost lane, at a regular speed.",
+      "raw_se2": {
+        "language_median_m": 0.09010372823535673,
+        "floor_lane1_median_m": 0.21843050515498125,
+        "per_observation_ratio_median": 0.5039800971961003,
+        "mean_log2_ratio": -1.1436974810950535,
+        "language_above_lane1_floor": 1,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.02127630787648701,
+        "floor_lane1_median_m": 0.032380950343535726,
+        "per_observation_ratio_median": 0.7340684494560316,
+        "mean_log2_ratio": -0.40327014247076365,
+        "language_above_lane1_floor": 4,
+        "n": 20
+      }
+    },
+    {
+      "condition": "all-reserved",
+      "short_label": "T+L+S",
+      "factors": {
+        "T": 1,
+        "L": 1,
+        "S": 1
+      },
+      "source": "eval_out/icce2026_factorial/lane_speed_all.json",
+      "instruction_lane1": "Roam the track in the innermost lane, at a regular speed.",
+      "instruction_lane2": "Roam the track in the outermost lane, at a regular speed.",
+      "raw_se2": {
+        "language_median_m": 0.06265627656991918,
+        "floor_lane1_median_m": 0.2195781646595502,
+        "per_observation_ratio_median": 0.41775056993024917,
+        "mean_log2_ratio": -1.3418861757101332,
+        "language_above_lane1_floor": 1,
+        "n": 20
+      },
+      "bridge_transform": {
+        "language_median_m": 0.016152302762050864,
+        "floor_lane1_median_m": 0.03684802525903115,
+        "per_observation_ratio_median": 0.4880710202215991,
+        "mean_log2_ratio": -1.0150877222276835,
+        "language_above_lane1_floor": 1,
+        "n": 20
+      }
+    }
+  ],
+  "effects": {
+    "raw_se2": {
+      "language": [
+        {
+          "effect": "T",
+          "label": "Template (T)",
+          "order": 1,
+          "estimate_log2": -0.12584950665369582,
+          "bootstrap_95_ci_log2": [
+            -0.23127901944791276,
+            -0.02297722927473897
+          ],
+          "multiplicative_change": 0.9164642397754694,
+          "multiplicative_change_95_ci": [
+            0.8518793243655957,
+            0.9841995559894846
+          ]
+        },
+        {
+          "effect": "L",
+          "label": "Lane replacement (L)",
+          "order": 1,
+          "estimate_log2": -3.1177184366354442,
+          "bootstrap_95_ci_log2": [
+            -3.4694723921711303,
+            -2.796827688022311
+          ],
+          "multiplicative_change": 0.11520550514632603,
+          "multiplicative_change_95_ci": [
+            0.0902785844539942,
+            0.14390337285754398
+          ]
+        },
+        {
+          "effect": "S",
+          "label": "Speed term (S)",
+          "order": 1,
+          "estimate_log2": -0.02455326416971223,
+          "bootstrap_95_ci_log2": [
+            -0.06784202255605587,
+            0.015402815177606378
+          ],
+          "multiplicative_change": 0.9831249796855067,
+          "multiplicative_change_95_ci": [
+            0.9540640163831106,
+            1.0107336142321446
+          ]
+        },
+        {
+          "effect": "T_x_L",
+          "label": "T \u00d7 L",
+          "order": 2,
+          "estimate_log2": -0.2720284048380838,
+          "bootstrap_95_ci_log2": [
+            -0.3783612795509054,
+            -0.1684834937517346
+          ],
+          "multiplicative_change": 0.8281543558636759,
+          "multiplicative_change_95_ci": [
+            0.7693109351875469,
+            0.8897774900756503
+          ]
+        },
+        {
+          "effect": "T_x_S",
+          "label": "T \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.014823738040301713,
+          "bootstrap_95_ci_log2": [
+            -0.009206999908697227,
+            0.04550071053089292
+          ],
+          "multiplicative_change": 1.010328001636984,
+          "multiplicative_change_95_ci": [
+            0.9936385144458743,
+            1.0320413036941927
+          ]
+        },
+        {
+          "effect": "L_x_S",
+          "label": "L \u00d7 S",
+          "order": 2,
+          "estimate_log2": -0.027961293178401837,
+          "bootstrap_95_ci_log2": [
+            -0.062141014210013466,
+            0.002965848687308551
+          ],
+          "multiplicative_change": 0.9808053181756287,
+          "multiplicative_change_95_ci": [
+            0.9578415907597161,
+            1.00205788419877
+          ]
+        },
+        {
+          "effect": "T_x_L_x_S",
+          "label": "T \u00d7 L \u00d7 S",
+          "order": 3,
+          "estimate_log2": 0.026628690460570807,
+          "bootstrap_95_ci_log2": [
+            -0.0006780247207063321,
+            0.059941395614286984
+          ],
+          "multiplicative_change": 1.0186289961312671,
+          "multiplicative_change_95_ci": [
+            0.9995301394955284,
+            1.0424234152150664
+          ]
+        }
+      ],
+      "floor": [
+        {
+          "effect": "T",
+          "label": "Template (T)",
+          "order": 1,
+          "estimate_log2": -0.1041256947223165,
+          "bootstrap_95_ci_log2": [
+            -0.19687420500943076,
+            -0.011794874952083707
+          ],
+          "multiplicative_change": 0.9303685958615012,
+          "multiplicative_change_95_ci": [
+            0.8724387742673454,
+            0.9918577448809704
+          ]
+        },
+        {
+          "effect": "L",
+          "label": "Lane replacement (L)",
+          "order": 1,
+          "estimate_log2": 0.523914988781509,
+          "bootstrap_95_ci_log2": [
+            0.17319082938246355,
+            0.8693699726985742
+          ],
+          "multiplicative_change": 1.4378518045212605,
+          "multiplicative_change_95_ci": [
+            1.1275495464722425,
+            1.8268649313087082
+          ]
+        },
+        {
+          "effect": "S",
+          "label": "Speed term (S)",
+          "order": 1,
+          "estimate_log2": -0.004032568090467992,
+          "bootstrap_95_ci_log2": [
+            -0.034737109492593655,
+            0.02337362912342492
+          ],
+          "multiplicative_change": 0.9972087396291428,
+          "multiplicative_change_95_ci": [
+            0.9762096312596483,
+            1.0163333188895576
+          ]
+        },
+        {
+          "effect": "T_x_L",
+          "label": "T \u00d7 L",
+          "order": 2,
+          "estimate_log2": -0.08457954540594906,
+          "bootstrap_95_ci_log2": [
+            -0.16248886820242198,
+            -0.01570968835263306
+          ],
+          "multiplicative_change": 0.9430593381780524,
+          "multiplicative_change_95_ci": [
+            0.8934823477557133,
+            0.989169945737168
+          ]
+        },
+        {
+          "effect": "T_x_S",
+          "label": "T \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.021875201675023857,
+          "bootstrap_95_ci_log2": [
+            0.012214764109046438,
+            0.0318241961123585
+          ],
+          "multiplicative_change": 1.0152782718380005,
+          "multiplicative_change_95_ci": [
+            1.0085025725771177,
+            1.022303947136582
+          ]
+        },
+        {
+          "effect": "L_x_S",
+          "label": "L \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.02715847069381177,
+          "bootstrap_95_ci_log2": [
+            0.0032852307849367004,
+            0.0524770180359926
+          ],
+          "multiplicative_change": 1.0190031213537623,
+          "multiplicative_change_95_ci": [
+            1.0022797431277235,
+            1.0370439363895827
+          ]
+        },
+        {
+          "effect": "T_x_L_x_S",
+          "label": "T \u00d7 L \u00d7 S",
+          "order": 3,
+          "estimate_log2": 0.008593250077414122,
+          "bootstrap_95_ci_log2": [
+            -0.0016979266856036285,
+            0.018244647361327502
+          ],
+          "multiplicative_change": 1.0059741616095974,
+          "multiplicative_change_95_ci": [
+            0.9988237791956776,
+            1.0127265275405875
+          ]
+        }
+      ],
+      "ratio": [
+        {
+          "effect": "T",
+          "label": "Template (T)",
+          "order": 1,
+          "estimate_log2": -0.02172381193137927,
+          "bootstrap_95_ci_log2": [
+            -0.12429404490803622,
+            0.08783576454892852
+          ],
+          "multiplicative_change": 0.9850550027721467,
+          "multiplicative_change_95_ci": [
+            0.9174528713136088,
+            1.0627746819036274
+          ]
+        },
+        {
+          "effect": "L",
+          "label": "Lane replacement (L)",
+          "order": 1,
+          "estimate_log2": -3.6416334254169533,
+          "bootstrap_95_ci_log2": [
+            -4.092071846152363,
+            -3.198195579677419
+          ],
+          "multiplicative_change": 0.080123351227204,
+          "multiplicative_change_95_ci": [
+            0.0586359046429959,
+            0.10895500840049285
+          ]
+        },
+        {
+          "effect": "S",
+          "label": "Speed term (S)",
+          "order": 1,
+          "estimate_log2": -0.02052069607924419,
+          "bootstrap_95_ci_log2": [
+            -0.07681585342075357,
+            0.03015033457510514
+          ],
+          "multiplicative_change": 0.9858768185797552,
+          "multiplicative_change_95_ci": [
+            0.9481479796602564,
+            1.0211185247848473
+          ]
+        },
+        {
+          "effect": "T_x_L",
+          "label": "T \u00d7 L",
+          "order": 2,
+          "estimate_log2": -0.1874488594321349,
+          "bootstrap_95_ci_log2": [
+            -0.2623998370279058,
+            -0.11317509772315923
+          ],
+          "multiplicative_change": 0.8781572084993424,
+          "multiplicative_change_95_ci": [
+            0.8336999552722357,
+            0.9245510599349953
+          ]
+        },
+        {
+          "effect": "T_x_S",
+          "label": "T \u00d7 S",
+          "order": 2,
+          "estimate_log2": -0.0070514636347221325,
+          "bootstrap_95_ci_log2": [
+            -0.03201721899749136,
+            0.02234169779607656
+          ],
+          "multiplicative_change": 0.995124223241718,
+          "multiplicative_change_95_ci": [
+            0.9780518000364549,
+            1.0156066156276446
+          ]
+        },
+        {
+          "effect": "L_x_S",
+          "label": "L \u00d7 S",
+          "order": 2,
+          "estimate_log2": -0.05511976387221353,
+          "bootstrap_95_ci_log2": [
+            -0.10433662367286127,
+            -0.009474769937969467
+          ],
+          "multiplicative_change": 0.962514537612616,
+          "multiplicative_change_95_ci": [
+            0.9302325814433847,
+            0.9934541082362685
+          ]
+        },
+        {
+          "effect": "T_x_L_x_S",
+          "label": "T \u00d7 L \u00d7 S",
+          "order": 3,
+          "estimate_log2": 0.018035440383156714,
+          "bootstrap_95_ci_log2": [
+            -0.006628963474585714,
+            0.0489035987273968
+          ],
+          "multiplicative_change": 1.0125796814715615,
+          "multiplicative_change_95_ci": [
+            0.9954156928189493,
+            1.0344784550794157
+          ]
+        }
+      ]
+    },
+    "bridge_transform": {
+      "language": [
+        {
+          "effect": "T",
+          "label": "Template (T)",
+          "order": 1,
+          "estimate_log2": -0.2830250282982704,
+          "bootstrap_95_ci_log2": [
+            -0.42252786441717194,
+            -0.16437368115419182
+          ],
+          "multiplicative_change": 0.8218659291990932,
+          "multiplicative_change_95_ci": [
+            0.7461161469544942,
+            0.8923158174298841
+          ]
+        },
+        {
+          "effect": "L",
+          "label": "Lane replacement (L)",
+          "order": 1,
+          "estimate_log2": -3.3392779984624132,
+          "bootstrap_95_ci_log2": [
+            -3.7038427435283605,
+            -3.009255878568713
+          ],
+          "multiplicative_change": 0.09880459870245899,
+          "multiplicative_change_95_ci": [
+            0.07674184479415994,
+            0.12420060630482113
+          ]
+        },
+        {
+          "effect": "S",
+          "label": "Speed term (S)",
+          "order": 1,
+          "estimate_log2": 0.04831033637139245,
+          "bootstrap_95_ci_log2": [
+            0.008461633177874227,
+            0.08616004274189798
+          ],
+          "multiplicative_change": 1.0340531462375633,
+          "multiplicative_change_95_ci": [
+            1.0058823908908832,
+            1.0615409625279855
+          ]
+        },
+        {
+          "effect": "T_x_L",
+          "label": "T \u00d7 L",
+          "order": 2,
+          "estimate_log2": -0.2906011155844782,
+          "bootstrap_95_ci_log2": [
+            -0.43083576136374974,
+            -0.17226723702672173
+          ],
+          "multiplicative_change": 0.8175613411866999,
+          "multiplicative_change_95_ci": [
+            0.7418319134068331,
+            0.8874469361727824
+          ]
+        },
+        {
+          "effect": "T_x_S",
+          "label": "T \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.020027057157277477,
+          "bootstrap_95_ci_log2": [
+            -0.019099655870146823,
+            0.07842182824157591
+          ],
+          "multiplicative_change": 1.0139784963649854,
+          "multiplicative_change_95_ci": [
+            0.9868483758100172,
+            1.0558623951181307
+          ]
+        },
+        {
+          "effect": "L_x_S",
+          "label": "L \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.02498001675667938,
+          "bootstrap_95_ci_log2": [
+            -0.0207370578469743,
+            0.0680635231891078
+          ],
+          "multiplicative_change": 1.0174655987545642,
+          "multiplicative_change_95_ci": [
+            0.9857289771779525,
+            1.0483086324936897
+          ]
+        },
+        {
+          "effect": "T_x_L_x_S",
+          "label": "T \u00d7 L \u00d7 S",
+          "order": 3,
+          "estimate_log2": 0.028295756480668732,
+          "bootstrap_95_ci_log2": [
+            -0.012546785826356922,
+            0.0897627965861379
+          ],
+          "multiplicative_change": 1.0198067247745521,
+          "multiplicative_change_95_ci": [
+            0.9913409382864721,
+            1.0641951964171397
+          ]
+        }
+      ],
+      "floor": [
+        {
+          "effect": "T",
+          "label": "Template (T)",
+          "order": 1,
+          "estimate_log2": -0.16151866442898882,
+          "bootstrap_95_ci_log2": [
+            -0.3154731191901002,
+            0.0009280751874986597
+          ],
+          "multiplicative_change": 0.8940834113659166,
+          "multiplicative_change_95_ci": [
+            0.803587418078885,
+            1.0006434996566866
+          ]
+        },
+        {
+          "effect": "L",
+          "label": "Lane replacement (L)",
+          "order": 1,
+          "estimate_log2": -0.007024643141451492,
+          "bootstrap_95_ci_log2": [
+            -0.1874259066523056,
+            0.16732501898261154
+          ],
+          "multiplicative_change": 0.9951427233196044,
+          "multiplicative_change_95_ci": [
+            0.8781711797883748,
+            1.1229743839755917
+          ]
+        },
+        {
+          "effect": "S",
+          "label": "Speed term (S)",
+          "order": 1,
+          "estimate_log2": -0.004567146132501176,
+          "bootstrap_95_ci_log2": [
+            -0.028202081635203692,
+            0.016350486568360436
+          ],
+          "multiplicative_change": 0.996839301093998,
+          "multiplicative_change_95_ci": [
+            0.9806416336234052,
+            1.0113977587420016
+          ]
+        },
+        {
+          "effect": "T_x_L",
+          "label": "T \u00d7 L",
+          "order": 2,
+          "estimate_log2": 0.2591487818418438,
+          "bootstrap_95_ci_log2": [
+            0.12180415079711979,
+            0.4204736654440211
+          ],
+          "multiplicative_change": 1.1967723772665775,
+          "multiplicative_change_95_ci": [
+            1.088094720258576,
+            1.338366895101155
+          ]
+        },
+        {
+          "effect": "T_x_S",
+          "label": "T \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.0007327068024962302,
+          "bootstrap_95_ci_log2": [
+            -0.025766019580406217,
+            0.026556101096154756
+          ],
+          "multiplicative_change": 1.0005080026439876,
+          "multiplicative_change_95_ci": [
+            0.9822988943973187,
+            1.0185777449872973
+          ]
+        },
+        {
+          "effect": "L_x_S",
+          "label": "L \u00d7 S",
+          "order": 2,
+          "estimate_log2": -0.010084938723166136,
+          "bootstrap_95_ci_log2": [
+            -0.03352538282549506,
+            0.013018367805653387
+          ],
+          "multiplicative_change": 0.9930340288012657,
+          "multiplicative_change_95_ci": [
+            0.9770298989599532,
+            1.009064480760879
+          ]
+        },
+        {
+          "effect": "T_x_L_x_S",
+          "label": "T \u00d7 L \u00d7 S",
+          "order": 3,
+          "estimate_log2": -0.011848574703233838,
+          "bootstrap_95_ci_log2": [
+            -0.035673061361628684,
+            0.012433697802791764
+          ],
+          "multiplicative_change": 0.9918208268065923,
+          "multiplicative_change_95_ci": [
+            0.9755765183082626,
+            1.0086556277558991
+          ]
+        }
+      ],
+      "ratio": [
+        {
+          "effect": "T",
+          "label": "Template (T)",
+          "order": 1,
+          "estimate_log2": -0.12150636386928142,
+          "bootstrap_95_ci_log2": [
+            -0.39397527632603707,
+            0.10699439028473612
+          ],
+          "multiplicative_change": 0.9192273547984806,
+          "multiplicative_change_95_ci": [
+            0.7610297321847235,
+            1.0769821884922548
+          ]
+        },
+        {
+          "effect": "L",
+          "label": "Lane replacement (L)",
+          "order": 1,
+          "estimate_log2": -3.3322533553209626,
+          "bootstrap_95_ci_log2": [
+            -3.760981877001861,
+            -2.975260685471998
+          ],
+          "multiplicative_change": 0.09928686246417583,
+          "multiplicative_change_95_ci": [
+            0.07376182304171112,
+            0.1271619821058964
+          ]
+        },
+        {
+          "effect": "S",
+          "label": "Speed term (S)",
+          "order": 1,
+          "estimate_log2": 0.05287748250389364,
+          "bootstrap_95_ci_log2": [
+            0.007768056916786317,
+            0.09577860868168199
+          ],
+          "multiplicative_change": 1.0373318398489348,
+          "multiplicative_change_95_ci": [
+            1.005398928720692,
+            1.0686419882818803
+          ]
+        },
+        {
+          "effect": "T_x_L",
+          "label": "T \u00d7 L",
+          "order": 2,
+          "estimate_log2": -0.5497498974263222,
+          "bootstrap_95_ci_log2": [
+            -0.7705629324672586,
+            -0.35536572179035414
+          ],
+          "multiplicative_change": 0.6831385455720543,
+          "multiplicative_change_95_ci": [
+            0.5861887020544929,
+            0.7816714650541883
+          ]
+        },
+        {
+          "effect": "T_x_S",
+          "label": "T \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.019294350354781175,
+          "bootstrap_95_ci_log2": [
+            -0.035340148228881894,
+            0.0922899575948728
+          ],
+          "multiplicative_change": 1.0134636541490922,
+          "multiplicative_change_95_ci": [
+            0.9758016661750242,
+            1.066060974979419
+          ]
+        },
+        {
+          "effect": "L_x_S",
+          "label": "L \u00d7 S",
+          "order": 2,
+          "estimate_log2": 0.03506495547984565,
+          "bootstrap_95_ci_log2": [
+            -0.01849843883790406,
+            0.08617147432008886
+          ],
+          "multiplicative_change": 1.0246029534182137,
+          "multiplicative_change_95_ci": [
+            0.9872597127022525,
+            1.0615493739637014
+          ]
+        },
+        {
+          "effect": "T_x_L_x_S",
+          "label": "T \u00d7 L \u00d7 S",
+          "order": 3,
+          "estimate_log2": 0.040144331183902655,
+          "bootstrap_95_ci_log2": [
+            -0.016359656773117046,
+            0.11668044047255408
+          ],
+          "multiplicative_change": 1.028216687139014,
+          "multiplicative_change_95_ci": [
+            0.9887244015276865,
+            1.0842372217626182
+          ]
+        }
+      ]
+    }
+  },
+  "raw_bridge_transform_conclusion_consistency": {
+    "median_above_floor_cell_classification_raw": {
+      "baseline": true,
+      "template-only": true,
+      "lane-only": false,
+      "speed-only": true,
+      "template-lane": false,
+      "template-speed": true,
+      "lane-speed": false,
+      "all-reserved": false
+    },
+    "median_above_floor_cell_classification_bridge_transform": {
+      "baseline": true,
+      "template-only": true,
+      "lane-only": false,
+      "speed-only": true,
+      "template-lane": false,
+      "template-speed": true,
+      "lane-speed": false,
+      "all-reserved": false
+    },
+    "all_cell_classifications_match": true,
+    "dominant_negative_main_effect_raw": "L",
+    "dominant_negative_main_effect_bridge_transform": "L",
+    "dominant_main_effect_matches": true
+  }
+}

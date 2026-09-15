@@ -1,0 +1,142 @@
+table,field,unit_or_type,source,description,required,feeds
+manifest,protocol_id,string,run_sheet,동결 protocol 식별자,yes,audit
+manifest,protocol_revision,string,protocol,동결 protocol 문서 revision이며 현재 v0.4,yes,audit
+manifest,run_id,string,run_sheet,50회 전체에서 고유한 run 식별자,yes,all
+manifest,attempt,integer,evaluator,infrastructure invalid 재시도 번호,yes,audit
+manifest,block_id,string,run_sheet,descriptive paired 분석 단위 B0--B4,yes,Fig2;TableII
+manifest,order_in_block,integer,run_sheet,시간 drift 확인용 실행 순서,yes,audit
+manifest,policy_seed,integer,bridge,request마다 server에 전달되는 seed,yes,Fig2;TableII
+manifest,start_lane,inner_or_outer,derived_from_start_pose,B0/B2/B4 outer와 B1/B3 inner,yes,Fig2;TableII
+manifest,condition,string,run_sheet,canonical_r030/heldout_lexical_r030/heldout_spatial_r030/canonical_r093,yes,Fig2;TableII
+manifest,instruction,string,logger,/vla/instruction 실제 발행 문자열,yes,audit
+manifest,expected_lane,inner_or_outer,run_sheet,문장으로 지정된 목표 차선,yes,TableII
+manifest,refill_at,float,bridge,queue refill threshold,yes,Fig3;TableII
+manifest,camera_topic,string,bridge,실제 inference observation topic,yes,audit
+manifest,checkpoint_sha256,hex,protocol,model weights hash,yes,TableI;audit
+manifest,source_snapshot_sha256,hex,protocol,관련 source diff bundle hash,yes,audit
+manifest,training_instruction_inventory_sha256,hex_or_missing,protocol,복구된 실제 training instruction 목록 hash; 없으면 held-out 주장 금지,yes,audit
+manifest,start_pose_error_m,m,evaluator,reset 뒤 지정 pose와 실제 pose 차이,yes,audit
+manifest,start_yaw_error_rad,rad,evaluator,reset 뒤 지정 yaw와 실제 yaw 차이,yes,audit
+manifest,start_speed_mps,m/s,evaluator,첫 instruction 직전 속도,yes,audit
+manifest,first_req,integer,/vla/plan,각 run 첫 policy request id이며 0이어야 함,yes,audit
+manifest,queue_empty_at_start,boolean,/vla/status,첫 instruction 직전 queue empty 여부,yes,audit
+manifest,pending_request_at_start,boolean,bridge,첫 instruction 직전 pending request 여부; false여야 함,yes,audit
+manifest,accepted,boolean,acceptance_gate,infrastructure 기준 통과 여부,yes,audit
+manifest,exclusion_reason,string,acceptance_gate,사전 정의된 invalid 사유,yes,audit
+pose,run_id,string,manifest,run join key,yes,Fig2;TableII
+pose,sim_time_s,s,/clock,simulation timestamp,yes,Fig2
+pose,x_m,m,dynamic_pose,world x,yes,Fig2
+pose,y_m,m,dynamic_pose,world y,yes,Fig2
+pose,yaw_rad,rad,dynamic_pose,vehicle heading,yes,analysis
+pose,speed_mps,m/s,odom,measured longitudinal speed,yes,TableII
+pose,progress_m,m,derived,unwrapped ring-centerline arclength,yes,Fig2;TableII
+pose,lateral_signed_m,m,derived,signed offset from ring centerline,yes,Fig2;TableII
+pose,target_lane_error_m,m,derived,distance to instructed lane centerline,yes,TableII
+command,run_id,string,manifest,run join key,yes,audit
+command,sim_time_s,s,/clock,command timestamp,yes,analysis
+command,control_tick,integer,bridge,run-local 10Hz control tick,yes,Fig3
+command,cmd_v_mps,m/s,/cmd_vel,executed linear command,yes,analysis
+command,cmd_w_radps,rad/s,/cmd_vel,executed angular command,yes,analysis
+command,source_lineage_json,list_of_req_idx_weight,queue_lineage,recursive overlap까지 보존한 모든 plan contribution list,yes,Fig3
+command,lineage_weight_sum_error,float,queue_lineage,source weight 합과 1의 절대차,yes,audit
+command,override,string,bridge,watchdog/curv 등 실제 override label,yes,audit
+plan,run_id,string,manifest,run join key,yes,Fig3;audit
+plan,req,integer,/vla/plan,run-local policy request sequence,yes,Fig3
+plan,task,string,/vla/plan,해당 plan의 instruction snapshot,yes,audit
+plan,seed,integer,/vla/plan,해당 policy request seed,yes,audit
+plan,state_json,3_float,request_snapshot,server가 실제 받은 state vector,yes,offline_replay
+plan,obs_stamp_s,s,/vla/plan,request observation simulation timestamp,yes,Fig3
+plan,obs_seq,integer,/vla/plan,request observation sequence,yes,audit
+plan,request_mono_s,s,/vla/plan,request send monotonic timestamp,yes,Fig3
+plan,splice_mono_s,s,/vla/plan,reply splice monotonic timestamp,yes,Fig3
+plan,next_splice_mono_s,s,derived,다음 plan splice timestamp,yes,Fig3
+plan,plan_interval_s,s,derived,next splice - current splice,yes,Fig3
+plan,obs_age_at_splice_ms,ms,derived,splice time - observation time,yes,Fig3
+plan,tick_at_request,integer,/vla/plan,request 시점 누적 pop count,yes,Fig3
+plan,tick_at_splice,integer,/vla/plan,reply splice 시점 누적 pop count,yes,Fig3
+plan,queue_before_splice,actions,/vla/plan,splice 직전 queue length,yes,Fig3
+plan,queue_after_splice,actions,/vla/plan,splice 직후 queue length,yes,Fig3
+plan,latency_ms,ms,/vla/plan,개별 request round-trip latency,yes,TableI;TableII
+plan,actions_json,30x3_float,/vla/plan,pre-blend incremental SE(2) chunk,yes,Fig3
+plan,jpeg_path,string,request_snapshot,server가 실제 받은 JPEG 저장 경로,yes,offline_replay
+plan,jpeg_sha256,hex,request_snapshot,request JPEG content hash,yes,audit
+plan,snapshot_drop,boolean,request_snapshot,non-blocking writer drop 여부,yes,audit
+plan,inter_splice_ticks,control_ticks,derived,두 splice 사이 tick 수; raw plan action 수가 아님,yes,Fig3
+plan,max_executed_idx,0_to_29_or_missing,queue_lineage,이 plan이 weight>0으로 기여한 최대 action index,yes,Fig3
+plan,decision_onset_idx,0_to_29_or_missing,offline_replay,plan별 paired instruction divergence onset,yes,Fig3
+plan,branch_touched,boolean_or_missing,derived,max_executed_idx >= decision_onset_idx,yes,Fig3
+plan,suffix_mass_action_equiv,float_or_missing,queue_lineage,j* 이상 plan index의 action-equivalent contribution 합,yes,Fig3
+plan,effective_max_executed_idx,0_to_29_or_missing,queue_lineage,cumulative contribution이 0.5 action-equivalent 이상인 최대 index,yes,Fig3
+plan,effective_branch_reached,boolean_or_missing,derived,suffix mass가 0.5 action-equivalent 이상,yes,Fig3
+status,run_id,string,manifest,run join key,yes,TableII
+status,sim_time_s,s,/clock,status timestamp,yes,audit
+status,queue_actions,actions,/vla/status,current queue length,yes,Fig3
+status,pending_request,boolean,/vla/status,inference request in flight 여부,yes,audit
+status,chunks,integer,/vla/status,cumulative served chunks,yes,audit
+status,popped,integer,/vla/status,cumulative executed actions,yes,Fig3
+status,underruns,integer,/vla/status,cumulative empty-queue ticks,yes,TableII
+status,underrun_pct,percent,/vla/status,executed+underrun 대비 underrun 비율,yes,TableII
+status,watchdog_hits,integer,/vla/status,cumulative watchdog activations,yes,TableII
+request_replay,run_id,string,manifest,source run join key,yes,Fig3
+request_replay,req,integer,plan,source plan request id,yes,Fig3
+request_replay,pair_id,string,protocol,condition별 inner-outer pair 식별자,yes,Fig3
+request_replay,query_role,original_or_paired_or_alt_seed,offline_replay,재현/semantic/seed-noise query 역할,yes,Fig3
+request_replay,instruction,string,offline_replay,query에 실제 사용한 instruction,yes,audit
+request_replay,seed,integer,offline_replay,query에 실제 사용한 seed,yes,audit
+request_replay,jpeg_sha256,hex,plan,원 request와 동일한 image 확인,yes,audit
+request_replay,state_sha256,hex,offline_replay,직렬화 state content hash,yes,audit
+request_replay,actions_json,30x3_float,offline_replay,query raw action chunk,yes,Fig3
+request_replay,reproduction_error_max,float,derived,original replay와 stored action 최대 차이,yes,audit
+chunk_profile,run_id,string,manifest,source run join key,yes,Fig3
+chunk_profile,req,integer,plan,source request id,yes,Fig3
+chunk_profile,pair_id,string,request_replay,paired instruction family,yes,Fig3
+chunk_profile,action_index,0_to_29,offline_replay,chunk position j,yes,Fig3
+chunk_profile,d_sem_m,m,derived,동일 JPEG/state/seed paired instruction 누적 경로 거리,yes,Fig3
+chunk_profile,d_seed_m,m,derived,동일 JPEG/state/instruction alternate seed 누적 경로 거리,yes,Fig3
+chunk_profile,decision_onset_idx,0_to_29_or_missing,derived,3개 연속 seed-noise p95 초과 최초 index,yes,Fig3
+run_summary,run_id,string,derived,run join key,yes,all
+run_summary,duration_s,s,derived,first valid command부터 종료까지,yes,audit
+run_summary,path_length_m,m,derived,world trajectory arclength,yes,TableII
+run_summary,progress_at_end_m,m,derived,75초 unwrapped ring progress,yes,TableII
+run_summary,non_progress,boolean,derived,15m warm-up에 도달하지 못함; occupancy는 0 처리,yes,TableII
+run_summary,full_lap,boolean,derived,progress가 동결된 ring length 이상인지,yes,TableII
+run_summary,target_lane_occupancy,0_to_1,derived,15m warm-up 뒤 target lane에 더 가까운 표본 비율; non-progress=0,yes,Fig2;TableII
+run_summary,median_lateral_final30s_m,m,derived,t=45--75s signed ring offset median; non-progress도 정의,yes,Fig2;paired_summary
+run_summary,lateral_error_p50_m,m_or_NA,derived,target lane error p50,yes,TableII
+run_summary,lateral_error_p95_m,m_or_NA,derived,target lane error p95,yes,TableII
+run_summary,lateral_error_max_m,m_or_NA,derived,target lane error max,yes,TableII
+run_summary,ring_departure_any,boolean,derived,ring centerline 5m 초과 여부,yes,TableII
+run_summary,ring_departure_duration_s,s,derived,5m 초과 누적 시간,yes,TableII
+run_summary,speed_mean_mps,m/s,derived,warm-up 뒤 measured mean speed,yes,TableII
+run_summary,latency_p50_ms,ms,derived,run 내 request latency p50,yes,TableI;TableII
+run_summary,latency_p95_ms,ms,derived,run 내 request latency p95,yes,TableI;TableII
+run_summary,inter_splice_ticks_median,ticks,derived,run 내 plan interval tick median,yes,Fig3;TableII
+run_summary,max_executed_idx_median,index_or_missing,derived,lineage 기반 plan max index median,yes,Fig3
+run_summary,branch_touched_fraction,0_to_1_or_missing,derived,j*가 정의된 plan 중 branch touched 비율,yes,Fig3;TableII
+run_summary,suffix_mass_median,action_equiv_or_missing,derived,j*가 정의된 plan의 suffix mass median,yes,Fig3;TableII
+run_summary,effective_max_idx_median,index_or_missing,derived,0.5 action-equivalent 기준 effective max index median,yes,Fig3;TableII
+run_summary,effective_branch_fraction,0_to_1_or_missing,derived,0.5 action-equivalent 기준 branch fraction,yes,Fig3;TableII
+run_summary,request_snapshot_coverage,0_to_1,derived,served plan 중 exact JPEG/state 저장 비율,yes,Fig3;audit
+run_summary,replay_reproduction_pass_fraction,0_to_1,derived,original replay가 stored action을 재현한 비율,yes,Fig3;audit
+run_summary,lineage_coverage,0_to_1,derived,non-override executed command 중 valid recursive lineage 비율,yes,Fig3;audit
+run_summary,jstar_defined_fraction,0_to_1,derived,valid replay plan 중 decision onset이 정의된 비율,yes,Fig3;TableII
+run_summary,underrun_pct,percent,derived,run 종료 status 기준,yes,TableII
+run_summary,watchdog_hits,integer,derived,run 시작 뒤 누적 hits,yes,TableII
+paired_summary,block_id,string,derived,paired descriptive 단위,yes,Fig2;TableII
+paired_summary,family,string,derived,canonical_r030/heldout_lexical_r030/heldout_spatial_r030/canonical_r093,yes,Fig2;TableII
+paired_summary,delta_lane_m,m,derived,해당 family inner/outer signed-offset separation,yes,Fig2;TableII
+paired_summary,repeat_floor_inner_m,m,derived,canonical inner R1/R2 repeatability difference,yes,Fig2;TableII
+paired_summary,repeat_floor_outer_m,m,derived,canonical outer R1/R2 repeatability difference,yes,Fig2;TableII
+paired_summary,repeat_floor_mean_m,m,derived,inner/outer repeat floor 평균,yes,TableII
+paired_summary,excess_over_repeat_floor_m,m,derived,canonical separation - mean repeat floor,yes,TableII
+paired_summary,commitment_delta_m,m,derived,canonical r030 separation - r093 separation,yes,Fig3;TableII
+paired_summary,test_gap_vs_canonical_m,m,derived,canonical separation - test pair separation,yes,TableII
+condition_summary,condition,string,derived,matrix와 동일한 condition key,yes,TableII
+condition_summary,n_blocks,integer,derived,항상 5 planned; missing은 별도 표시,yes,TableII
+condition_summary,n_runs,integer,derived,accepted infrastructure runs 수,yes,TableII
+condition_summary,n_non_progress,integer,derived,15m 미도달 system outcomes,yes,TableII
+condition_summary,median_delta_lane_m,m,derived,5 block delta median,yes,TableII
+condition_summary,range_delta_lane_m,string,derived,5 block delta min--max,yes,TableII
+condition_summary,median_target_occupancy,0_to_1,derived,run-level occupancy median,yes,TableII
+condition_summary,departure_count,integer,derived,5m ring departure run count,yes,TableII
+condition_summary,median_latency_p95_ms,ms,derived,run p95 latency의 median,yes,TableI;TableII

@@ -1,0 +1,308 @@
+{
+  "factorial_action_analysis": "factorial_wording_analysis.json",
+  "execution_contract": {
+    "state_steer_source": "zero",
+    "goal_conditioning": false,
+    "rate_hz": 10.0,
+    "chunk_len": 30,
+    "refill_at": 0.3,
+    "splice_overlap": 5,
+    "seed": 0,
+    "max_speed": 2.25,
+    "speed_scale": 1.0,
+    "speed_slew": 0.08,
+    "track_mode": "replay",
+    "curv_gain_lo": 1.0,
+    "curv_boost": 1.0,
+    "curv_slow_alat": 0.0,
+    "curv_brake_decel": 0.8,
+    "image_topic": "/camera/image_raw",
+    "odom_topic": "/odom"
+  },
+  "static_source_contract": {
+    "max_curvature_1pm": 0.23920867424534697,
+    "sim_wheel_base_m": 2.86,
+    "sim_max_steer_rad": 0.6,
+    "provenance": "vla_bridge_node.py constants; these static values were not included in the captured /vla/status contract"
+  },
+  "closed_loop": {
+    "familiar-wording": {
+      "paired_repeats": 4,
+      "different_pairs": 4,
+      "same_pairs": 4,
+      "different_median_m": 7.375909696151598,
+      "different_range_m": [
+        6.7402508120969875,
+        7.859736158424334
+      ],
+      "same_median_m": 0.17715323570376074,
+      "same_range_m": [
+        0.16731896237614383,
+        0.26508043290669037
+      ],
+      "ratio_of_medians": 41.635760514618795,
+      "same_floor_by_start_and_target_m": {
+        "inner": {
+          "lane1": 0.16731896237614383,
+          "lane2": 0.18391851074948468
+        },
+        "outer": {
+          "lane1": 0.17038796065803677,
+          "lane2": 0.26508043290669037
+        }
+      },
+      "local_conservative_floor_by_start_m": {
+        "inner": 0.18391851074948468,
+        "outer": 0.26508043290669037
+      },
+      "different_above_local_conservative_floor": 4,
+      "different_to_local_floor_ratio_median": 34.319229241836545,
+      "different_to_local_floor_ratio_range": [
+        25.427191053628576,
+        42.734883652521944
+      ],
+      "different_shared_prefix_median_m": 2.5,
+      "rollouts": 16,
+      "valid_rollouts": 16,
+      "prefill_range_s": [
+        0.24712683400139213,
+        0.29879128001630306
+      ],
+      "latency_range_ms": [
+        244.6,
+        251.4
+      ],
+      "trajectory_arclength_range_m": [
+        53.64526318386286,
+        58.24898600863899
+      ],
+      "lane_reference_after_15m": {
+        "by_requested_lane": {
+          "lane1": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 0.33928901759829044,
+            "median_of_run_p95_m": 0.7276515089048987,
+            "median_fraction_closer_to_intended": 1.0
+          },
+          "lane2": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 0.08581894805614193,
+            "median_of_run_p95_m": 0.27718357376377656,
+            "median_fraction_closer_to_intended": 1.0
+          }
+        },
+        "by_maneuver": {
+          "stay": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 0.2312538315312737,
+            "median_of_run_p95_m": 0.4999376659672117,
+            "median_fraction_closer_to_intended": 1.0
+          },
+          "change": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 0.1853067954320645,
+            "median_of_run_p95_m": 0.5121387578926714,
+            "median_fraction_closer_to_intended": 1.0
+          }
+        },
+        "by_start_and_target": {
+          "inner->lane1": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 0.3528778360002486,
+            "median_of_run_p95_m": 0.7443856323055268,
+            "median_fraction_closer_to_intended": 1.0
+          },
+          "inner->lane2": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 0.07375930195649828,
+            "median_of_run_p95_m": 0.3314032862649319,
+            "median_fraction_closer_to_intended": 1.0
+          },
+          "outer->lane1": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 0.31201685679860847,
+            "median_of_run_p95_m": 0.6920457151605863,
+            "median_fraction_closer_to_intended": 1.0
+          },
+          "outer->lane2": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 0.10352516391508221,
+            "median_of_run_p95_m": 0.2434576243567606,
+            "median_fraction_closer_to_intended": 1.0
+          }
+        }
+      },
+      "lane_assignment_cutoff_sensitivity": {
+        "10.0": {
+          "by_requested_lane": {
+            "lane1": 1.0,
+            "lane2": 1.0
+          },
+          "by_maneuver": {
+            "stay": 1.0,
+            "change": 1.0
+          }
+        },
+        "15.0": {
+          "by_requested_lane": {
+            "lane1": 1.0,
+            "lane2": 1.0
+          },
+          "by_maneuver": {
+            "stay": 1.0,
+            "change": 1.0
+          }
+        },
+        "20.0": {
+          "by_requested_lane": {
+            "lane1": 1.0,
+            "lane2": 1.0
+          },
+          "by_maneuver": {
+            "stay": 1.0,
+            "change": 1.0
+          }
+        }
+      }
+    },
+    "test-wording": {
+      "paired_repeats": 4,
+      "different_pairs": 4,
+      "same_pairs": 4,
+      "different_median_m": 0.6664114117648327,
+      "different_range_m": [
+        0.569365524182162,
+        0.8893473458969086
+      ],
+      "same_median_m": 0.24308004372901332,
+      "same_range_m": [
+        0.17251847714405621,
+        0.29162797656153283
+      ],
+      "ratio_of_medians": 2.7415307383593817,
+      "same_floor_by_start_and_target_m": {
+        "inner": {
+          "lane1": 0.17251847714405621,
+          "lane2": 0.29162797656153283
+        },
+        "outer": {
+          "lane1": 0.20394443730800665,
+          "lane2": 0.28221565015002
+        }
+      },
+      "local_conservative_floor_by_start_m": {
+        "inner": 0.29162797656153283,
+        "outer": 0.28221565015002
+      },
+      "different_above_local_conservative_floor": 4,
+      "different_to_local_floor_ratio_median": 2.3613552664800204,
+      "different_to_local_floor_ratio_range": [
+        1.9523693539121998,
+        3.0495954345081784
+      ],
+      "different_shared_prefix_median_m": 10.299999999999995,
+      "rollouts": 16,
+      "valid_rollouts": 16,
+      "prefill_range_s": [
+        0.23908297799061984,
+        0.29678942798636854
+      ],
+      "latency_range_ms": [
+        242.1,
+        250.9
+      ],
+      "trajectory_arclength_range_m": [
+        52.7356287271727,
+        58.97768710301536
+      ],
+      "lane_reference_after_15m": {
+        "by_requested_lane": {
+          "lane1": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 2.7792801651410315,
+            "median_of_run_p95_m": 3.0193611937035207,
+            "median_fraction_closer_to_intended": 0.0
+          },
+          "lane2": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 0.15947212889769408,
+            "median_of_run_p95_m": 0.3031868290430848,
+            "median_fraction_closer_to_intended": 1.0
+          }
+        },
+        "by_maneuver": {
+          "stay": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 1.4175598062114814,
+            "median_of_run_p95_m": 1.636284004252396,
+            "median_fraction_closer_to_intended": 0.5
+          },
+          "change": {
+            "rollouts": 8,
+            "median_of_run_medians_m": 1.5256443089879328,
+            "median_of_run_p95_m": 1.6889194169880017,
+            "median_fraction_closer_to_intended": 0.5
+          }
+        },
+        "by_start_and_target": {
+          "inner->lane1": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 2.70200279085674,
+            "median_of_run_p95_m": 2.982299871138194,
+            "median_fraction_closer_to_intended": 0.0
+          },
+          "inner->lane2": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 0.1923730028309195,
+            "median_of_run_p95_m": 0.3244474227501294,
+            "median_fraction_closer_to_intended": 1.0
+          },
+          "outer->lane1": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 2.8845130039273212,
+            "median_of_run_p95_m": 3.074487683116761,
+            "median_fraction_closer_to_intended": 0.0
+          },
+          "outer->lane2": {
+            "rollouts": 4,
+            "median_of_run_medians_m": 0.14461920910739307,
+            "median_of_run_p95_m": 0.2995821587973989,
+            "median_fraction_closer_to_intended": 1.0
+          }
+        }
+      },
+      "lane_assignment_cutoff_sensitivity": {
+        "10.0": {
+          "by_requested_lane": {
+            "lane1": 0.0,
+            "lane2": 1.0
+          },
+          "by_maneuver": {
+            "stay": 0.5,
+            "change": 0.5
+          }
+        },
+        "15.0": {
+          "by_requested_lane": {
+            "lane1": 0.0,
+            "lane2": 1.0
+          },
+          "by_maneuver": {
+            "stay": 0.5,
+            "change": 0.5
+          }
+        },
+        "20.0": {
+          "by_requested_lane": {
+            "lane1": 0.0,
+            "lane2": 1.0
+          },
+          "by_maneuver": {
+            "stay": 0.5,
+            "change": 0.5
+          }
+        }
+      }
+    }
+  }
+}

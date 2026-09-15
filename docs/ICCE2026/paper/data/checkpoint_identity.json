@@ -1,0 +1,10 @@
+{
+  "verified_on": "2026-09-01",
+  "sha256": "581773d8ac2c50a921f42930db51be31745c14909103c66910429c11c63ce562",
+  "files": {
+    "closed_loop_local": "models/ckpt_v6_60k/model.safetensors",
+    "factorial_probe_remote": "/home/autolab_sw/sunhong/nav-vla/runs/navvla_smolvla_v6/checkpoints/060000/pretrained_model/model.safetensors"
+  },
+  "byte_identical": true,
+  "method": "sha256sum computed independently on the local and remote model.safetensors files"
+}

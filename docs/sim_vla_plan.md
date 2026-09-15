@@ -1,5 +1,7 @@
 # 시뮬레이션 VLA 계획서
 
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+
 > 목표: nav-vla 시뮬레이션을 **정규식 파서 + 목표를 못 보는 BC 정책**에서 **진짜 VLA**로 전환하고,
 > 그 결과를 실차로 이식한다.
 > 1차 범위: 시뮬레이션. 실차 이식은 §0.1 결정 5에 따라 본론에 포함(후속 단계).
@@ -520,7 +522,7 @@ ROS2 Jazzy의 시스템 Python 3.12(apt numpy/opencv)와 lerobot의 torch/transf
   컴파일 → **워밍업(reduce-overhead CUDA graph 30–120 s, 하네스가 world를 스텝하기 *전에* 완료)**
   → ZMQ REQ/REP `ipc:///tmp/nav_vla.sock`. msgpack `{jpeg, state:f32[3], task:str, seed:int}` →
   `{actions:f32[30,3]}`. **`seed`를 명시적으로 받는 것이 `D_same` 측정을 가능하게 한다.**
-- **`nav_vla_pkg/vla_bridge_node.py`** (~300 LOC) — ROS2 노드, `MultiThreadedExecutor(4)`:
+- **`sant_vla_pkg/vla_bridge_node.py`** (~300 LOC) — ROS2 노드, `MultiThreadedExecutor(4)`:
   - `sensor_cg`(Reentrant): 이미지/상태 → mutex 보호 `LatestObservation`. torch·인코딩 금지
   - `control_cg`(MutuallyExclusive): 10 Hz, `ActionQueue`에서 1개 pop → 발행. O(µs). GPU 접촉 금지
   - `instruction_cg`: `/vla/instruction` (RELIABLE + **TRANSIENT_LOCAL** depth 1 — 늦게 붙는

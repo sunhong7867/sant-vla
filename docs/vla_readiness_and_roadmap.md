@@ -1,5 +1,7 @@
 # nav-vla / VLA_AD — VLA 성숙도 진단 및 실차 VLA 로드맵
 
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+
 > 질문: (1) 지금은 VLM인가, 단순 LLM 명령 파서인가? (2) VLA까지 가려면 무엇이 필요한가?
 > (3) 알파마요 말고 다른 VLA 모델을 쓰는 게 나은가? (4) 아니면 지금 학습데이터를 VLA용으로
 > 만드는 게 나은가?
@@ -29,7 +31,7 @@
 | `chat_gui_node.py` | LLM 언어층 | **정규식 파서 + LLM 폴백.** 결정 경로가 LLM보다 **먼저** 실행되고(`:556-566`), 이후 4개 후처리기가 LLM 플랜을 버리고 원문 regex로 재작성(`:1339-1352`, `:1430-1468`) | Ollama 페이로드에 `images` 키 없음(`:607-624`) → qwen3:4b는 **픽셀을 본 적이 없다**. 출력은 8동사 × 15존 × 3차선으로 폐쇄(`:576-606`) |
 | `action_policy_model.py` | 학습된 행동 정책 | **순서 무시 bag-of-words 분류기.** 40.5k 파라미터, 137토큰 어휘. `_rule_override`가 자기 학습셋의 85.9%를 텐서 생성 전에 결정 | `nn.EmbeddingBag(mode="mean")`(`:132`). `"avoid the child and pull over"` → **`start`** (fail-open 안전 역전) |
 | `policy_node.py` / `stage_a.pt` | VLA 정책 | **목표를 못 보는 ResNet18 차선추종기.** 언어는 정수 → `nn.Embedding`: 11,348,142 중 **536 파라미터 = 0.0047%** | 어블레이션: goal zone 셔플 시 조향 변화 **0.0049 rad/s**, **이미지** 셔플 시 **0.1702 rad/s** (35배). pose/goal 전체 0으로 → 0.0051 |
-| `train_stage_a.py` | VLA 학습 | **언어 조건부 학습이 아예 아님** | `grep -rn instruction src/nav_vla_pkg/train/*.py` → **0회** (직접 확인). 83k 프레임의 언어를 읽는 모델이 없음 |
+| `train_stage_a.py` | VLA 학습 | **언어 조건부 학습이 아예 아님** | `grep -rn instruction src/sant_vla_pkg/train/*.py` → **0회** (직접 확인). 83k 프레임의 언어를 읽는 모델이 없음 |
 | Alpamayo 연동 | VLA teacher | **쓰기 전용 사이드카.** 실제 10B 추론은 되지만 결과는 Tk 위젯 + JSONL로만 감 | 기본 비활성(`alpamayo_endpoint=""`, `:300-305`). `grep -rni alpamayo train/*.py` → **0회** (직접 확인) |
 | `obstacle_vla_node.py` | 반응형 VLA | **ResNet18 → 로짓 1개 → `std_msgs/Bool`.** 프레임당 1비트, 언어 없음 | `:79-88` |
 | **VLA_AD** `vla_trt_node.cpp` | VLA 정책 | **JSON 5키만 내는 VLM. 횡방향 액션 0** | `SYSTEM_PROMPT_POLICY`(`:40`)가 요구하는 키는 `safety_mode, speed_scale, scenario, current_lane, reasoning`뿐. `waypoint_offset_px`는 `j.value(..., 0.0f)`(`:411`)로 **항상 0** (직접 확인) |
@@ -207,7 +209,7 @@ reasoning 라벨러 + 평가 심판으로 강등한다. 어떤 파운데이션 V
 ### P4 — 학습 (13~22주)
 - 트렁크 + ACT식 청크 헤드, 지평 감쇠 가중 L1, 보조 **`arrived` 로짓**.
   *멈출 때를 스스로 결정 못 하는 VLA는 루프를 닫은 게 아니다* — 지금은 GT pose 기하 340줄
-  ([policy_node.py:702-739](../src/nav_vla_pkg/nav_vla_pkg/policy_node.py#L702-L739))이 그 판단을 한다.
+  ([policy_node.py:702-739](../src/sant_vla_pkg/sant_vla_pkg/policy_node.py#L702-L739))이 그 판단을 한다.
 - P2 이후 두 도메인이 공유하는 명령 축에 한해 sim:real co-train.
 - **컴퓨트는 빌려라.** 개발 노트북은 RTX 4060 Laptop(VRAM 8 GB) — 3B 모델을 448px로
   LoRA 학습 불가이고, 같은 GPU에서 Gazebo 폐루프와 3B 추론서버를 함께 돌리면 OOM.
@@ -260,7 +262,7 @@ A-governor-only(현 VLA_AD) / A-full. 학습본 vs 미학습 패러프레이즈 
 | 619 에피소드 코퍼스를 *명령 조건부* 학습데이터로 쓰는 것 | 독립 pose+heading 셀 ~1,128개(셀당 68.5회 재방문), 전 프레임의 31%가 cruise 4개, 619/619 성공, 영어 템플릿 182개. **차선유지 warm-start와 음성 결과 어블레이션 용도로만** |
 
 ### 방향과 무관하게 고칠 버그
-- [policy_node.py:455](../src/nav_vla_pkg/nav_vla_pkg/policy_node.py#L455) — `if self.task_type == "direct" and pose:`
+- [policy_node.py:455](../src/sant_vla_pkg/sant_vla_pkg/policy_node.py#L455) — `if self.task_type == "direct" and pose:`
   가 pose가 `None`일 때 **학습 안 된 신경망 분기로 낙하**한다. **fail-closed**(0 발행)로.
 - `action_policy_model.py` OOV — 파싱 실패 명령은 반드시 `none`/`stop`, 절대 `start` 금지.
 - `alpamayo_real_server.py:179-189` — 짧은 시퀀스를 frame 0 복제로 패딩. 진짜 4프레임
@@ -420,7 +422,7 @@ JetPack 7.1은 의도적 고정임을 명시(7.2가 2026-06-02 출시) — 안 �
 ## 부록 — 이 문서의 근거 수준
 
 - **직접 검증(이 저장소에서 실행):** 619 에피소드 / 619개 전부 `success:true` / 고유 명령 182개 /
-  `grep instruction src/nav_vla_pkg/train/*.py` = 0 / `grep alpamayo train/*.py` = 0 /
+  `grep instruction src/sant_vla_pkg/train/*.py` = 0 / `grep alpamayo train/*.py` = 0 /
   VLA_AD `SYSTEM_PROMPT_POLICY` 5키 / `waypoint_offset_px` 기본값 0.0f /
   `steering = max(min(int(angle/5),7),-7)`.
 - **웹 출처 검증:** Thor 사양·GR00T/Cosmos Thor 벤치마크·Alpamayo 모델카드/라이선스·

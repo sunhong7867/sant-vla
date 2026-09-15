@@ -1,0 +1,182 @@
+{
+  "qualifying": {
+    "label": "예선",
+    "description": "Start 2차선 · 반시계 1바퀴",
+    "source": "output/blender/nav_vla_driving_ego_only.blend",
+    "ego_pose": [
+      3.70000005,
+      24.59428024,
+      0.01264991,
+      -3e-08,
+      0.0,
+      -1.57073987
+    ],
+    "lane": "lane2",
+    "entities": []
+  },
+  "tournament": {
+    "label": "본선 · 토너먼트",
+    "description": "Start / T3 2차선 · 상대 차량은 배치만 제공",
+    "source": "output/blender/tournament/tournament_animated.blend",
+    "ego_pose": [
+      3.22875214,
+      24.5478363,
+      0.01265,
+      0.0,
+      -0.0,
+      -1.57079637
+    ],
+    "lane": "lane2",
+    "entities": [
+      {
+        "entity": "race_opponent",
+        "model": "prius_hybrid",
+        "pose": [
+          -1.38975215,
+          -24.57261848,
+          0.01265,
+          0.0,
+          -0.0,
+          1.57079637
+        ],
+        "kind": "vehicle"
+      }
+    ]
+  },
+  "mission1": {
+    "label": "미션 1 · 장애물 회피 / 신호등",
+    "description": "M3 2차선 · 장애물 3대 · 초록 신호 시작",
+    "source": "output/blender/mission/mission_animated_v3.blend",
+    "ego_pose": [
+      -15.92779446,
+      -13.47522926,
+      0.01265,
+      0.0,
+      -0.0,
+      0.10393259
+    ],
+    "lane": "lane2",
+    "entities": [
+      {
+        "entity": "obstacle1",
+        "model": "prius_hybrid",
+        "pose": [
+          13.4613905,
+          -20.73162651,
+          0.01265,
+          0.0,
+          -0.0,
+          2.34990686
+        ],
+        "kind": "vehicle"
+      },
+      {
+        "entity": "obstacle2",
+        "model": "prius_hybrid",
+        "pose": [
+          10.08918285,
+          -2.65152407,
+          0.01265,
+          0.0,
+          -0.0,
+          3.00397873
+        ],
+        "kind": "vehicle"
+      },
+      {
+        "entity": "obstacle3",
+        "model": "prius_hybrid",
+        "pose": [
+          17.76553535,
+          16.38954926,
+          0.00898784,
+          0.0,
+          -0.0,
+          3.55959868
+        ],
+        "kind": "vehicle"
+      },
+      {
+        "entity": "race_signal",
+        "model": "traffic",
+        "pose": [
+          5.7985301,
+          -19.70730019,
+          0.051603,
+          0.0,
+          -0.0,
+          -1.54043984
+        ],
+        "kind": "signal"
+      }
+    ]
+  },
+  "mission2": {
+    "label": "미션 2 · 수직 / 평행 주차",
+    "description": "IN 출발 · 기준 차량 4대 · 경기 배치 제공 (현역 VLA 주차 미지원)",
+    "source": "output/blender/nav_vla_parking.blend",
+    "ego_pose": [
+      -2.74371767,
+      -17.12303352,
+      0.01265,
+      0.0,
+      -0.0,
+      -3.1415925
+    ],
+    "lane": "lane2",
+    "entities": [
+      {
+        "entity": "obstacle4",
+        "model": "prius_hybrid",
+        "pose": [
+          3.6779201,
+          -5.72370005,
+          0.01265,
+          0.0,
+          -0.0,
+          4.69933617
+        ],
+        "kind": "vehicle"
+      },
+      {
+        "entity": "obstacle5",
+        "model": "prius_hybrid",
+        "pose": [
+          3.7699101,
+          1.54263997,
+          0.01265,
+          0.0,
+          -0.0,
+          4.6891762
+        ],
+        "kind": "vehicle"
+      },
+      {
+        "entity": "obstacle6",
+        "model": "prius_hybrid",
+        "pose": [
+          -7.76423073,
+          -2.94410634,
+          0.01265,
+          0.0,
+          -0.0,
+          3.130481
+        ],
+        "kind": "vehicle"
+      },
+      {
+        "entity": "obstacle7",
+        "model": "prius_hybrid",
+        "pose": [
+          -7.83047104,
+          8.301054,
+          0.01265,
+          0.0,
+          -0.0,
+          3.15643537
+        ],
+        "kind": "vehicle"
+      }
+    ]
+  }
+}

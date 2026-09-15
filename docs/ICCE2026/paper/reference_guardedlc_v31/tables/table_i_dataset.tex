@@ -1,0 +1,22 @@
+% Source: eval/lc_utt_v1.0.jsonl
+\begin{table}[!t]
+\centering
+\caption{LC-Utt v1.0 Categories}
+\label{tab:dataset}
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrll@{}}
+\toprule
+ID & Category & $n$ & Purpose & Example \\
+\midrule
+C1 & Direct target & 25 & explicit lane-change target & ``change to lane 1'' \\
+C2 & Polite/indirect & 25 & indirect requests and soft commands & ``could you move left?'' \\
+C3 & Spatial aliases & 25 & left/right, inner/outer, first/second & ``take the inner lane'' \\
+C4 & State-relative & 25 & target-underspecified lane-change intent & ``change lanes'' \\
+C5 & Noisy/casual & 25 & typos, abbreviations, casual phrasing & ``chnge to lane1'' \\
+C6 & OOS/refusal & 25 & 15 non-driving + 10 refusal/keep-current & ``do not change lanes'' \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

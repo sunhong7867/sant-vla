@@ -1,0 +1,17 @@
+study_id,condition_id,checkpoint,track_mode,refill_at,preview_dual,curv_slow_alat,curv_boost,speed_word,seeds,targets_or_lanes_per_seed,probe,repeats_per_seed,total_rollouts,priority,feeds
+S0,bay_smoke,ckpt_v2b_40k,replay,0.30,false,0.0,1.0,slow,0,4,probe_policy_bays,1,4,gate,smoke_only
+S0,ring_smoke,ckpt_v6_60k,preview,0.30,false,0.0,1.0,normal,0,4,ring_map_probe,1,4,gate,smoke_only
+S2,r093_replay,ckpt_v2b_40k,replay,0.93,false,0.0,1.0,slow,0;1;2;3;4,4,probe_policy_bays,1,20,core,Fig1;Fig2;TableII
+S2,r070_replay,ckpt_v2b_40k,replay,0.70,false,0.0,1.0,slow,0;1;2;3;4,4,probe_policy_bays,1,20,core,Fig1;Fig2;TableII
+S2,r030_replay,ckpt_v2b_40k,replay,0.30,false,0.0,1.0,slow,0;1;2;3;4,4,probe_policy_bays,1,20,core,Fig1;Fig2;TableII
+S2O,r093_oracle,oracle_parking_extremes,replay,0.93,false,0.0,1.0,slow,0,2,stub_policy_server_replay,3,6,core,TableII
+S2O,r030_oracle,oracle_parking_extremes,replay,0.30,false,0.0,1.0,slow,0,2,stub_policy_server_replay,3,6,core,TableII
+S2P,r030_preview,ckpt_v2b_40k,preview,0.30,false,0.0,1.0,slow,0;1;2;3;4,4,probe_policy_bays,1,20,core,Fig2;TableII
+S3,replay_normal,ckpt_v6_60k,replay,0.30,false,0.0,1.0,normal,0;1;2;3;4,4,ring_map_probe,1,20,core,Fig3;TableIII
+S3,pursuit_normal,ckpt_v6_60k,pursuit,0.30,false,0.0,1.0,normal,0;1;2;3;4,4,ring_map_probe,1,20,core,Fig3;TableIII
+S3,preview_normal,ckpt_v6_60k,preview,0.30,false,0.0,1.0,normal,0;1;2;3;4,4,ring_map_probe,1,20,core,Fig3;TableIII
+S3,preview_cap_normal,ckpt_v6_60k,preview,0.30,false,0.8,1.0,normal,0;1;2;3;4,4,ring_map_probe,1,20,core,Fig3;TableIII
+S3E,replay_fast,ckpt_v6_60k,replay,0.30,false,0.0,1.0,fast,0;1;2,4,ring_map_probe,1,12,extension,FigS1
+S3E,pursuit_fast,ckpt_v6_60k,pursuit,0.30,false,0.0,1.0,fast,0;1;2,4,ring_map_probe,1,12,extension,FigS1
+S3E,preview_fast,ckpt_v6_60k,preview,0.30,false,0.0,1.0,fast,0;1;2,4,ring_map_probe,1,12,extension,FigS1
+S3E,preview_cap_fast,ckpt_v6_60k,preview,0.30,false,0.8,1.0,fast,0;1;2,4,ring_map_probe,1,12,extension,FigS1

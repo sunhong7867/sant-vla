@@ -163,6 +163,8 @@ def generate_launch_description():
     clock_hz = LaunchConfiguration("clock_hz")
 
     return LaunchDescription([
+        DeclareLaunchArgument("use_gazebo_gui", default_value="true",
+                              description="Open a standalone Gazebo window. Disable for the integrated dashboard."),
         DeclareLaunchArgument("clock_hz", default_value="100.0"),
         *_rendering_environment_actions(),
         DeclareLaunchArgument(
@@ -179,7 +181,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "use_policy",
             default_value="false",
-            description="Launch nav_vla_pkg policy_node as the sole /cmd_vel controller. "
+            description="Launch sant_vla_pkg policy_node as the sole /cmd_vel controller. "
                         "This disables the built-in simple and YOLO motion drivers.",
         ),
         DeclareLaunchArgument(
@@ -245,6 +247,7 @@ def generate_launch_description():
         ),
         TimerAction(
             period=0.5,
+            condition=IfCondition(LaunchConfiguration("use_gazebo_gui")),
             actions=[
                 ExecuteProcess(
                     cmd=[
@@ -264,6 +267,7 @@ def generate_launch_description():
         ),
         TimerAction(
             period=4.0,
+            condition=IfCondition(LaunchConfiguration("use_gazebo_gui")),
             actions=[
                 ExecuteProcess(
                     cmd=[
@@ -386,7 +390,10 @@ def generate_launch_description():
             output="screen",
         ),
         Node(
-            condition=IfCondition(use_top_down_view),
+            condition=IfCondition(PythonExpression([
+                "'", use_camera, "'.lower() in ('true', '1') or '",
+                use_top_down_view, "'.lower() in ('true', '1')",
+            ])),
             package="ros_gz_bridge",
             executable="parameter_bridge",
             name="gz_bridge_top_camera",
@@ -556,7 +563,7 @@ def generate_launch_description():
                 ),
                 Node(
                     condition=IfCondition(use_policy),
-                    package="nav_vla_pkg",
+                    package="sant_vla_pkg",
                     executable="policy_node",
                     parameters=[{
                         "initial_lane": "lane2",

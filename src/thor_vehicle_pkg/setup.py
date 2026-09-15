@@ -19,7 +19,7 @@ setup(
     zip_safe=True,
     maintainer='sunhong7867',
     maintainer_email='tjsghd7867@g.skku.edu',
-    description='Thor real-vehicle I/O + cmd_vel adapter for nav-vla',
+    description='Thor real-vehicle I/O + cmd_vel adapter for SANT-VLA',
     license='MIT',
     entry_points={
         'console_scripts': [

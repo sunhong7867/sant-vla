@@ -20,6 +20,7 @@ the action path is untouched by the subclass.
 """
 
 import argparse
+import json
 import math
 import os
 import shutil
@@ -46,6 +47,50 @@ def main():
     ap.add_argument("--seed", type=int, default=1000)
     ap.add_argument("--sample-decode", action="store_true",
                     help="greedy-decode 2 samples at every save (slow)")
+    ap.add_argument("--boost-target",
+                    choices=("sampler", "language", "resample-comp"),
+                    default="sampler",
+                    help="sampler: r5-r11 behaviour, weighted resampling "
+                    "boosts BOTH losses (this regressed r11's lane "
+                    "centering, median 0.88 vs v3y 0.25 m). language: "
+                    "natural-frequency sampling; the same weights apply "
+                    "to the reasoning CE only, the action expert sees the "
+                    "true data distribution.")
+    ap.add_argument("--action-v10-weight", type=float, default=1.0,
+                    help="r21: action-loss multiplier for v10 sessions "
+                    "(2026-09-14+). 0.0 = bank v10's language win while "
+                    "the action expert keeps the proven v3y-only diet "
+                    "(the v10-action oscillation is an open problem, "
+                    "docs/ver/20260915_1006).")
+    ap.add_argument("--action-crossing-weight", type=float, default=1.0,
+                    help="r20: action-loss multiplier for v10 frames "
+                    "BEFORE the episode first reaches its commanded lane "
+                    "(crossing_cut.json in the dataset root). The oracle's "
+                    "slow sweeping lane entries taught mid-gap cruising as "
+                    "a stable mode (r19 isolation, 2026-09-15); crossing "
+                    "skill itself stays in the corpus via v3y.")
+    ap.add_argument("--action-non-v10-weight", type=float, default=1.0,
+                    help="r19 diagnostic: action-loss multiplier for every "
+                    "frame OUTSIDE the v10 sessions (2026-09-14+). 0.0 "
+                    "isolates whether v10 alone yields clean driving.")
+    ap.add_argument("--action-v3y-cruise-weight", type=float, default=1.0,
+                    help="r18: action-loss multiplier for v3y-era CRUISE "
+                    "episodes (ring_goal keeps full weight). r17 mixed two "
+                    "teacher styles (YOLO v3y + oracle v10) under the same "
+                    "cruise sentences and the policy mode-hopped between "
+                    "their lines (periodic mid-gap excursions, measured "
+                    "2026-09-15). One consistent cruise teacher only.")
+    ap.add_argument("--action-v9-weight", type=float, default=1.0,
+                    help="r15: action-loss multiplier for EVERY frame of a "
+                    "v9-era episode (packed name session_202609*) — the "
+                    "r4 probe proved the v9 corpus, not co-training, costs "
+                    "lane centering (0.24 vs 0.54-0.88 m median).")
+    ap.add_argument("--action-obstacle-weight", type=float, default=1.0,
+                    help="r13: multiply the FLOW-MATCHING loss of every "
+                    "boosted (obstacle-phase) frame by this factor. <1 "
+                    "keeps those frames narrating at full CE weight while "
+                    "their swerve/stop trajectories barely train the "
+                    "action expert. Requires --boost-target language.")
     ap.add_argument("--obstacle-boost", type=float, default=1.0,
                     help="sampling weight for frames whose reasoning "
                          "mentions the parked car (r5 lesson: at natural "
@@ -143,9 +188,124 @@ def main():
               f"x{args.obstacle_boost * 4:.0f}: {n_ramp}")
         n_boost = int((w > 1.0).sum())
         print(f"obstacle boost x{args.obstacle_boost}: "
-              f"{n_boost}/{len(ds)} frames")
-        sampler = torch.utils.data.WeightedRandomSampler(
-            torch.from_numpy(w), num_samples=len(ds), replacement=True)
+              f"{n_boost}/{len(ds)} frames (target={args.boost_target})")
+        if args.boost_target == "resample-comp":
+            # r15: r11-style weighted RESAMPLING gives the language head
+            # its full exposure to the rare frames (the r11 recipe that
+            # reached 100% obstacle mention; CE-only weighting starved it
+            # to 2% once the FOV gate shrank the pool). The action loss
+            # gets the INVERSE weight, so resampling cancels out and the
+            # expert still effectively trains on the natural distribution
+            # (importance reweighting) — times the per-episode v9 damping
+            # the r4 probe justified.
+            sampler = torch.utils.data.WeightedRandomSampler(
+                torch.from_numpy(w), num_samples=len(ds), replacement=True)
+            aw = 1.0 / w
+            v9_eps = set()
+            v3y_cruise_eps = set()
+            try:
+                with open(os.path.join(args.dataset,
+                                       "nav_vla_index.jsonl")) as f:
+                    for line in f:
+                        row = json.loads(line)
+                        # v9 collection sessions are 2026-09-04..09; the
+                        # v10 speed-invariance corpus (09-14+) must NOT be
+                        # damped — its whole point is clean action data.
+                        if "session_2026090" in row["packed_episode"]:
+                            v9_eps.add(row["lerobot_episode_index"])
+                        elif (row.get("intent_id") == "cruise"
+                              and "session_20260" in row["packed_episode"]
+                              and "session_2026091"
+                              not in row["packed_episode"]):
+                            # v3y-era (July/Aug) cruise: the OTHER teacher's
+                            # line for the same sentences (r18 mode-mix fix)
+                            v3y_cruise_eps.add(row["lerobot_episode_index"])
+            except OSError:
+                print("WARNING: no nav_vla_index.jsonl — v9 damping off")
+            v10_eps = set()
+            try:
+                with open(os.path.join(args.dataset,
+                                       "nav_vla_index.jsonl")) as f:
+                    for line in f:
+                        row = json.loads(line)
+                        if "session_2026091" in row["packed_episode"]:
+                            v10_eps.add(row["lerobot_episode_index"])
+            except OSError:
+                pass
+            n_damp = n_cruise = n_nonv10 = n_v10 = 0
+            for i in range(len(ds)):
+                e = int(epi[i])
+                if args.action_non_v10_weight != 1.0 and e not in v10_eps:
+                    aw[i] *= args.action_non_v10_weight
+                    n_nonv10 += 1
+                    continue
+                if args.action_v10_weight != 1.0 and e in v10_eps:
+                    aw[i] *= args.action_v10_weight
+                    n_v10 += 1
+                    continue
+                if args.action_v9_weight != 1.0 and e in v9_eps:
+                    aw[i] *= args.action_v9_weight
+                    n_damp += 1
+                elif (args.action_v3y_cruise_weight != 1.0
+                      and e in v3y_cruise_eps):
+                    aw[i] *= args.action_v3y_cruise_weight
+                    n_cruise += 1
+            if args.action_v10_weight != 1.0:
+                print(f"v10 action x{args.action_v10_weight} on "
+                      f"{n_v10} frames ({len(v10_eps)} v10 episodes)")
+            if args.action_non_v10_weight != 1.0:
+                print(f"non-v10 action x{args.action_non_v10_weight} on "
+                      f"{n_nonv10} frames ({len(v10_eps)} v10 episodes "
+                      "keep full weight)")
+            if args.action_crossing_weight != 1.0:
+                try:
+                    cut = {int(k): v for k, v in json.load(open(
+                        os.path.join(args.dataset,
+                                     "crossing_cut.json"))).items()}
+                except OSError:
+                    cut = {}
+                    print("WARNING: crossing_cut.json missing — no cut")
+                n_cut = 0
+                for i in range(len(ds)):
+                    c = cut.get(int(epi[i]))
+                    if c is not None and int(fri[i]) < c:
+                        aw[i] *= args.action_crossing_weight
+                        n_cut += 1
+                print(f"crossing action x{args.action_crossing_weight} on "
+                      f"{n_cut} pre-convergence v10 frames")
+            if args.action_v3y_cruise_weight != 1.0:
+                print(f"v3y-cruise action x{args.action_v3y_cruise_weight} "
+                      f"on {n_cruise} frames "
+                      f"({len(v3y_cruise_eps)} episodes)")
+            rds.action_weights = aw
+            print(f"resample-comp: sampler on, action 1/w compensation; "
+                  f"v9 damp x{args.action_v9_weight} on {n_damp} frames "
+                  f"({len(v9_eps)} v9-era episodes)")
+        elif args.boost_target == "language":
+            rds.frame_weights = w
+            if args.action_obstacle_weight != 1.0:
+                aw = np.where(w > 1.0, args.action_obstacle_weight, 1.0)
+                # r14: r13 (phase frames only at 0.2) still probed 0.57 m
+                # median vs v3y/r4 0.25 — the v1 avoidance episodes bend
+                # cruising even through their non-phase frames, while r4
+                # (v3y-only co-training) is clean. Damp the ENTIRE v1
+                # episode in the action loss; v0/v2 stay full weight.
+                V1_PAT = ("ahead in our", "watching whether",
+                          "has not moved", "returning to the")
+                v1_eps = {e for e, segs in rds.by_ep.items()
+                          if any(any(p in " ".join(v).lower()
+                                     for p in V1_PAT)
+                                 for _f0, _f1, v in segs)}
+                for i in range(len(ds)):
+                    if int(epi[i]) in v1_eps:
+                        aw[i] = args.action_obstacle_weight
+                rds.action_weights = aw
+                print(f"action loss x{args.action_obstacle_weight} on "
+                      f"{int((aw != 1.0).sum())} frames "
+                      f"({len(v1_eps)} v1 episodes fully damped)")
+        else:
+            sampler = torch.utils.data.WeightedRandomSampler(
+                torch.from_numpy(w), num_samples=len(ds), replacement=True)
     dl = torch.utils.data.DataLoader(
         rds, batch_size=args.batch_size,
         shuffle=(sampler is None), sampler=sampler,
@@ -229,11 +389,17 @@ def main():
             it = iter(dl)
             batch = next(it)
         reasoning = batch.pop("reasoning")
+        ce_weight = batch.pop("reasoning_weight", None)
+        act_weight = batch.pop("action_weight", None)
         batch = preproc(batch)
         batch = {k: (v.to(device, non_blocking=True)
                      if torch.is_tensor(v) else v)
                  for k, v in batch.items()}
         batch["reasoning"] = reasoning
+        if ce_weight is not None:
+            batch["reasoning_weight"] = ce_weight.to(device).float()
+        if act_weight is not None:
+            batch["action_weight"] = act_weight.to(device).float()
         if sample_batch is None and args.sample_decode:
             sample_batch = {}
             for k, v in batch.items():

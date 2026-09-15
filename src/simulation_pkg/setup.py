@@ -52,6 +52,7 @@ setup(
         'sim_motion_planner_node = simulation_pkg.motion_planner_node:main',
         'sim_simulation_sender_node = simulation_pkg.simulation_sender_node:main',
         'ackermann_cmd_adapter_node = simulation_pkg.ackermann_cmd_adapter_node:main',
+        'clock_throttle_node = simulation_pkg.clock_throttle_node:main',
         'timer_based_obstacle_mover = simulation_pkg.timer_based_obstacle_mover:main',
         
         'sim_yolov8_node = simulation_pkg.lib.yolov8_node:main',

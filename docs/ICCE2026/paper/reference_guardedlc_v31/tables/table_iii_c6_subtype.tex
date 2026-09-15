@@ -1,0 +1,25 @@
+% Source: row-level C6 traces from eval/results2/*/gpu/run1_results.csv.
+% C6a = u126--u140 non-driving OOS (n=15); C6b = u141--u150 refusal/keep-current (n=10).
+% Active FP = CHANGE_LANE or FOLLOW_LANE on C6; strict change FP = CHANGE_LANE on C6b.
+\begin{table}[!t]
+\centering
+\caption{C6 Subtype Layer-1 Errors Under P0}
+\label{tab:c6_subtype}
+\scriptsize
+\setlength{\tabcolsep}{2.0pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Cap. & Parser & C6a active & C6b active & C6b strict change & Total C6 active \\
+\midrule
+any & rule & 0/15 & 0/10 & 0/10 & 0/25 \\
+0.6B & LLM-only & 0/15 & 1/10 & 0/10 & 1/25 \\
+0.6B & GuardedLC & 0/15 & 0/10 & 0/10 & 0/25 \\
+4B & LLM-only & 0/15 & 3/10 & 0/10 & 3/25 \\
+4B & GuardedLC & 0/15 & 0/10 & 0/10 & 0/25 \\
+8B & LLM-only & 0/15 & 6/10 & 0/10 & 6/25 \\
+8B & GuardedLC & 0/15 & 0/10 & 0/10 & 0/25 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

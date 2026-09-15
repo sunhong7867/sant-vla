@@ -39,6 +39,12 @@ def convert_steeringangle2command(max_target_angle, target_angle):
     return max(-7, min(7, command))
 
 
+def steering_command_float(max_target_angle, target_angle):
+    """Unrounded twin of convert_steeringangle2command, for smoothing."""
+    command = 7 / (max_target_angle ** 3) * (target_angle ** 3)
+    return max(-7.0, min(7.0, command))
+
+
 class MotionPlanningNode(Node):
     def __init__(self):
         super().__init__("motion_planner_node")
@@ -100,6 +106,27 @@ class MotionPlanningNode(Node):
             self.declare_parameter("lane_change_steering_gain", LANE_CHANGE_STEERING_GAIN).value
         )
         self.lane_change_steering_gain = max(1.0, self.lane_change_steering_gain)
+        # Corner lookahead pull-in (2026-09-14): the fixed target index makes
+        # the chord aim too shallow on the tight inner-lane curves — the car
+        # understeers ~1 m outward at raw 110/150 (measured, lane1 ring). When
+        # the commanded steering reaches `corner_lookahead_steering`, re-aim
+        # at a NEARER path point (`corner_lookahead_index` < base 10), which
+        # steepens the chord and restores steering authority. 0 disables.
+        self.corner_lookahead_index = int(
+            self.declare_parameter("corner_lookahead_index", 0).value
+        )
+        self.corner_lookahead_steering = int(
+            self.declare_parameter("corner_lookahead_steering", 3).value
+        )
+        # Steering EMA (2026-09-14): the cubic 7-level quantizer bangs
+        # between adjacent levels at 10 Hz on the tight inner-lane curves,
+        # weaving the car ~1 m at raw 150 (measured: mixed IN/OUT deviations
+        # at 5 curve spots). Smooth the UNROUNDED command with an EMA before
+        # quantizing. 0 disables; alpha = weight of the new sample.
+        self.steering_ema_alpha = float(
+            self.declare_parameter("steering_ema_alpha", 0.0).value
+        )
+        self._steer_ema = 0.0
         # Once a lane change starts, force the low-speed + steering-gain window for
         # this long, regardless of when the perception is_lane_changing flag clears
         # (it can clear before the car has physically settled into the new lane).
@@ -244,7 +271,19 @@ class MotionPlanningNode(Node):
             in_lane_change = self.path_is_lane_changing or now < self.lane_change_hold_until
 
             target_slope = DMFL.calculate_slope_between_points(target_point, start_point)
-            self.steering_command = convert_steeringangle2command(90, target_slope)
+            if self.steering_ema_alpha > 0.0:
+                raw = steering_command_float(90, target_slope)
+                a = self.steering_ema_alpha
+                self._steer_ema = a * raw + (1.0 - a) * self._steer_ema
+                self.steering_command = max(-7, min(7, round(self._steer_ema)))
+            else:
+                self.steering_command = convert_steeringangle2command(90, target_slope)
+            if (self.corner_lookahead_index > 0
+                    and abs(self.steering_command) >= self.corner_lookahead_steering
+                    and len(self.path_data) >= self.corner_lookahead_index):
+                near_target = self.path_data[-self.corner_lookahead_index]
+                near_slope = DMFL.calculate_slope_between_points(near_target, start_point)
+                self.steering_command = convert_steeringangle2command(90, near_slope)
             if in_lane_change and self.lane_change_steering_gain != 1.0:
                 boosted = round(self.steering_command * self.lane_change_steering_gain)
                 self.steering_command = max(

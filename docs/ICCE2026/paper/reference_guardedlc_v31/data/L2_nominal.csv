@@ -1,0 +1,7 @@
+capacity,parser,n,l2_correct,l1_parser_exact,rescue_gap,llm_call_rate,command_fp_oos,behavior_fp_oos,command_fp_oos_count,behavior_fp_oos_count,c6_n,reset_fail,mean_latency_ms
+any,rule,150,0.973,0.660,0.313,0.000,0.000,0.000,0,0,25,1,0.1
+0.6B,hybrid,150,0.900,0.660,0.240,0.440,0.000,0.000,0,0,25,4,366.9
+4B,llm,150,0.987,0.860,0.127,1.000,0.000,0.000,0,0,25,5,1757.4
+4B,hybrid,150,0.993,0.940,0.053,0.440,0.000,0.000,0,0,25,9,780.6
+8B,llm,150,0.993,0.927,0.067,1.000,0.040,0.040,1,1,25,14,2405.9
+8B,hybrid,150,1.000,0.967,0.033,0.440,0.000,0.000,0,0,25,12,1047.1

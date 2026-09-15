@@ -1,0 +1,5 @@
+# Install into the Python environment used by `ros2 run ... chat_gui_node`.
+PySide6>=6.6,<7
+python-xlib>=0.33,<1
+sounddevice>=0.4,<1
+faster-whisper>=1,<2
