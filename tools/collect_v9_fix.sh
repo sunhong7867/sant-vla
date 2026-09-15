@@ -4,9 +4,9 @@
 # 구멍을 냈다(66/120 손실). 스탬프 정밀도는 레코더가 브리지 헤더 시간을
 # 쓰도록 고쳐 해결(2026-09-07). 그룹 수는 고정값: V9_GROUPS 환경변수
 # 유입 사고(1000그룹) 재발 방지.
-WS=/home/sh/ROS2_project/nav-vla
+WS=/home/sh/ROS2_project/sant-vla
 OUT=$WS/eval_out/v9_fix
-DATA=$WS/src/nav_vla_pkg/data_v9
+DATA=$WS/src/sant_vla_pkg/data_v9
 TRAIN_GROUPS=28
 HELDOUT_GROUPS=6
 mkdir -p "$OUT" "$DATA"
@@ -46,7 +46,7 @@ done
 echo "[v9] 장애물 4대 상주 스폰 (파킹 스팟, 이후 teleport만)..."
 python3 - <<'PYEOF' || { echo "[v9] OBSTACLE_SPAWN_FAIL"; exit 5; }
 import sys
-sys.path.insert(0, "/home/sh/ROS2_project/nav-vla/src/simulation_pkg")
+sys.path.insert(0, "/home/sh/ROS2_project/sant-vla/src/simulation_pkg")
 from simulation_pkg import basic
 models = ["hatchback_green", "hatchback_red", "hatchback_blue",
           "hatchback_yellow"]
@@ -57,19 +57,19 @@ print("spawned", len(models))
 PYEOF
 
 echo "[v9] 오라클 기동..."
-setsid nohup ros2 run nav_vla_pkg route_oracle_node --ros-args \
+setsid nohup ros2 run sant_vla_pkg route_oracle_node --ros-args \
   -p use_sim_time:=true > "$OUT/oracle.log" 2>&1 < /dev/null &
 sleep 3
 
 run_batch() {  # $1=groups $2=prefix $3=split $4=seed $5=pack_dir
   # 배치마다 레코더를 새로 띄운다: 레코더 세션은 프로세스당 하나라, 한
   # 세션에 두 배치를 섞으면 finalize가 train/heldout을 가르지 못한다.
-  setsid nohup ros2 run nav_vla_pkg episode_recorder_node --ros-args \
+  setsid nohup ros2 run sant_vla_pkg episode_recorder_node --ros-args \
     -p out_dir:="$DATA" -p use_sim_time:=true -p use_cli_pose_stream:=false \
     > "$OUT/recorder_$2.log" 2>&1 < /dev/null &
   sleep 5
   echo "[v9] 수집: $2 ${1}그룹 split=$3 ($(date +%H:%M))..."
-  python3 $WS/src/nav_vla_pkg/scripts/collect_corpus.py \
+  python3 $WS/src/sant_vla_pkg/scripts/collect_corpus.py \
     --driver oracle --groups 0 --speed-groups 0 --floor-groups 0 \
     --ring-groups 0 --obstacle-groups "$1" --obstacle-v1-only \
     --group-prefix "$2" --split "$3" --seed "$4" --out-dir "$DATA" \
@@ -82,7 +82,7 @@ run_batch() {  # $1=groups $2=prefix $3=split $4=seed $5=pack_dir
   SESS=$(ls -dt "$DATA"/session_*/ep_0000 2>/dev/null | head -1 | xargs dirname)
   if [ -n "$SESS" ] && [ "$RC" -eq 0 ]; then
     echo "[v9] finalize: $SESS -> $5"
-    PACK_OUT=$5 bash $WS/src/nav_vla_pkg/scripts/finalize_corpus.sh "$SESS" \
+    PACK_OUT=$5 bash $WS/src/sant_vla_pkg/scripts/finalize_corpus.sh "$SESS" \
       > "$OUT/finalize_$2.log" 2>&1 \
       && echo "[v9] finalize OK" || echo "[v9] finalize FAIL — $OUT/finalize_$2.log"
   fi

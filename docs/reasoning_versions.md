@@ -50,7 +50,7 @@ heldout인지 모호), `packed_v3y_supp`는 수집 스크립트명이 `y4_supp.s
 
 ## 1. 패킹 코퍼스 (라벨이 붙는 단위)
 
-| 이름 | 위치(로컬 `src/nav_vla_pkg/`) | 에피소드 | 내용 | 비고 |
+| 이름 | 위치(로컬 `src/sant_vla_pkg/`) | 에피소드 | 내용 | 비고 |
 |---|---|---|---|---|
 | packed_v3y | `data_v3y/packed_v3y` | 173 | ring_goal(111)+cruise(62), cf축 lane/speed/floor | 7월 수집, mm급 순도. **서버 사본에는 라벨 없는 옛 세션 167ep가 섞여 있음** — 합본 시 reasoning.jsonl 보유로 필터 |
 | packed_v3y_heldout(+supp) | `data_v3y/packed_v3y_*heldout` | 22+18 | v3y heldout | 언어 평가 기본셋(40프레임) |

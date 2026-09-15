@@ -276,7 +276,7 @@ VLA_AD엔 진짜 차선변경이 없다. 두 안:
 - VLA_AD: `src/decision_making_pkg/{lasa_node,motion_planner_node,behavior_manager_node,path_planner_node}.py`,
   `src/interfaces_pkg/msg/{VlaIR,IrApplied,MotionCommand,LaneInfo}.msg`,
   `src/vision_language_action_pkg/.../vla_control_node.py`, `src/serial_communication_pkg/...`
-- nav-vla: `src/nav_vla_pkg/nav_vla_pkg/{chat_gui_node,navigator_node,policy_node,speed_control,gz_pose}.py`,
+- nav-vla: `src/sant_vla_pkg/sant_vla_pkg/{chat_gui_node,navigator_node,policy_node,speed_control,gz_pose}.py`,
   `config/zone_map.yaml`
 - 라이다 정합: `0725_4점정합ver/{live_bev_intensity_viewer,track_map_align,pick_alignment_points}.py`,
   `track_map_aligned_homography.json`

@@ -1,7 +1,7 @@
 # stage_a vs SmolVLA — 학습 입력·시뮬 출력 파이프라인 비교와 "VLA인가"에 대한 판정
 
 작성 2026-08-06. 근거 코드: `train/train_stage_a.py`, `scripts/collect_corpus.py`,
-`scripts/to_lerobot.py`, `scripts/vla_policy_server.py`, `nav_vla_pkg/vla_bridge_node.py`.
+`scripts/to_lerobot.py`, `scripts/vla_policy_server.py`, `sant_vla_pkg/vla_bridge_node.py`.
 측정치는 docs/ver/ 해당 일자 문서에서 가져옴.
 
 ---

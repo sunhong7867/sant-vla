@@ -104,7 +104,7 @@ sleep 25
 
 echo "[demo] 2/5 정책 서버 기동: $CKPT"
 setsid nohup "$POLICY_PYTHON" -u \
-  "$WS/src/nav_vla_pkg/scripts/vla_policy_server.py" \
+  "$WS/src/sant_vla_pkg/scripts/vla_policy_server.py" \
   --checkpoint "$CKPT" --endpoint ipc:///tmp/nav_vla.sock --warmup 4 \
   > "$LOGD/serve.log" 2>&1 < /dev/null &
 for _ in $(seq 1 40); do
@@ -114,14 +114,14 @@ done
 grep -q 'serving on' "$LOGD/serve.log" || { echo "정책 서버 기동 실패 — $LOGD/serve.log 확인"; exit 3; }
 
 echo "[demo] 3/5 브리지 기동..."
-setsid nohup ros2 run nav_vla_pkg vla_bridge_node --ros-args -p use_sim_time:=true \
+setsid nohup ros2 run sant_vla_pkg vla_bridge_node --ros-args -p use_sim_time:=true \
   -p image_topic:=/camera/image_raw -p max_speed:=2.25 -p speed_slew:=0.08 \
   -p track_mode:=preview -p curv_slow_alat:=0.6 -p curv_boost:=1.1 \
   > "$LOGD/bridge.log" 2>&1 < /dev/null &
 
 echo "[demo] 4/5 내비게이터 + 내레이터 기동..."
-setsid nohup ros2 run nav_vla_pkg navigator_node > "$LOGD/navigator.log" 2>&1 < /dev/null &
-setsid nohup python3 "$WS/src/nav_vla_pkg/scripts/vla_narrator.py" > "$LOGD/narrator.log" 2>&1 < /dev/null &
+setsid nohup ros2 run sant_vla_pkg navigator_node > "$LOGD/navigator.log" 2>&1 < /dev/null &
+setsid nohup python3 "$WS/src/sant_vla_pkg/scripts/vla_narrator.py" > "$LOGD/narrator.log" 2>&1 < /dev/null &
 sleep 6
 
 NPUB=$(timeout 10 ros2 topic info /cmd_vel --verbose 2>/dev/null | grep -c 'Endpoint type: PUBLISHER')
@@ -130,7 +130,7 @@ echo "[demo] /cmd_vel 퍼블리셔 수: $NPUB (2 초과면 유령 노드 — dow
 
 if [ "$GUI" = 1 ]; then
   echo "[demo] 5/5 채팅 GUI 기동..."
-  setsid nohup ros2 run nav_vla_pkg chat_gui_node --ros-args -p control_backend:=smolvla \
+  setsid nohup ros2 run sant_vla_pkg chat_gui_node --ros-args -p control_backend:=smolvla \
     > "$LOGD/chat_gui.log" 2>&1 < /dev/null &
 else
   echo "[demo] 5/5 GUI 생략 — 문장 직접 발행 예:"

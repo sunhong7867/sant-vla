@@ -31,12 +31,12 @@ setsid nohup ros2 launch simulation_pkg driving_sim.launch.py use_camera:=true \
 sleep 25
 
 setsid nohup "$NAVVLA_PY" -u \
-  $WS/src/nav_vla_pkg/scripts/vla_policy_server.py \
+  $WS/src/sant_vla_pkg/scripts/vla_policy_server.py \
   --checkpoint $CKPT --endpoint ipc:///tmp/nav_vla.sock --warmup 4 \
   > $OUT/${PFX}_serve.log 2>&1 < /dev/null &
 until grep -q 'serving on' $OUT/${PFX}_serve.log 2>/dev/null; do sleep 3; done
 
-setsid nohup ros2 run nav_vla_pkg vla_bridge_node --ros-args -p use_sim_time:=true \
+setsid nohup ros2 run sant_vla_pkg vla_bridge_node --ros-args -p use_sim_time:=true \
   -p max_speed:=3.2 -p image_topic:=/camera/image_raw -p speed_slew:=0.08 \
   ${EXTRA_BRIDGE_ARGS:-} \
   > $OUT/${PFX}_bridge.log 2>&1 < /dev/null &
@@ -46,7 +46,7 @@ NPUB=$(timeout 10 ros2 topic info /cmd_vel --verbose 2>/dev/null | grep -c 'Endp
 echo "cmd_vel publishers: $NPUB"
 [ "$NPUB" -le 2 ] || { echo GHOST; exit 20; }
 
-python3 $WS/src/nav_vla_pkg/scripts/probe_policy_counterfactual.py \
+python3 $WS/src/sant_vla_pkg/scripts/probe_policy_counterfactual.py \
   --x -1.49 --y 24.55 --yaw -1.571 --duration 115 \
   --say-a "Start driving in the inner lane, at a ${SPEED_WORD:-fast} speed." \
   --say-b "Start driving in the outer lane, at a ${SPEED_WORD:-fast} speed." \

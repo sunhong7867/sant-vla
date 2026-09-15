@@ -11,8 +11,8 @@ margin: (lane_width - car_width)/2 = (3.16 - 1.75)/2 = 0.70 m.
 """
 import json, math, os, sys, statistics as st
 
-REPO = os.path.expanduser("~/ROS2_project/nav-vla")
-paths = json.load(open(f"{REPO}/src/nav_vla_pkg/config/track_paths.json"))
+REPO = os.path.expanduser("~/ROS2_project/sant-vla")
+paths = json.load(open(f"{REPO}/src/sant_vla_pkg/config/track_paths.json"))
 C = paths["ring_center"]; N = len(C)
 LANES = {"lane1": paths["lane1"], "lane2": paths["lane2"]}
 ZONES = {name: z["lane2"]["index"] for name, z in paths["zones"].items()
