@@ -155,10 +155,32 @@ LANE2_RE = re.compile(r"lane\s*2|2\s*차선|second lane|outer lane|right lane", 
 DIRECT_DRIVE_RE = re.compile(r"direct|shortest|차선\s*무시|최단", re.IGNORECASE)
 DRIVE_TO_RE = re.compile(r"\b(go|drive|move|navigate)\b|가|이동|주행", re.IGNORECASE)
 STANDALONE_DRIVE_RE = re.compile(
-    r"^\s*(go|drive|start|resume|continue|출발|주행|가|계속\s*가)\s*$",
+    r"^\s*(go|drive|start|resume|continue|출발|주행|가|계속\s*가|고+|ㄱㄱ+)\s*$",
     re.IGNORECASE,
 )
 SEQUENCE_SPLIT_RE = re.compile(r"\bthen\b|\band\s+then\b|,|그리고|그다음|다음", re.IGNORECASE)
+# "2바퀴 주행", "drive 3 laps" — a lap-count mission: cruise N full loops from
+# the drive-start point, then stop (coordinate-supervised, like a zone arrival).
+_KO_LAP_NUM = {"한": 1, "두": 2, "세": 3, "네": 4, "다섯": 5,
+               "여섯": 6, "일곱": 7, "여덟": 8, "아홉": 9, "열": 10}
+LAP_RE = re.compile(
+    r"(\d+|한|두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s*(?:바퀴|랩|laps?|lap)\b",
+    re.IGNORECASE)
+
+
+# Dispatch outcomes the assistant LLM must not reword (see assistant_reply).
+ASSISTANT_KEEP_TEMPLATE_RE = re.compile(
+    r"nothing was sent|not a trained|not in the navigator map|parse failed|"
+    r"보내지 않았|오류|실패|찾지 못했|error", re.IGNORECASE)
+
+
+def parse_lap_count(text):
+    """Lap count in `text` (0 when none). Accepts digits and Korean words."""
+    m = LAP_RE.search(text or "")
+    if not m:
+        return 0
+    tok = m.group(1)
+    return _KO_LAP_NUM.get(tok, int(tok) if tok.isdigit() else 0)
 # Explicit phrases that name the Start line as a target. Bare "start" is left out
 # on purpose: it collides with the start verb ("start driving").
 START_LINE_PHRASES = (
@@ -627,6 +649,19 @@ class ChatGuiNode(Node):
         self.avoid_hold_pub = self.create_publisher(
             String, "/vla/avoidance_hold", transient_qos)
         self.avoid_hold_pub.publish(String(data="0"))
+        # Lap counter / N-lap mission state (see _lap_tick). Latched so a
+        # late-joining dashboard immediately shows the current lap.
+        self.lap_pub = self.create_publisher(String, "/vla/lap", transient_qos)
+        self._assistant_history = deque(maxlen=8)   # (role, text) for reply LLM
+        self._lap_target = 0        # 0 = count/display only, no auto-stop
+        self._lap_count = 0         # completed laps since the drive started
+        self._lap_progress = 0.0    # accumulated forward arc distance (m)
+        self._lap_loop = None       # loop length of the lane we parameterize on
+        self._lap_lane = None       # lane fixed at drive start
+        self._lap_s0 = None         # arc-length at drive start
+        self._lap_prev_s = None
+        self._lap_reset_pending = False
+        threading.Thread(target=self._lap_worker, daemon=True).start()
         self.status_q = queue.Queue()
         self.event_q = queue.Queue()
         self.last_parsed = None
@@ -697,6 +732,17 @@ class ChatGuiNode(Node):
         # Any new command (including the STOP shortcut) supersedes an active
         # coordinate watch: cancel the navigator goal first.
         self._cancel_vla_zone_watch()
+        # Lap-count mission: "2바퀴 주행" cruises 2 loops then stops. Strip the
+        # lap tokens so the rest ("1차선", "빠르게") still parses; a bare
+        # "N바퀴" becomes a plain drive. Only (re)arm the counter on a fresh
+        # start or when a lap number is given, so a mid-drive lane/speed tweak
+        # keeps the running count and any active target.
+        lap_target = parse_lap_count(instruction) if instruction else 0
+        if lap_target:
+            instruction = LAP_RE.sub(" ", instruction).strip() or "주행"
+        if lap_target or self._vla_mode not in {"cruise", "zone"}:
+            self._lap_target = lap_target
+            self._lap_reset_pending = True
         if not instruction:
             # Empty text is the stop shortcut: clear the bridge queue.
             self._vla_mode = "idle"
@@ -792,8 +838,9 @@ class ChatGuiNode(Node):
         parts = [f"Understood: {self._steps_summary(steps)}."]
         if sentence is None:
             self.last_dispatch = "none"
-            parts.extend(notes or ["Nothing was sent to SmolVLA."])
-            self.last_action_text = " ".join(parts)
+            # A refusal reads as a refusal: no "Understood:" head in front.
+            self.last_action_text = " ".join(
+                notes or ["Nothing was sent to SmolVLA."])
             return self.last_action_text
 
         self.vla_instruction_pub.publish(String(data=sentence))
@@ -872,7 +919,9 @@ class ChatGuiNode(Node):
             if action == "drive_direct" or self._is_direct_only_zone(zone):
                 if zone not in self.zone_names:
                     return None, (
-                        f"Zone {zone} is not in the navigator map; nothing was sent."
+                        "어느 구역으로 갈지 알려주세요 (예: M2, Start). 아무것도 보내지 않았습니다."
+                        if not zone else
+                        f"{zone}은(는) 내비게이터 지도에 없는 구역이라 보내지 않았습니다."
                     )
                 self._vla_mode = "direct"
                 self._vla_zone = zone
@@ -884,8 +933,12 @@ class ChatGuiNode(Node):
                     f"navigator가 {zone}까지 직행 (도착 시 자동 정차)."
                 )
             if zone not in VLA_ZONE_WORDS:
+                known = ", ".join(z for z in VLA_ZONE_WORDS if z != "T1/M1")
                 return None, (
-                    f"Zone {zone} is not a trained SmolVLA target; nothing was sent."
+                    f"어느 구역으로 갈지 알려주세요 (예: {known}). 아무것도 보내지 않았습니다."
+                    if not zone else
+                    f"{zone}은(는) VLA가 학습한 목적지가 아니라 보내지 않았습니다. "
+                    f"갈 수 있는 곳: {known}"
                 )
             notes = []
             if lane in {"lane1", "lane2"}:
@@ -951,10 +1004,9 @@ class ChatGuiNode(Node):
                         self._vla_direct_dist = None
                         self._vla_mode = "idle"
                         self._vla_zone = None
-                        self.event_q.put((
-                            "assistant",
+                        self.announce(
                             f"도착: {direct_zone} — 좌표 내비게이터 직행 완료, 정차.",
-                        ))
+                            f"{direct_zone}에 도착하여 정차했다(내비게이터 직행 구간 완료)")
                     return
             zone = self._vla_watch_zone
             if zone is None:
@@ -975,11 +1027,10 @@ class ChatGuiNode(Node):
                 sentence = self._vla_cruise_sentence(speed_word="slowly")
                 self.vla_instruction_pub.publish(String(data=sentence))
                 self.last_dispatch = f"{self.vla_instruction_topic} {sentence!r}"
-                self.event_q.put((
-                    "assistant",
+                self.announce(
                     f"{zone} 접근(dist={dist:.1f}m) — 감속 주행으로 전환. "
                     f'→ VLA: "{sentence}"',
-                ))
+                    f"{zone}까지 {dist:.1f}m 남아 감속 주행으로 전환했다")
                 return
             if text.startswith("arrived:"):
                 parts = text.split(None, 2)
@@ -1007,7 +1058,7 @@ class ChatGuiNode(Node):
                     reason_match = VLA_STATUS_REASON_RE.search(text)
                     if reason_match:
                         message += f" [reason={reason_match.group(1)}]"
-                    self.event_q.put(("assistant", message))
+                    self.announce(message, f"{zone}에 도착하여 정차했다")
                     return
             if text.startswith("error:"):
                 self._vla_watch_zone = None
@@ -1036,11 +1087,11 @@ class ChatGuiNode(Node):
             self.last_dispatch = (
                 f"{self.vla_instruction_topic} {sentence!r} "
                 f"(staged after {fired_zone})")
-        self.event_q.put((
-            "assistant",
+        self.announce(
             f"📍 {fired_zone} 도착 — 예약된 단계 실행, 정차 없이 계속 "
             f"주행합니다." + (f' → VLA: "{sentence}"' if sentence else ""),
-        ))
+            f"{fired_zone}을 지나며 예약된 차선/속도 변경을 적용했고 정차 없이 "
+            f"계속 주행 중이다")
 
     def _vla_cruise_sentence(self, speed_word=None):
         word = speed_word or self._vla_speed_word(self._vla_speed_raw)
@@ -1053,6 +1104,171 @@ class ChatGuiNode(Node):
         if speed_raw <= 130:
             return "at a normal speed"
         return "at a fast speed"
+
+    # ------------------------------------------------------------------
+    # VLA assistant phrasing: the LLM only WORDS what the code decided.
+    # ------------------------------------------------------------------
+    def assistant_facts(self):
+        """Live vehicle state, pre-rendered in Korean, for the reply prompt."""
+        lane = "안쪽 1차선" if self._vla_lane == "lane1" else "바깥쪽 2차선"
+        tier = {"slowly": "느림", "at a normal speed": "보통",
+                "at a fast speed": "빠름"}[self._vla_speed_word(self._vla_speed_raw)]
+        mode = {"idle": "정차 중", "cruise": f"{lane} 순환 주행 중",
+                "zone": f"{lane}으로 {self._vla_zone} 향해 주행 중(도착 시 정차)",
+                "direct": f"내비게이터가 {self._vla_zone}까지 직행 중"}.get(
+                    self._vla_mode, self._vla_mode)
+        # Laps are always stated (hiding a zero count made the model invent
+        # "three laps" when asked); the prompt limits WHEN they are mentioned.
+        laps = f"완주 {self._lap_count}바퀴" + (
+            "(아직 한 바퀴도 안 돎)" if not self._lap_count else "")
+        if self._lap_target:
+            laps += f" / 목표 {self._lap_target}바퀴"
+        parts = [f"상태: {mode}", f"차선: {lane}", f"속도 단계: {tier}", laps]
+        if self.last_nav_status and self.last_nav_status != "-":
+            parts.append(f"navigator: {self.last_nav_status[:80]}")
+        return "; ".join(parts)
+
+    def command_facts(self, steps, response):
+        """Terse Korean facts for the assistant LLM: what the car does NOW as
+        a result of a dispatched command. Not the summary sentence, which the
+        model was measured to copy verbatim. Refusals return the response so
+        the guard in assistant_reply keeps them verbatim."""
+        if ASSISTANT_KEEP_TEMPLATE_RE.search(response):
+            return response
+        lane = "안쪽 1차선" if self._vla_lane == "lane1" else "바깥쪽 2차선"
+        facts = []
+        for step in steps:
+            action = step.get("action")
+            zone = step.get("zone")
+            if action == "start":
+                facts.append(f"{lane} 순환 주행 시작")
+            elif action == "change_lane":
+                facts.append(f"{lane}으로 차선 변경")
+            elif action == "keep_lane":
+                facts.append(f"{lane} 유지하며 주행")
+            elif action == "drive_direct" or (
+                    action == "drive_to_zone" and self._is_direct_only_zone(zone)):
+                facts.append(f"{zone}까지 최단거리로 직행(내비게이터 담당), 도착하면 정차")
+            elif action == "drive_to_zone":
+                facts.append(f"{lane}을 따라 {zone}까지 주행, 도착하면 정차")
+            elif action == "stop":
+                facts.append("정지")
+            elif action == "set_speed":
+                tier = {"slowly": "느림", "at a normal speed": "보통",
+                        "at a fast speed": "빠름"}[
+                            self._vla_speed_word(int(step.get("speed") or 0))]
+                facts.append(f"속도 단계 {tier}")
+        if "〔예약〕" in response:
+            facts.append("목적지는 경유지: 도착 후 예약된 차선/속도 변경을 적용하고 정차 없이 계속 주행")
+        if "no step sequencing" in response:
+            facts.append("여러 단계 중 마지막 주행 설정만 적용")
+        return "지금 하는 일: " + "; ".join(facts) if facts else response
+
+    def assistant_reply(self, user_text, event, timeout=6.0):
+        """One natural Korean reply (1-2 sentences) grounded ONLY in `event`
+        (what the code actually did / observed) and the live facts. Returns
+        None on any failure so callers keep the deterministic template. Uses
+        the resident parser model: one call per command, not per second, so
+        the laptop budget (docs: no per-second LLM) is unaffected.
+        """
+        if self.parser_backend != "llm" or not self.parser_model:
+            return None
+        # Refusals and failures stay verbatim: a small model was measured to
+        # invert them ("IN으로 가고 있어요" for an untrained zone), and a
+        # rejected command must never read as accepted.
+        if ASSISTANT_KEEP_TEMPLATE_RE.search(str(event)):
+            return None
+        facts = self.assistant_facts()
+        history = list(self._assistant_history)
+        en = self.scene_lang == "en"     # dashboard language selector
+        if en:
+            # Generate English directly: routing a Korean reply through the
+            # dashboard translator doubled the latency and surfaced
+            # "Translation unavailable" lines when that call timed out.
+            system = (
+                "You are the SANT-VLA autonomous demo car itself, called 'VLA "
+                "Assistant'. Speak to the driver in first person about what you "
+                "are doing now. Use ONLY the facts below ('vehicle state', "
+                "'actual outcome'; they are written in Korean — read them, do not "
+                "translate them literally) and never invent actions, places or "
+                "objects. Forbidden: repeating the driver's words, copying the "
+                "outcome text, system phrasing like 'request sent', asking or "
+                "instructing the driver (you are the one acting), emoji, "
+                "markdown, Korean. End sentences with what you will do "
+                "('I'll ...'). Mention only the speed/lane given in the outcome; "
+                "mention laps only when the driver asks about laps. "
+                "Lane names: inner lane 1 / outer lane 2. Zone names (Start, M2, "
+                "M3, T1-T4, IN, OUT) stay verbatim. 1-2 natural sentences, max "
+                "30 words. Put only the answer in the reply field."
+            )
+        else:
+          system = (
+            "너는 SANT-VLA 자율주행 데모차 자신이며 이름은 'VLA 어시스턴트'다. "
+            "운전자에게 1인칭(제가)으로 지금 무엇을 하는지 말한다. 아래 '실제 처리 "
+            "결과'와 '차량 상태'만 사실로 쓰고, 거기 없는 동작·위치·물체를 지어내지 "
+            "말라. 금지: 운전자 말을 되풀이하기, 결과 문장을 그대로 옮기기, "
+            "'요청했습니다/전송했습니다' 같은 시스템 말투, '~해주세요'처럼 운전자에게 "
+            "부탁·지시하기(행동 주체는 나 자신이다), 이모지·영어 문장·마크다운. "
+            "문장은 내가 할 행동으로 '~할게요' 또는 '~하겠습니다'로 끝낸다. 속도·차선은 "
+            "실제 처리 결과에 적힌 것만, 바퀴 수는 운전자가 물을 때만 말한다. 자연스러운 한국어 존댓말 1~2문장"
+            "(50자 이내). 존 이름(Start, M2, M3, T1~T4, IN, OUT)은 그대로. "
+            "reply 필드에 답변만 넣어라."
+          )
+        if en:
+            user = (f"vehicle state: {facts}\nactual outcome: {event}\n"
+                    f"driver said: {user_text or '(nothing - automatic drive event)'}")
+        else:
+            user = (f"차량 상태: {facts}\n실제 처리 결과: {event}\n"
+                    f"운전자 말: {user_text or '(없음 — 주행 중 자동 알림)'}")
+        messages = [{"role": "system", "content": system}]
+        for role, content in history:
+            messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": user})
+        payload = {
+            "model": self.parser_model, "stream": False, "think": False,
+            "messages": messages,
+            # A format schema keeps qwen3's chain-of-thought out of the text.
+            "format": {"type": "object",
+                       "properties": {"reply": {"type": "string"}},
+                       "required": ["reply"]},
+            "options": {"temperature": 0.6, "num_predict": 160},
+            "keep_alive": "15m",
+        }
+        request = urllib.request.Request(
+            f"{self.host}/api/chat", data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"}, method="POST")
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                body = json.loads(response.read().decode("utf-8"))
+            reply = str(json.loads(body["message"]["content"])["reply"]).strip()
+        except Exception as exc:                                # noqa: BLE001
+            self.get_logger().warn(f"assistant reply failed: {exc}")
+            return None
+        reply = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", reply)
+        reply = re.sub(r"\s+", " ", reply).strip()
+        # Reject degenerate/foreign output (wrong script, CJK ideographs, empty).
+        hangul = re.search(r"[가-힣]", reply)
+        if (len(reply) < 2 or len(reply) > 200
+                or (bool(hangul) == en)
+                or re.search(r"[\u4e00-\u9fff]", reply)):
+            return None
+        self.remember_turn(user_text, reply)
+        return reply
+
+    def remember_turn(self, user_text, reply):
+        """Keep a short dialogue window so follow-ups read in context."""
+        if user_text:
+            self._assistant_history.append(("user", user_text))
+        self._assistant_history.append(("assistant", reply))
+
+    def announce(self, template, event=None):
+        """Chat line for a drive event from a non-UI thread: phrase it off the
+        ROS executor and fall back to `template` when the LLM is unavailable.
+        """
+        def worker():
+            line = self.assistant_reply("", event or template, timeout=4.0)
+            self.event_q.put(("assistant", line or template))
+        threading.Thread(target=worker, daemon=True).start()
 
     def _init_alpamayo_logs(self):
         # Only the Alpamayo judgment backend produces these records. In local
@@ -1640,6 +1856,98 @@ class ChatGuiNode(Node):
                 best = (lane, d)
         return best[0]
 
+    def _lane_s(self, lane, x, y):
+        """(arc-length of (x,y) projected onto `lane`, loop length), or None."""
+        pts = self._track_lanes.get(lane) if self._track_lanes else None
+        cumlen = getattr(self, "_lane_cumlen", {}).get(lane)
+        if not pts or not cumlen:
+            return None
+        cum, loop = cumlen
+        best_i, best_d = 0, float("inf")
+        for i, (px, py) in enumerate(pts):
+            d = (px - x) ** 2 + (py - y) ** 2
+            if d < best_d:
+                best_d, best_i = d, i
+        return cum[best_i], loop
+
+    def _lap_worker(self):
+        """~5 Hz lap counter, independent of avoidance/scene cadence."""
+        while True:
+            try:
+                self._lap_tick()
+            except Exception as exc:                            # noqa: BLE001
+                self.get_logger().warning(f"lap worker: {exc}")
+            time.sleep(0.2)
+
+    def _lap_publish(self):
+        pct = 0.0
+        if self._lap_loop:
+            pct = (self._lap_progress % self._lap_loop) / self._lap_loop
+        self.lap_pub.publish(String(data=json.dumps({
+            "lap": self._lap_count, "target": self._lap_target, "pct": pct})))
+
+    def _lap_tick(self):
+        driving = self._vla_mode in {"cruise", "zone"}
+        if self._lap_reset_pending and driving:
+            self._lap_count = 0
+            self._lap_progress = 0.0
+            self._lap_s0 = None
+            self._lap_prev_s = None
+            self._lap_lane = None
+            self._lap_reset_pending = False
+            self._lap_publish()
+        if not driving:
+            return
+        if self._ego_pose_stream is None:
+            self._ego_pose_stream = WorldPoseStream(
+                self._gz_bin, "ego_vehicle").start()
+        pose = self._ego_pose_stream.latest
+        if pose is None or (time.monotonic()
+                            - self._ego_pose_stream.received_at > 1.5):
+            return
+        x, y = pose[0], pose[1]
+        if self._lap_lane is None:
+            self._lap_lane = self._nearest_lane(x, y) or self._vla_lane
+        got = self._lane_s(self._lap_lane, x, y)
+        if got is None:
+            return
+        s, loop = got
+        self._lap_loop = loop
+        if self._lap_s0 is None:
+            self._lap_s0 = s
+            self._lap_prev_s = s
+            self._lap_publish()
+            return
+        ds = s - self._lap_prev_s
+        # Unwrap the seam where s jumps from ~loop back to ~0 (forward motion).
+        if ds < -loop / 2.0:
+            ds += loop
+        elif ds > loop / 2.0:
+            ds -= loop
+        if ds > 0.0:                        # forward only; ignore back-jitter
+            self._lap_progress += ds
+        self._lap_prev_s = s
+        count = int(self._lap_progress // loop)
+        if count > self._lap_count:
+            self._lap_count = count
+            self.announce(f"🏁 {count}바퀴 완료.", f"{count}바퀴째 완주했다")
+        self._lap_publish()
+        if self._lap_target and self._lap_count >= self._lap_target:
+            # Mission complete: stop exactly like a coordinate-supervised zone
+            # arrival (empty instruction + navigator stop), back at the start.
+            target = self._lap_target
+            self._lap_target = 0
+            self._lap_reset_pending = False
+            self._vla_mode = "idle"
+            self._vla_zone = None
+            self.vla_instruction_pub.publish(String(data=""))
+            self.nav_goal_pub.publish(String(data="stop"))
+            self.last_dispatch = (
+                f"{self.vla_instruction_topic} '' (laps {target} done)")
+            self.announce(f"🏁 목표 {target}바퀴 완주 — 정차합니다.",
+                          f"목표였던 {target}바퀴를 완주하여 정차했다")
+            self._lap_publish()
+
     def _detections_cb(self, msg):
         detections = []
         for det in msg.detections[:12]:
@@ -1761,8 +2069,8 @@ class ChatGuiNode(Node):
         if not state or state.get("color") != "red":
             if self._signal_stopped:
                 self._set_signal_stopped(False)
-                self.event_q.put((
-                    "assistant", "🟢 초록불 — 출발합니다."))
+                self.announce("🟢 초록불 — 출발합니다.",
+                              "신호가 초록불로 바뀌어 다시 출발했다")
             return False
         if self._ego_pose_stream is None:
             self._ego_pose_stream = WorldPoseStream(
@@ -2273,6 +2581,19 @@ class ChatGuiNode(Node):
         if CHANGE_LANE_RE.search(text) or STOP_WORD_RE.search(text):
             return None
         zone = self._match_zone_in_text(text)
+        explicit_lane = self._explicit_lane_from_text(text)
+        if (zone is None and explicit_lane is not None
+                and not DIRECT_DRIVE_RE.search(text)
+                and not SEQUENCE_SPLIT_RE.search(text)
+                and not POSITION_TRIGGER_RE.search(text)):
+            # "1차선 따라 주행하자" / "drive in lane 2": a lane command, not a
+            # destination — the LLM was measured to emit a zone-less
+            # drive_to_zone for it.
+            action = "keep_lane" if explicit_lane == self._vla_lane else "change_lane"
+            return self._normalize_plan({
+                "steps": [{"action": action, "zone": None, "lane": explicit_lane}],
+                "reason": "deterministic lane drive command",
+            })
         if zone is None and re.search(r"\b(go|drive|move|navigate)\s+start\b", text, re.IGNORECASE):
             zone = "Start"
         if zone not in self.zones:
@@ -2937,6 +3258,7 @@ class ChatGuiNode(Node):
             raw_steps = [parsed] if parsed.get("action") is not None else []
         steps = [self._normalize_step(step) for step in raw_steps if isinstance(step, dict)]
         steps = [step for step in steps if step["action"] != "none"]
+        steps = self._apply_zoneless_drive(steps)
         steps = self._apply_explicit_lane_override(steps)
         steps = self._apply_unspecified_lane_defaults(steps)
         steps = self._apply_stop_target(steps)
@@ -2945,11 +3267,37 @@ class ChatGuiNode(Node):
             steps = [{"action": "none", "zone": None, "lane": "default"}]
         return {"steps": steps, "reason": str(parsed.get("reason") or "")}
 
+    def _apply_zoneless_drive(self, steps):
+        """Repair drive steps the LLM emitted without a zone (measured on
+        qwen2.5vl:7b: "1차선 따라 주행하자" -> drive_to_zone[lane1] zone=None,
+        "최단거리로 가줘" -> drive_direct zone=None). A lane-only drive is a
+        lane command; a zone-less direct leg means "the target I already
+        gave you", i.e. the active zone goal."""
+        fixed = []
+        for step in steps:
+            if step["action"] in {"drive_to_zone", "drive_direct"} and not step.get("zone"):
+                if step["action"] == "drive_direct" and self._vla_zone:
+                    step = {**step, "zone": self._vla_zone}
+                elif step.get("lane") in {"lane1", "lane2"}:
+                    action = "keep_lane" if step["lane"] == self._vla_lane else "change_lane"
+                    step = {"action": action, "zone": None, "lane": step["lane"]}
+                elif step["action"] == "drive_to_zone":
+                    step = {"action": "start", "zone": None, "lane": "default"}
+            fixed.append(step)
+        return fixed
+
     def _apply_explicit_lane_override(self, steps):
-        """Do not let the LLM turn "go T4 through lane2" into direct driving."""
-        lane = self._explicit_lane_from_text(self.last_user_text or "")
+        """Do not let the LLM turn "go T4 through lane2" into direct driving.
+        When the user SAID direct/최단거리, that wins over the lane word
+        ("출발지점 2차선으로, 최단거리로 가줘" is a direct leg)."""
+        text = self.last_user_text or ""
+        lane = self._explicit_lane_from_text(text)
         if lane is None:
             return steps
+        if DIRECT_DRIVE_RE.search(text):
+            return [({**st, "action": "drive_direct"}
+                     if st["action"] == "drive_to_zone" and st.get("zone") else st)
+                    for st in steps]
         fixed = []
         for step in steps:
             if (
@@ -3325,7 +3673,10 @@ class ChatGuiWindow:
 
             def smolvla_worker():
                 response = self.node.dispatch_smolvla_instruction(text)
-                self.root.after(0, lambda: self._handle_smolvla_result(response))
+                facts = self.node.command_facts(
+                    self.node.last_parsed.get("steps", []), response)
+                reply = self.node.assistant_reply(text, facts) or response
+                self.root.after(0, lambda: self._handle_smolvla_result(reply))
 
             threading.Thread(target=smolvla_worker, daemon=True).start()
             return
@@ -3335,7 +3686,14 @@ class ChatGuiWindow:
 
         def worker():
             parsed, latency, error = self.node.parse_command(text)
-            self.root.after(0, lambda: self._handle_result(parsed, latency, error))
+            reply = None
+            if parsed is not None and not error:
+                # Dispatch here (off the Tk thread) so the reply can describe
+                # what was actually sent; _handle_result only renders.
+                response = self.node.dispatch_plan(parsed)
+                self.node.last_action_text = response
+                reply = self.node.assistant_reply(text, response) or response
+            self.root.after(0, lambda: self._handle_result(parsed, latency, error, reply))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -3353,7 +3711,7 @@ class ChatGuiWindow:
         self._append("assistant", response)
         self._append_debug(f"Action: {response}")
 
-    def _handle_result(self, parsed, latency, error):
+    def _handle_result(self, parsed, latency, error, reply=None):
         self.send_button.config(state=tk.NORMAL)
         if self.voice_available and not self.recording and not self.voice_busy:
             self.voice_button.config(state=tk.NORMAL)
@@ -3362,8 +3720,7 @@ class ChatGuiWindow:
             self._append("error", f"오류: {error}")
             self._append_debug(f"Error: {error}")
             return
-        response = self.node.dispatch_plan(parsed)
-        self.node.last_action_text = response
+        response = reply or self.node.last_action_text
         compact = json.dumps(parsed, ensure_ascii=False, sort_keys=True)
         self.status_text.set(self._debug_text(latency=latency))
         self._append("assistant", response)

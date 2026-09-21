@@ -49,7 +49,7 @@ PAIRS = [
     ('명령을 해석하고 있습니다…', 'Interpreting command…'), ('명령 처리 실패', 'Command failed'),
     ('정지 명령 전송 · 대기 중 명령 취소', 'Stop sent · Pending commands cancelled'),
     ('기준 차선', 'Reference lanes'), ('실제 궤적', 'Actual trajectory'), ('VLA 예측', 'VLA prediction'), ('장애물', 'Obstacles'),
-    ('알림', 'Notice'), ('입력', 'Input'), ('나', 'YOU'), ('주행 도우미', 'DRIVING ASSISTANT'), ('안내', 'STUDIO'),
+    ('알림', 'Notice'), ('입력', 'Input'), ('나', 'YOU'), ('VLA 어시스턴트', 'VLA ASSISTANT'), ('안내', 'STUDIO'),
     ('실시간 데이터 연결 대기', 'Waiting for live data'),
     ('Gazebo 연결을 준비하고 있습니다…', 'Connecting to Gazebo…'),
     ('3D 뷰 다시 연결', 'Reconnect 3D view'),
@@ -140,8 +140,22 @@ def _r_apply(rules, text):
     return None
 
 
-def reasoning_ko(text):
-    """Korean line for one reasoning sentence, or None when unrecognized."""
+# The language head's speed-trend guess is the weakest-grounded fact it emits
+# (~28% heldout) and defaults to the majority class "speeding up", so at a
+# steady normal cruise the narration reads "속도를 올립니다" almost every frame.
+# The code supervisor knows the commanded-speed slope exactly, so when the
+# dashboard passes it in we overwrite the *pure* trend clause with the measured
+# one. Causal tails (curve/goal) carry meaning beyond the trend and are kept.
+_TREND_KO = {'up': '속도를 올립니다', 'down': '속도를 줄입니다', 'hold': '속도를 유지합니다'}
+_PURE_TREND = set(_TREND_KO.values())
+
+
+def reasoning_ko(text, speed_trend=None):
+    """Korean line for one reasoning sentence, or None when unrecognized.
+
+    `speed_trend` (``'up'``/``'down'``/``'hold'``) overrides the model's
+    pure-trend clause with the measured commanded-speed slope when available.
+    """
     full = _r_apply(_R_FULL, text)
     if full:
         return full
@@ -150,6 +164,8 @@ def reasoning_ko(text):
         head_ko = _r_apply(_R_HEAD, head.strip())
         tail_ko = _r_apply(_R_TAIL, tail.strip().rstrip('.'))
         if head_ko and tail_ko:
+            if speed_trend in _TREND_KO and tail_ko in _PURE_TREND:
+                tail_ko = _TREND_KO[speed_trend]
             return f'{head_ko} — {tail_ko}.'
     return None
 
@@ -160,6 +176,7 @@ class DisplayLanguage(QObject):
     def __init__(self, node, parent=None):
         super().__init__(parent)
         self.language = 'ko'
+        self.speed_trend = None      # 'up'/'down'/'hold' from measured cmd_vel
         self.host = getattr(node, 'scene_host', None) or getattr(node, 'host', 'http://localhost:11434')
         self.model = getattr(node, 'scene_model', '') or getattr(node, 'parser_model', 'qwen3:4b')
         self.cache = OrderedDict()
@@ -193,7 +210,7 @@ class DisplayLanguage(QObject):
         if text in table:
             return source.replace(text, table[text], 1)
         if self.language == 'ko':
-            rendered = reasoning_ko(text)
+            rendered = reasoning_ko(text, self.speed_trend)
             if rendered:
                 return source.replace(text, rendered, 1)
         # Keep bullets / status indicators outside the translated sentence.

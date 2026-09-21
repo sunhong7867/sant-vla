@@ -256,6 +256,46 @@ class VlaBridge(Node):
         self.curv_boost_fast = float(
             self.declare_parameter("curv_boost_fast", -1.0).value)
         self._tier_boost = None      # active override, set per instruction
+        # Cross-track lane-centring assist (default OFF, xtrack_gain=0). A
+        # serving-layer supervisor for the ONE regime the 2026-09-17 imitation
+        # diagnosis characterised as unfixable by the policy alone (high-speed
+        # inner-lane curves: r21/r26 both 30-55% touch, no teacher/gain helps).
+        # It nudges the executed curvature toward the COMMANDED lane centreline
+        # from the gz ground-truth pose — the same cross-track feedback a
+        # YOLO+controller stack uses. Gated to `xtrack_tiers` so it acts only
+        # where the model fails; self-gating elsewhere (correction ~0 when
+        # already centred, via the deadband). k_corr = -gain*e, capped.
+        self.xtrack_gain = float(
+            self.declare_parameter("xtrack_gain", 0.0).value)
+        self.xtrack_cap = float(
+            self.declare_parameter("xtrack_cap_1pm", 0.06).value)
+        self.xtrack_deadband_m = float(
+            self.declare_parameter("xtrack_deadband_m", 0.15).value)
+        self.xtrack_tiers = str(
+            self.declare_parameter("xtrack_tiers", "fast").value)
+        self._xt_lane = None         # commanded lane, from the instruction
+        # Lane-change speed reduction: while the commanded lane differs from
+        # the previous one, the executed speed is scaled by this factor (same
+        # curvature, slower pace) until the gz pose is within
+        # lane_change_done_m of the new lane centreline, or the timeout.
+        # A slower swerve keeps the imitation policy inside its training
+        # envelope (lane changes were recorded at cruise pace, but the demo
+        # runs the fast tier) — user request 2026-09-21.
+        self.lane_change_speed_factor = float(
+            self.declare_parameter("lane_change_speed_factor", 0.5).value)
+        self.lane_change_max_s = float(
+            self.declare_parameter("lane_change_max_s", 8.0).value)
+        self.lane_change_done_m = float(
+            self.declare_parameter("lane_change_done_m", 0.5).value)
+        self._lane_change_t0 = None  # monotonic start, None = not changing
+        self._xt_lanes = {}
+        if self.xtrack_gain > 0.0 or self.lane_change_speed_factor < 1.0:
+            try:
+                _tp = json.load(open(os.path.expanduser(self.goal_zones_file)))
+                self._xt_lanes = {k: [(p[0], p[1]) for p in _tp[k]]
+                                  for k in ("lane1", "lane2")}
+            except Exception as exc:                            # noqa: BLE001
+                self.get_logger().warning(f"xtrack lanes unavailable: {exc}")
         self.curv_boost_lo = float(
             self.declare_parameter("curv_boost_lo", 0.05).value)
         self.curv_boost_hi = float(
@@ -325,6 +365,8 @@ class VlaBridge(Node):
             "seed": self.seed,
             "max_speed": self.max_speed,
             "speed_scale": self.speed_scale,
+            "lane_change_speed_factor": self.lane_change_speed_factor,
+            "lane_change_max_s": self.lane_change_max_s,
             "speed_slew": self.speed_slew,
             "track_mode": self.track_mode,
             "curv_gain_lo": self.curv_gain_lo,
@@ -594,6 +636,22 @@ class VlaBridge(Node):
             elif ("fast" in low or "quickly" in low or "briskly" in low
                   or "high speed" in low) and self.curv_boost_fast > 0:
                 self._tier_boost = self.curv_boost_fast
+            # Commanded lane for the cross-track assist reference centreline.
+            prev_lane = self._xt_lane
+            self._xt_lane = None
+            if ("inner" in low or "left lane" in low or "lane 1" in low
+                    or "lane1" in low):
+                self._xt_lane = "lane1"
+            elif ("outer" in low or "right lane" in low or "lane 2" in low
+                  or "lane2" in low):
+                self._xt_lane = "lane2"
+            # A lane switch between two driving instructions starts the
+            # slow-swerve window; a fresh start or a stop does not.
+            if (prev_lane and self._xt_lane and prev_lane != self._xt_lane
+                    and self.lane_change_speed_factor < 1.0):
+                self._lane_change_t0 = time.monotonic()
+            else:
+                self._lane_change_t0 = None
             self.get_logger().info(
                 f"instruction: {text!r} (queue + counters reset, "
                 f"curv_boost={self._tier_boost or self.curv_boost})")
@@ -677,6 +735,9 @@ class VlaBridge(Node):
             if v < lo or v > hi:
                 v = min(max(v, lo), hi)
                 override = "slew"
+        if self._lane_change_active():
+            v *= self.lane_change_speed_factor
+            override = "lane_change"
         if self.track_mode == "pursuit":
             k_pursuit = self._pursuit_curvature(a, abs(v))
             if k_pursuit is not None:
@@ -700,6 +761,10 @@ class VlaBridge(Node):
                 if abs(gain - 1.0) > 1e-6:
                     k *= gain
                     override = "curv_boost"
+            k_xt = self._xtrack_correction()
+            if k_xt != 0.0:
+                k += k_xt
+                override = "xtrack"
             if abs(k) > MAX_CURVATURE:
                 k = math.copysign(MAX_CURVATURE, k)
                 override = "clamp_curvature"
@@ -750,6 +815,88 @@ class VlaBridge(Node):
             if cap is None or v_now < cap:
                 cap = v_now
         return cap
+
+    def _lane_to_centreline_m(self, lane):
+        """|cross-track| of the gz pose to `lane`'s centreline, None if unknown."""
+        pts = self._xt_lanes.get(lane) if lane else None
+        if not pts or not self._pose_stream:
+            return None
+        pose = self._pose_stream.latest
+        if pose is None or time.monotonic() - self._pose_stream.received_at > 0.5:
+            return None
+        x, y = pose[0], pose[1]
+        n = len(pts)
+        i = min(range(n), key=lambda j: (pts[j][0]-x)**2 + (pts[j][1]-y)**2)
+        px, py = pts[i]
+        nx, ny = pts[(i + 1) % n]
+        theta = math.atan2(ny - py, nx - px)
+        return abs((x - px) * math.sin(theta) - (y - py) * math.cos(theta))
+
+    def _lane_change_active(self):
+        """True while the lane-change speed reduction applies; clears itself
+        on arrival at the new centreline (after a 1 s grace so the
+        pre-swerve position does not count) or on timeout."""
+        t0 = self._lane_change_t0
+        if t0 is None:
+            return False
+        elapsed = time.monotonic() - t0
+        done = elapsed >= self.lane_change_max_s
+        reason = "timeout"
+        if not done and elapsed >= 1.0:
+            dist = self._lane_to_centreline_m(self._xt_lane)
+            if dist is not None and dist <= self.lane_change_done_m:
+                done, reason = True, f"centred ({dist:.2f} m)"
+        if done:
+            self._lane_change_t0 = None
+            self.get_logger().info(
+                f"lane change to {self._xt_lane}: speed factor "
+                f"{self.lane_change_speed_factor} released after "
+                f"{elapsed:.1f} s ({reason})")
+            return False
+        return True
+
+    def _xtrack_correction(self):
+        """Curvature nudge toward the commanded lane centreline (0 if off/gated).
+
+        The imitation policy is stable and centred at normal/slow speed but
+        drifts on high-speed inner-lane curves (diagnosis 2026-09-17). Here the
+        code supervisor closes a cross-track loop the policy cannot: from the gz
+        pose it measures signed offset e to the commanded lane and returns
+        k_corr = -gain*e (capped), acting only in `xtrack_tiers`. Straights and
+        already-centred frames fall in the deadband and get no correction.
+        """
+        if self.xtrack_gain <= 0.0 or not self._xt_lane or not self._xt_lanes:
+            return 0.0
+        if self.xtrack_tiers:
+            tier = ("fast" if self._tier_boost == self.curv_boost_fast
+                    else "slow" if self._tier_boost == self.curv_boost_slow
+                    else "normal")
+            if tier not in self.xtrack_tiers.split(","):
+                return 0.0
+        if not self._pose_stream:
+            return 0.0
+        pose = self._pose_stream.latest
+        if pose is None or time.monotonic() - self._pose_stream.received_at > 0.5:
+            return 0.0
+        pts = self._xt_lanes.get(self._xt_lane)
+        if not pts:
+            return 0.0
+        x, y = pose[0], pose[1]
+        n = len(pts)
+        i = min(range(n), key=lambda j: (pts[j][0]-x)**2 + (pts[j][1]-y)**2)
+        px, py = pts[i]
+        nx, ny = pts[(i + 1) % n]
+        theta = math.atan2(ny - py, nx - px)
+        # signed cross-track: + when the ego is RIGHT of the path direction.
+        e = (x - px) * math.sin(theta) - (y - py) * math.cos(theta)
+        if abs(e) < self.xtrack_deadband_m:
+            return 0.0
+        e -= math.copysign(self.xtrack_deadband_m, e)
+        # Sign set empirically: the bridge's +curvature and this e sign make
+        # +gain*e the corrective (centre-seeking) direction; -gain*e diverged
+        # the car a full lane-width (2026-09-17 probe).
+        k_corr = self.xtrack_gain * e
+        return max(-self.xtrack_cap, min(self.xtrack_cap, k_corr))
 
     def _preview_curvature(self, popped, speed):
         """Mean curvature of the predicted path over the lookahead window.

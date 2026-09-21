@@ -332,7 +332,10 @@ def load_model(entity_name, model_name, random_coordinates, skip_if_exists=True)
 
 def driving_ego():  
     # Fixed start pose captured from Gazebo at the desired lane position.
-    random_x = 3.7
+    # Nose 0.2 m behind the painted Start line (x=2.27, texture-measured).
+    # The car drives toward -x here and the prius nose (local -y) sits 2.4 m
+    # ahead of the model origin (2026-09-21).
+    random_x = 4.9
     random_y = 24.594280242919915
     
     z = 0.012649910524487494

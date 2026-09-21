@@ -243,13 +243,14 @@ class BevView(QWidget):
 class ResultBus(QObject):
     parsed = Signal(int, str, object)
     failed = Signal(int, str)
+    replied = Signal(str)
     service = Signal(str)
     scenario_done = Signal(str, str)
 
 
 # Follow-camera offsets in the vehicle frame: (left, back, height).
 # The low, close diagonal views are for checking whether a wheel touches a lane line.
-FOLLOW_OFFSETS = {"ego": (0., 8., 5.), "ego_left": (3.5, 6., 2.5), "ego_right": (-3.5, 6., 2.5)}
+FOLLOW_OFFSETS = {"ego": (0., 8., 5.), "ego_left": (2.5, 4.5, 2.), "ego_right": (-2.5, 4.5, 2.)}
 
 
 class DashboardWindow(QMainWindow):
@@ -290,6 +291,7 @@ class DashboardWindow(QMainWindow):
         self.bus = ResultBus(self)
         self.bus.parsed.connect(self.on_parsed)
         self.bus.failed.connect(self.on_failed)
+        self.bus.replied.connect(self.on_replied)
         self.bus.service.connect(self.show_service_result)
         self.bus.scenario_done.connect(self.on_scenario_done)
         self.setWindowTitle("NAV / VLA · Driving Studio")
@@ -565,7 +567,7 @@ class DashboardWindow(QMainWindow):
         if role in {"user", "assistant", "error"}:
             self.record_event(("입력: " if role == "user" else "") + str(text))
         colors = {"user": "#6de3ce", "assistant": "#dce7f7", "system": "#8c9db5", "error": "#ffb8bd"}
-        names = {"user": "YOU", "assistant": "DRIVING ASSISTANT", "system": "STUDIO", "error": "알림"}
+        names = {"user": "YOU", "assistant": "VLA ASSISTANT", "system": "STUDIO", "error": "알림"}
         alignment = "right" if role == "user" else "left"
         self.chat_log.append(f'<p align="{alignment}" style="color:{colors[role]}; margin-top:14px">'
                              f'<b>{names[role]}</b><br>{html.escape(str(text)).replace(chr(10), "<br>")}</p>')
@@ -627,26 +629,77 @@ class DashboardWindow(QMainWindow):
             return
         self.send_button.setEnabled(True)
         plan, latency, error = result
+        if error:
+            self.on_failed(generation, error)
+            return
         # Do not forward failed/unsupported commands as unvalidated raw VLA text.
-        if error or not plan or not any(s.get("action") != "none" for s in plan.get("steps", [])):
-            self.on_failed(generation, error or "실행 가능한 주행 명령을 찾지 못했습니다.")
+        if not plan or not any(s.get("action") != "none" for s in plan.get("steps", [])):
+            # Not a driving command: answer as the assistant (state questions,
+            # small talk) without touching the vehicle; template error if the
+            # LLM is unavailable.
+            self.command_status.setText("답변을 작성하고 있습니다…")
+            self.phrase_reply(text, "차량 동작 변화 없음(명령 아님)",
+                              fallback=None, generation=generation)
             return
         try:
             if self.node.control_backend == "smolvla":
                 response = self.node.dispatch_smolvla_instruction(text, parsed_result=result)
             else:
                 response = self.node.dispatch_plan(plan)
-            self.add_chat("assistant", self.command_summary(plan, response))
-            self.command_status.setText(f"명령 전송 완료 · 해석 {latency:.2f}초")
+            summary = self.command_summary(plan, response)
+            self.command_status.setText(f"명령 전송 완료 · 해석 {latency:.2f}초 · 답변 작성 중…")
+            facts = self.node.command_facts(plan.get("steps", []), response)
+            self.phrase_reply(text, facts, fallback=summary, generation=generation)
         except Exception as exc:
             self.on_failed(generation, str(exc))
+
+    def phrase_reply(self, text, event, fallback, generation):
+        """Let the assistant LLM word the reply off the Qt thread. The event
+        text is what actually happened (the deterministic summary), so the
+        model can only rephrase it; `fallback` is shown when the LLM fails
+        (None = report a failed command instead)."""
+        def worker():
+            try:
+                reply = self.node.assistant_reply(text, event)
+            except Exception:                                   # noqa: BLE001
+                reply = None
+            if self.closing:
+                return
+            if reply:
+                self.bus.replied.emit(reply)
+            elif fallback:
+                self.node.remember_turn(text, fallback)
+                self.bus.replied.emit(fallback)
+            else:
+                self.bus.failed.emit(generation, "실행 가능한 주행 명령을 찾지 못했습니다.")
+        threading.Thread(target=worker, daemon=True).start()
+
+    def on_replied(self, reply):
+        # Not gated on generation: a reply for an earlier command still
+        # belongs in the log even if a newer command is already in flight.
+        if self.closing:
+            return
+        self.add_chat("assistant", reply)
+        status = self.command_status.text()
+        if status.endswith(" · 답변 작성 중…"):
+            self.command_status.setText(status[:-len(" · 답변 작성 중…")])
+        elif status == "답변을 작성하고 있습니다…":
+            self.command_status.setText("답변 완료")
+
+    def commanded_lane_name(self):
+        # smolvla mode has no lane feedback: the commanded adapter lane is the
+        # truth (current_lane can be overwritten by /lane_state estimates).
+        lane = (self.node._vla_lane if self.node.control_backend == "smolvla"
+                else self.node.current_lane)
+        return "안쪽 1차선" if lane == "lane1" else "바깥쪽 2차선"
 
     def command_summary(self, plan, response):
         # Keep the exact canonical instruction in the status log, and make
         # the conversation about what the driver asked the vehicle to do.
-        if "nothing was sent" in response.lower() or "not a trained" in response.lower():
+        if ("보내지 않았" in response or "nothing was sent" in response.lower()
+                or "not a trained" in response.lower()):
             return response
-        lane = "안쪽 1차선" if self.node.current_lane == "lane1" else "바깥쪽 2차선"
+        lane = self.commanded_lane_name()
         if "〔예약〕" in response:
             # Staged waypoint plan: the zone is a pass-through, not a stop.
             steps = plan.get("steps", [])
@@ -904,7 +957,14 @@ class DashboardWindow(QMainWindow):
         self.bev.prediction = plan if plan is not None and pose is not None else []
         plan_info = fresh(snapshot, "plan_info", age=2.0, now=data_time) or {}
         preview_note = f" · 미래 {plan_info['horizon_s']:.1f}초" if self.bev.prediction and plan_info else ""
-        self.bev_status.setText(f"● 궤적 {len(self.bev.trail)} · 예측 {max(0,len(self.bev.prediction)-1)}{preview_note} · 장애물 {len(self.bev.obstacles)}" if pose is not None
+        lap = fresh(snapshot, "lap", age=3.0)
+        lap_note = ""
+        if lap and (lap.get("target") or lap.get("lap")):
+            lap_note = f"🏁 {int(lap['lap']) + 1}바퀴째 {int(lap.get('pct', 0) * 100)}%"
+            if lap.get("target"):
+                lap_note += f" / 목표 {int(lap['target'])}바퀴"
+            lap_note += " · "
+        self.bev_status.setText(f"{lap_note}● 궤적 {len(self.bev.trail)} · 예측 {max(0,len(self.bev.prediction)-1)}{preview_note} · 장애물 {len(self.bev.obstacles)}" if pose is not None
                                 else "위치 신호 없음/지연 · 차량과 예측 경로 표시 중단")
         self.bev.update()
         odom = self.node.latest_pose
@@ -993,6 +1053,7 @@ class DashboardWindow(QMainWindow):
                 break
             for description in self.status_summary.feed(message):
                 self.record_event(description)
+        self.display_language.speed_trend = fresh(snapshot, "speed_trend", age=2.0)
         self.display_language.apply(self)
 
     def keyPressEvent(self, event):
@@ -1018,6 +1079,9 @@ class DashboardWindow(QMainWindow):
 
 def attach_telemetry(node):
     from rclpy.qos import qos_profile_sensor_data
+    from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy
+    latched_qos = QoSProfile(depth=1, history=HistoryPolicy.KEEP_LAST,
+                             durability=DurabilityPolicy.TRANSIENT_LOCAL)
     from sensor_msgs.msg import Image
     from std_msgs.msg import String
     telemetry = Telemetry()
@@ -1054,6 +1118,11 @@ def attach_telemetry(node):
             text = msg.data
         if text:
             telemetry.put("reasoning", text)
+    def lap_cb(msg):
+        try:
+            telemetry.put("lap", json.loads(msg.data))
+        except (ValueError, TypeError):
+            pass
     def plan_cb(msg, preview=False):
         try:
             data = json.loads(msg.data)
@@ -1078,11 +1147,30 @@ def attach_telemetry(node):
                 "requested_at": data.get("requested_at")})
         except (ValueError, KeyError, TypeError, IndexError):
             pass
+    # Measured commanded-speed trend for the narration: the model's own trend
+    # word is poorly grounded, so we read the actual /cmd_vel slope and hand it
+    # to the translator (see dashboard_language.reasoning_ko).
+    from geometry_msgs.msg import Twist
+    speed_hist = deque()          # (t_mono, |v|), trimmed to a 2 s window
+    def cmd_vel_cb(msg):
+        t = time.monotonic()
+        speed_hist.append((t, abs(msg.linear.x)))
+        while speed_hist and t - speed_hist[0][0] > 2.0:
+            speed_hist.popleft()
+        recent = [v for ts, v in speed_hist if t - ts <= 0.6]
+        older = [v for ts, v in speed_hist if t - ts >= 1.4]
+        if not recent or not older:
+            return
+        dv = sum(recent) / len(recent) - sum(older) / len(older)
+        telemetry.put("speed_trend",
+                      "up" if dv > 0.15 else "down" if dv < -0.15 else "hold")
     subscriptions = [
+        node.create_subscription(Twist, "/cmd_vel", cmd_vel_cb, qos_profile_sensor_data),
         node.create_subscription(Image, node.alpamayo_image_topic, image_cb, qos_profile_sensor_data),
         node.create_subscription(Image, "/ego_top_camera/image_raw",
                                  lambda msg: image_cb(msg, "top_image"), qos_profile_sensor_data),
         node.create_subscription(String, "/vla/reasoning", reason_cb, 5),
+        node.create_subscription(String, "/vla/lap", lap_cb, latched_qos),
         node.create_subscription(String, "/vla/plan", plan_cb, 5),
         node.create_subscription(String, "/vla/preview", lambda msg: plan_cb(msg, True), 5),
         node.create_subscription(String, node.vla_status_topic, status_cb, 5),

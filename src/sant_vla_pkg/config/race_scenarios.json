@@ -4,7 +4,7 @@
     "description": "Start 2차선 · 반시계 1바퀴",
     "source": "output/blender/nav_vla_driving_ego_only.blend",
     "ego_pose": [
-      3.70000005,
+      4.9,
       24.59428024,
       0.01264991,
       -3e-08,
@@ -19,7 +19,7 @@
     "description": "Start / T3 2차선 · 상대 차량은 배치만 제공",
     "source": "output/blender/tournament/tournament_animated.blend",
     "ego_pose": [
-      3.22875214,
+      4.9,
       24.5478363,
       0.01265,
       0.0,
@@ -32,7 +32,7 @@
         "entity": "race_opponent",
         "model": "prius_hybrid",
         "pose": [
-          -1.38975215,
+          -2.7,
           -24.57261848,
           0.01265,
           0.0,
@@ -129,12 +129,12 @@
         "entity": "obstacle4",
         "model": "prius_hybrid",
         "pose": [
-          3.6779201,
-          -5.72370005,
+          4.55,
+          -5.74,
           0.01265,
           0.0,
           -0.0,
-          4.69933617
+          4.712389
         ],
         "kind": "vehicle"
       },
@@ -142,12 +142,12 @@
         "entity": "obstacle5",
         "model": "prius_hybrid",
         "pose": [
-          3.7699101,
-          1.54263997,
+          4.55,
+          1.52,
           0.01265,
           0.0,
           -0.0,
-          4.6891762
+          4.712389
         ],
         "kind": "vehicle"
       },
@@ -155,12 +155,12 @@
         "entity": "obstacle6",
         "model": "prius_hybrid",
         "pose": [
-          -7.76423073,
-          -2.94410634,
+          -7.19,
+          -2.91,
           0.01265,
           0.0,
           -0.0,
-          3.130481
+          3.141593
         ],
         "kind": "vehicle"
       },
@@ -168,12 +168,12 @@
         "entity": "obstacle7",
         "model": "prius_hybrid",
         "pose": [
-          -7.83047104,
-          8.301054,
+          -7.19,
+          8.34,
           0.01265,
           0.0,
           -0.0,
-          3.15643537
+          3.141593
         ],
         "kind": "vehicle"
       }
