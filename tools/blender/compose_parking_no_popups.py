@@ -3,7 +3,7 @@ import json,subprocess,time
 from pathlib import Path
 from PIL import Image,ImageDraw
 from compose_tournament_video import font,txt,BG,CARD,FG,MUTED,COLORS
-ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'output/blender/parking';OUT=SRC;OUT.mkdir(exist_ok=True);meta=json.loads((SRC/'metadata.json').read_text());BLUE=COLORS[0];GREEN=(71,229,132)
+ROOT=Path(__file__).resolve().parents[2];SRC=ROOT/'output/blender/parking_v5';OUT=ROOT/'output/blender/parking_no_popups';OUT.mkdir(exist_ok=True);meta=json.loads((SRC/'metadata.json').read_text());BLUE=COLORS[0];GREEN=(71,229,132)
 cache={}
 def frame(i,intro=False,outro=False):
  r=meta['frames'][i];key=r['render']
@@ -20,6 +20,7 @@ def frame(i,intro=False,outro=False):
     time.sleep(.5)
  im=Image.new('RGB',(1920,1080),BG);im.paste(cache[key],(0,80));d=ImageDraw.Draw(im)
  txt(d,(32,23),'수직주차 · 평행주차 미션',33,b=True);txt(d,(565,31),'미션 2 주행 예시',23,MUTED)
+ d.rounded_rectangle((1110,18,1380,62),radius=12,fill=CARD);txt(d,(1127,29),'주차·조향 실시간' if r['realtime'] else '이동 2배속',21)
  txt(d,(1440,25),'출발 준비' if intro else '미션 완료' if outro else '주차 미션 진행',31,b=True)
  d.line((1410,80,1410,1030),fill=(47,62,82),width=2)
  x,y=r['screen'];y+=80;d.line((x,y+14,x,y+34),fill=BLUE,width=2);d.ellipse((x-17,y-17,x+17,y+17),fill=BLUE,outline=FG,width=2);d.text((x,y),'E',font=font(22,True),fill=BG,anchor='mm')
@@ -29,10 +30,13 @@ def frame(i,intro=False,outro=False):
   y=305+j*175;d.rounded_rectangle((1435,y,1888,y+152),radius=18,fill=CARD)
   txt(d,(1458,y+20),title,27,b=True);txt(d,(1458,y+64),desc,23,MUTED)
   state='완료' if done>j else '진행 중' if done==j and not intro else '대기';txt(d,(1458,y+105),state,23,GREEN if done>j else BLUE,True)
+ d.rounded_rectangle((1435,683,1888,858),radius=18,fill=CARD);txt(d,(1458,704),'현재 차량 상태',24,b=True)
+ txt(d,(1458,748),'출발 대기' if intro else 'OUT 도달' if outro else r['gear'],34,BLUE,True)
+ txt(d,(1458,801),'각 주차구획에서 5초 이상 정차',22,MUTED)
  if r['hold']:
   txt(d,(1445,889),'주차 정지 유지',25,b=True);txt(d,(1445,933),f"{min(r['stop_time'],5.5):04.1f}초 / 5초",36,GREEN,True)
  else:
-  pass
+  txt(d,(1445,891),'앞바퀴 조향 · 뒷바퀴 방향 고정',22,MUTED);txt(d,(1445,934),'출차 전 후진으로 공간 확보',23)
  d.rectangle((0,1030,1920,1080),fill=BG)
  return im
 if __name__=='__main__':

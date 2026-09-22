@@ -56,6 +56,12 @@ def main():
                     "natural-frequency sampling; the same weights apply "
                     "to the reasoning CE only, the action expert sees the "
                     "true data distribution.")
+    ap.add_argument("--action-v10p-weight", type=float, default=1.0,
+                    help="r23: action-loss multiplier for v10p RECOVERY "
+                    "demos (session_20260915, jittered-start return-to-lane). "
+                    ">1 amplifies the rare closed-loop correction signal r22 "
+                    "proved works but was diluted at 10%% (recovery gain "
+                    "+0.01 vs demo -0.10). Applied before other v10 rules.")
     ap.add_argument("--action-v10-weight", type=float, default=1.0,
                     help="r21: action-loss multiplier for v10 sessions "
                     "(2026-09-14+). 0.0 = bank v10's language win while "
@@ -223,18 +229,29 @@ def main():
             except OSError:
                 print("WARNING: no nav_vla_index.jsonl — v9 damping off")
             v10_eps = set()
+            v10p_eps = set()
             try:
                 with open(os.path.join(args.dataset,
                                        "nav_vla_index.jsonl")) as f:
                     for line in f:
                         row = json.loads(line)
-                        if "session_2026091" in row["packed_episode"]:
+                        name = row["packed_episode"]
+                        if "session_2026091" in name:
                             v10_eps.add(row["lerobot_episode_index"])
+                        # v10p recovery demos (jittered-start, 2026-09-15):
+                        # the rare correction signal r22 proved works but was
+                        # diluted at 10%. r23 boosts them in the action loss.
+                        if "session_20260915" in name:
+                            v10p_eps.add(row["lerobot_episode_index"])
             except OSError:
                 pass
-            n_damp = n_cruise = n_nonv10 = n_v10 = 0
+            n_damp = n_cruise = n_nonv10 = n_v10 = n_v10p = 0
             for i in range(len(ds)):
                 e = int(epi[i])
+                if args.action_v10p_weight != 1.0 and e in v10p_eps:
+                    aw[i] *= args.action_v10p_weight
+                    n_v10p += 1
+                    continue
                 if args.action_non_v10_weight != 1.0 and e not in v10_eps:
                     aw[i] *= args.action_non_v10_weight
                     n_nonv10 += 1
@@ -250,6 +267,9 @@ def main():
                       and e in v3y_cruise_eps):
                     aw[i] *= args.action_v3y_cruise_weight
                     n_cruise += 1
+            if args.action_v10p_weight != 1.0:
+                print(f"v10p RECOVERY action x{args.action_v10p_weight} on "
+                      f"{n_v10p} frames ({len(v10p_eps)} v10p episodes)")
             if args.action_v10_weight != 1.0:
                 print(f"v10 action x{args.action_v10_weight} on "
                       f"{n_v10} frames ({len(v10_eps)} v10 episodes)")

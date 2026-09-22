@@ -117,9 +117,19 @@ def main():
                     choices=["lane1", "lane2"])
     ap.add_argument("--speed", default="slowly")
     ap.add_argument("--timeout", type=float, default=150.0)
+    ap.add_argument("--models", default=None,
+                    help="comma list of simulation_pkg models, one per "
+                         "obstacle in order (default: hatchback colours). "
+                         "Held-out object test: e.g. --models ob_person")
+    ap.add_argument("--no-supervisor", action="store_true",
+                    help="policy-native avoidance: do not wait for the chat "
+                         "GUI's 'avoid:' log line and never republish the "
+                         "sentence (a repeat overrides a live lane switch)")
     ap.add_argument("--cleanup", action="store_true",
                     help="remove trial obstacles and exit")
     args = ap.parse_args()
+    models = ([m.strip() for m in args.models.split(",") if m.strip()]
+              if args.models else MODELS)
 
     from simulation_pkg import basic
 
@@ -146,7 +156,7 @@ def main():
         lane, frac = part.split(":")
         x, y, yaw = lane_pose(paths, lane, float(frac))
         specs.append({"entity": f"trial_ob{i+1}",
-                      "model": MODELS[i % len(MODELS)],
+                      "model": models[i % len(models)],
                       "lane": lane, "frac": float(frac),
                       "x": x, "y": y, "yaw": yaw})
 
@@ -177,7 +187,7 @@ def main():
           f" '{sentence}'", flush=True)
     # Verify the SUPERVISOR engaged (it logs an "avoid:" snapshot on its
     # first cruise tick); if the GUI missed the publish, resend.
-    for attempt in range(4):
+    for attempt in range(0 if args.no_supervisor else 4):
         time.sleep(3.0)
         if any("avoid:" in ln for ln in avoid_log_since(offset)):
             break

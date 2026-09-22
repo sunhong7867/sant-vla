@@ -63,6 +63,15 @@ preflight() {
       }
     fi
   fi
+  # NVIDIA 드라이버 업그레이드 후 미재부팅이면 커널모듈/유저랜드 버전이 어긋나
+  # gz 서버(ogre2)가 GLX BadValue로 즉사한다(2026-09-21). 시뮬 기동 전에 걸러낸다.
+  if command -v nvidia-smi >/dev/null 2>&1; then
+    if nvidia-smi -L 2>&1 | grep -q 'Driver/library version mismatch'; then
+      echo "[demo] NVIDIA 드라이버 불일치(커널 모듈 vs 라이브러리) — 재부팅이 필요합니다."
+      echo "       증상: gz 서버가 'X Error BadValue (GLX)'로 죽고 /world/default/control 타임아웃"
+      failed=1
+    fi
+  fi
   [ "$failed" -eq 0 ]
 }
 
@@ -84,6 +93,7 @@ kill_stack() {
   pat='lane_info_extracto'; pkill -f "${pat}r"           2>/dev/null
   pat='lidar_obstacle_detecto'; pkill -f "${pat}r"       2>/dev/null
   pat='clock_throttl';    pkill -f "${pat}e"             2>/dev/null
+  pat='ackermann_cmd_adapte'; pkill -f "${pat}r"         2>/dev/null
   # Qt GUI는 이벤트 루프가 파이썬 시그널을 삼켜 SIGTERM으로 안 죽는 경우가
   # 있음 — 잠시 후에도 살아있으면 강제 종료
   sleep 2
@@ -93,7 +103,7 @@ kill_stack() {
   # 컨트롤러가 2개가 되어 /cmd_vel을 서로 뺏는다(차선 침범 사고의 실제 원인).
   # 전부 사라질 때까지 최대 10초 대기.
   for _ in $(seq 1 10); do
-    pgrep -f "vla_bridge_nod[e]|navigator_nod[e]|chat_gui_nod[e]|vla_policy_serve[r]|simulation_sende[r]|motion_planner_nod[e]|yolov8_nod[e]|lidar_obstacle_detecto[r]|gz si[m]" >/dev/null || break
+    pgrep -f "vla_bridge_nod[e]|navigator_nod[e]|chat_gui_nod[e]|vla_policy_serve[r]|simulation_sende[r]|motion_planner_nod[e]|yolov8_nod[e]|lidar_obstacle_detecto[r]|ackermann_cmd_adapte[r]|clock_throttl[e]|gz si[m]" >/dev/null || break
     sleep 1
   done
 }
@@ -210,9 +220,12 @@ else
   if [ -n "${NAVVLA_CKPT:-}" ] || [ "$CKPT" != "$WS/models/ckpt_v6_60k" ]; then
     DEFAULT_REMOTE=runs/navvla_smolvla_${ver}/checkpoints/060000/pretrained_model
   else
-    # r16 (2026-09-11): lane median 0.346 m vs r11 0.88 — v9 excluded from
-    # the action loss, new cause->action labels, zero clear-frame mentions.
-    DEFAULT_REMOTE=runs/navvla_reasoning_r16/checkpoints/025000/pretrained_model
+    # r26 (2026-09-17): Stanley reactive-teacher single cruise action — the
+    # imitation-phase fix. Clean/centred at normal+slow (no oracle-phase
+    # oscillation); high-speed inner-lane curves are closed by the bridge's
+    # cross-track assist (xtrack, fast tier only) below. See
+    # docs/ver/20260916_1945_oracle-vs-yolo-imitation-diagnosis.md.
+    DEFAULT_REMOTE=runs/navvla_reasoning_r26/checkpoints/last/pretrained_model
   fi
   RCKPT=${REMOTE_CKPT:-$DEFAULT_REMOTE}
   echo "[demo] 2/5 정책 서버 기동(랩서버 4070Ti): $RCKPT"
@@ -259,6 +272,7 @@ setsid nohup ros2 run sant_vla_pkg vla_bridge_node --ros-args -p use_sim_time:=t
   -p image_topic:=/camera/image_raw -p max_speed:=2.25 -p speed_slew:=0.08 \
   -p track_mode:=preview -p curv_slow_alat:=0.6 -p curv_boost:=0.95 \
   -p curv_boost_slow:=0.85 -p curv_boost_fast:=0.85 \
+  -p xtrack_gain:="${XTRACK_GAIN:-0.15}" -p xtrack_tiers:="${XTRACK_TIERS:-fast}" \
   > "$LOGD/bridge.log" 2>&1 < /dev/null &
 
 echo "[demo] 4/5 내비게이터 + 내레이터 기동..."

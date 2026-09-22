@@ -160,6 +160,14 @@ class RouteOracle(Node):
         self.lookahead_base = float(self.declare_parameter("lookahead_base", 2.1).value)
         self.lookahead_gain = float(self.declare_parameter("lookahead_gain", 0.9).value)
         self.lookahead_max = float(self.declare_parameter("lookahead_max", 5.0).value)
+        # Controller: "pure_pursuit" (lookahead point -> anticipatory phase, cuts
+        # corners) or "stanley" (cross-track + heading error -> REACTIVE phase,
+        # drives dead-centre). The 2026-09-16 imitation diagnosis found the
+        # oracle's pure-pursuit lookahead LEAD (phase -1.2f) is what destabilises
+        # SmolVLA imitation; Stanley is reactive (no lookahead point) and centres.
+        self.controller = str(self.declare_parameter("controller", "pure_pursuit").value)
+        self.stanley_k = float(self.declare_parameter("stanley_k", 2.0).value)
+        self.stanley_ksoft = float(self.declare_parameter("stanley_ksoft", 0.6).value)
         self.accel_limit = float(self.declare_parameter("accel_limit", 0.55).value)
         self.arrive_tol = float(self.declare_parameter("arrive_tol_m", 1.0).value)
         # A 1.0 m arrival tolerance is fine on a 142 m ring and badly wrong in a
@@ -378,27 +386,47 @@ class RouteOracle(Node):
         self.speed += max(-self.accel_limit * dt,
                           min(self.accel_limit * dt, target - self.speed))
 
-        # Pure pursuit. Lookahead grows with speed so the same gains work across
-        # the speed axis instead of oscillating at the top of it.
-        ld = min(self.lookahead_max,
-                 self.lookahead_base + self.lookahead_gain * self.speed)
-        if parking:
-            # Shorter lookahead in the bay: the 2.65 m turn-in radius is tighter
-            # than anything on the ring, and the ring value cuts the corner.
-            # Shorter still on the final straight — the curvature clamp makes the
-            # turn under-steer and overshoot in +y, and a long lookahead then has
-            # no distance left to null that error before the car stops.
-            ld = min(ld, self.park_final_lookahead if remaining < 4.0
-                     else self.park_lookahead)
-            gx, gy = path.point_at(path.advance_by(i, ld))
+        if self.controller == "stanley" and not parking:
+            # Stanley: reactive steering from cross-track + heading error at the
+            # front axle. No lookahead point -> no anticipatory phase lead (the
+            # 2026-09-16 diagnosis' destabiliser), and it nulls cross-track ->
+            # drives dead-centre instead of cutting corners.
+            px, py = path.point_at(i)
+            nx, ny = path.point_at((i + 1) % path.n)
+            theta_p = math.atan2(ny - py, nx - px)
+            psi = wrap_pi(theta_p - heading)                 # heading error
+            fx = x + SIM_WHEEL_BASE * math.cos(heading)      # front axle
+            fy = y + SIM_WHEEL_BASE * math.sin(heading)
+            ox, oy = fx - px, fy - py
+            e = ox * math.sin(theta_p) - oy * math.cos(theta_p)  # + = right of path
+            delta = psi + math.atan2(self.stanley_k * e,
+                                     self.speed + self.stanley_ksoft)
+            curvature_raw = math.tan(delta) / SIM_WHEEL_BASE
+            # Diagnostic fields shared with the pure-pursuit path's logging.
+            local_x, local_y, ld = self.speed + self.stanley_ksoft, e, 0.0
         else:
-            gx, gy = path.point_at(path.advance(i, ld))
-        dx, dy = gx - x, gy - y
-        c, s = math.cos(heading), math.sin(heading)
-        local_x = dx * c + dy * s
-        local_y = -dx * s + dy * c
-        dist2 = max(local_x ** 2 + local_y ** 2, 1e-6)
-        curvature_raw = 2.0 * local_y / dist2
+            # Pure pursuit. Lookahead grows with speed so the same gains work
+            # across the speed axis instead of oscillating at the top of it.
+            ld = min(self.lookahead_max,
+                     self.lookahead_base + self.lookahead_gain * self.speed)
+            if parking:
+                # Shorter lookahead in the bay: the 2.65 m turn-in radius is
+                # tighter than anything on the ring, and the ring value cuts the
+                # corner. Shorter still on the final straight — the curvature
+                # clamp makes the turn under-steer and overshoot in +y, and a
+                # long lookahead then has no distance left to null that error
+                # before the car stops.
+                ld = min(ld, self.park_final_lookahead if remaining < 4.0
+                         else self.park_lookahead)
+                gx, gy = path.point_at(path.advance_by(i, ld))
+            else:
+                gx, gy = path.point_at(path.advance(i, ld))
+            dx, dy = gx - x, gy - y
+            c, s = math.cos(heading), math.sin(heading)
+            local_x = dx * c + dy * s
+            local_y = -dx * s + dy * c
+            dist2 = max(local_x ** 2 + local_y ** 2, 1e-6)
+            curvature_raw = 2.0 * local_y / dist2
         # Clamp to what the vehicle can actually execute. Unclamped, recovering
         # from a 0.89 m path error during the parking turn asked for 1.20 1/m —
         # a 0.83 m radius against a 4.18 m limit. The command is then physically

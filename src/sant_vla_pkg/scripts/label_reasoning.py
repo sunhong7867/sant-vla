@@ -189,6 +189,7 @@ def frame_facts(rows, k, core, lanes, zone_idx, ep):
         bearing = abs(((math.atan2(opy - y, opx - x) - heading + math.pi)
                        % (2 * math.pi)) - math.pi)
         ob_fact = {"rel": "ours" if ob.get("in_our_lane") else "other",
+                   "noun": ob.get("noun"),
                    "arc_m": round(ob_arc, 2),
                    "gap_m": round(max(abs(ob_arc) - 4.6, 0.3), 2)
                    * (1 if ob_arc >= 0 else -1),
@@ -279,24 +280,28 @@ def compose(f, ep):
 
     phase = obstacle_phase(f)
     gd = f["goal_arc_m"]
+    # Multi-object axis (2026-09-22): the spec carries the noun the label
+    # should use; pre-2026-09-22 v9 corpora have no noun and stay "car".
+    noun = (f.get("obstacle") or {}).get("noun") or "car"
+    parked_w = "parked" if noun == "car" else "stationary"
 
     # The obstacle phases ARE the story the user wants narrated — each is
     # a complete cause -> action sentence of its own.
     if phase == "ahead":
-        return (f"A stopped car ahead in our {lane_w} lane"
+        return (f"A stopped {noun} ahead in our {lane_w} lane"
                 " — slowing down.")
     if phase == "watching":
-        return ("Holding right behind the stopped car,"
+        return (f"Holding right behind the stopped {noun},"
                 " watching whether it moves.")
     if phase == "passing":
-        return (f"The car has not moved — passing it"
+        return (f"The {noun} has not moved — passing it"
                 f" in the {actual_w} lane.")
     if phase == "returning":
-        return (f"Past the parked car — returning"
+        return (f"Past the {parked_w} {noun} — returning"
                 f" to the {lane_w} lane.")
 
     if phase == "beside":
-        head = f"A car parked in the {other_w} lane"
+        head = f"A {noun} {parked_w} in the {other_w} lane"
         tail = f"keeping our {lane_w} lane"
         return f"{head} — {tail}."
 

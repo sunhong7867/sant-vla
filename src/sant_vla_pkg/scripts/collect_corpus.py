@@ -80,6 +80,17 @@ from tf2_msgs.msg import TFMessage  # noqa: E402
 from sant_vla_pkg.gz_pose import query_world_pose, resolve_gz_bin  # noqa: E402
 from sant_vla_pkg.gz_reset import SimResetter, set_model_pose  # noqa: E402
 from sant_vla_pkg.speed_control import raw_speed_to_mps  # noqa: E402
+from sant_vla_pkg.race_scenarios import set_signal  # noqa: E402
+
+# --- visual-grounded signal-stop axis -----------------------------------
+# Same start/approach, RED -> stop at the crosswalk line, GREEN -> pass. The
+# only differing predictor is the light COLOUR (dense counterfactual), forcing
+# the policy to ground the stop on the red light — not on position. The light
+# is a gantry over the ring near the crosswalk_stop zone (idx 125); confirmed
+# large + clear in the ego camera (feasibility 2026-09-18).
+SIG_KEY = "mission1"                 # scenario carrying the traffic light
+SIG_STOP_ZONE = "crosswalk_stop"     # where RED stops (at the painted line)
+SIG_PASS_ZONE = "T4"                 # a zone past the light, for GREEN pass
 
 CFG = os.path.join(PKG_PARENT, "config")
 PATHS_FILE = os.path.join(CFG, "track_paths.json")
@@ -102,9 +113,32 @@ OB_ENTITY = "v9_ob1"
 OB_MODELS = ["hatchback_green", "hatchback_red", "hatchback_blue",
              "hatchback_yellow"]
 OB_Z = 0.01265
-# One parking spot per colour: all four hatchbacks are pre-spawned and the
-# inactive ones sit here, far outside the camera's world (track is ~±25 m).
+# One parking spot per fleet member: every obstacle model is pre-spawned and
+# the inactive ones sit here, far outside the camera's world (track is
+# ~±25 m). Rebuilt by set_obstacle_fleet() when --obstacle-models is given.
 OB_PARK = {m: (60.0 + 8.0 * i, 60.0) for i, m in enumerate(OB_MODELS)}
+# Multi-object axis (2026-09-22): the fleet may mix cars with primitive
+# props (simulation_pkg/models/ob_*). The noun is what the reasoning label
+# calls the thing ("A stopped box ahead ..."); unknown models fall back to
+# "obstacle". Held-out generalisation test = train on several nouns, collect
+# the heldout split with a model the training fleet never contained.
+OB_NOUN = {"ob_box": "box", "ob_barrel": "barrel", "ob_cone": "cone",
+           "ob_barrier": "barrier", "ob_person": "person", "cone": "cone"}
+
+
+def ob_noun(model):
+    if model in OB_NOUN:
+        return OB_NOUN[model]
+    if model.startswith("hatchback") or model.startswith("prius"):
+        return "car"
+    return "obstacle"
+
+
+def set_obstacle_fleet(models):
+    """Replace the module fleet (and its parking spots) from --obstacle-models."""
+    global OB_MODELS, OB_PARK
+    OB_MODELS = list(models)
+    OB_PARK = {m: (60.0 + 8.0 * i, 60.0) for i, m in enumerate(OB_MODELS)}
 # Watch-then-avoid (user decision 2026-09-07): the demo car cannot know the
 # car ahead is parked — it can only observe. So the demonstration is:
 # decelerate to a stop short of it, hold OB_WAIT_S while "watching", then
@@ -404,6 +438,49 @@ def build_plan(args, paths, bank, rng):
                        "cf_axis": "lane", "start": sp, "goal": goal,
                        "variants": variants})
 
+    # --- signal-stop: visual-grounded stop axis (red->stop, green->pass) ---
+    # Same neutral cruise instruction on both variants; only the light colour
+    # and the oracle outcome differ, so the policy must read the light.
+    n_sig = getattr(args, "signal_groups", 0)
+    for gi in range(n_sig):
+        sp = lane_starts(paths, 1, rng, args.lat_jitter, args.yaw_jitter,
+                         windows=[(90, 115)])[0]
+        lane = sp["lane"]
+        level = "normal"
+        variants = []
+        for vi, color in enumerate(["red", "green"]):
+            text, tpl, fill = bank.render("cruise", {"lane": lane, "speed": level})
+            slots = {"lane": lane, "speed_level": level,
+                     "target_speed": bank.speed_map[level],
+                     "target_speed_raw": bank.speed_map_raw[level],
+                     "signal": color, "words": fill}
+            if color == "red":
+                # Drive to the crosswalk line and halt (arrival stop).
+                og = {"goal": SIG_STOP_ZONE, "lane": lane,
+                      "target_speed": bank.speed_map[level]}
+                timeout = 45.0
+            else:
+                # Green: cruise straight through, ends by duration (a short
+                # pass past the light — no need to drive to a far zone).
+                slots["cruise_s"] = 18.0
+                og = {"goal": "cruise", "lane": lane,
+                      "target_speed": bank.speed_map[level]}
+                timeout = 33.0
+            variants.append({
+                "cf_variant_id": f"v{vi}",
+                "intent_id": "cruise",
+                "instruction": text,
+                "template": tpl,
+                "intent_slots": slots,
+                "oracle_goal": og,
+                "signal_spec": {"color": color},
+                "cruise_s": 18.0 if color == "green" else None,
+                "timeout_s": timeout,
+            })
+        groups.append({"cf_group_id": f"{args.group_prefix}sig{gi:04d}",
+                       "kind": "signal", "cf_axis": "signal",
+                       "start": sp, "variants": variants})
+
     # --- cruise: lane axis with NO endpoint in the sentence ----------------
     # The demo's first utterance is "start driving", not "drive to T2". These
     # episodes end by duration (the collector cancels mid-cruise), so the
@@ -446,6 +523,12 @@ def build_plan(args, paths, bank, rng):
             # the policy was following when it drifted into this state
         elif args.cruise_lane == "both":
             cruise_lanes = ["lane1", "lane2"]
+        elif args.cruise_lane == "match":
+            # Command the lane the ego actually STARTS on (no cross-lane
+            # counterfactual). Needed for controllers that follow a single
+            # lane without a lane-change (Stanley): the "both" pairing else
+            # leaves half the episodes with the ego a full lane-width off.
+            cruise_lanes = [sp["lane"]]
         else:
             cruise_lanes = [args.cruise_lane]
         for vi, lane in enumerate(cruise_lanes):
@@ -503,7 +586,7 @@ def build_plan(args, paths, bank, rng):
                 ox, oy = paths[ob_lane][ob_idx]
                 nx2, ny2 = paths[ob_lane][(ob_idx + 1) % n_pts]
                 ob = {"present": True, "entity": f"v9_{model}",
-                      "model": model,
+                      "model": model, "noun": ob_noun(model),
                       "lane": ob_lane, "index": ob_idx,
                       "x": ox, "y": oy,
                       "yaw": math.atan2(ny2 - oy, nx2 - ox),
@@ -822,6 +905,13 @@ class Collector(Node):
             fwd -= loop            # negative = obstacle behind / overlapped
         return fwd, loop - fwd if fwd >= 0 else -fwd
 
+    def _set_signal(self, color):
+        """Set the traffic-light colour for this variant (spawns if missing)."""
+        try:
+            set_signal(SIG_KEY, OB_REGISTRY, color)
+        except Exception as exc:                                # noqa: BLE001
+            self.get_logger().warning(f"set_signal failed: {exc}")
+
     def run_episode(self, group, variant):
         sp = group["start"]
         row = {
@@ -841,6 +931,9 @@ class Collector(Node):
                 row["termination"] = "obstacle_failed"
                 row["episode"] = None
                 return row
+            self._spin(0.5)
+        if "signal_spec" in variant:
+            self._set_signal(variant["signal_spec"]["color"])
             self._spin(0.5)
 
         # Reset, with retries. A group whose variants started from different
@@ -1175,6 +1268,11 @@ def main():
                         "cruise sentence, 3 variants — no obstacle / parked "
                         "car in our lane (scripted oracle lane-change) / "
                         "parked car in the other lane (hold lane)")
+    p.add_argument("--obstacle-models", default=None,
+                   help="comma list of simulation_pkg model dirs forming the "
+                        "obstacle fleet (default: the four hatchbacks). The "
+                        "collection script must pre-spawn exactly this fleet "
+                        "as v9_<model> — e.g. hatchback_red,ob_box,ob_cone")
     p.add_argument("--obstacle-v1-only", action="store_true",
                    help="obstacle groups emit only the avoidance variant "
                         "(v1) — repair collection after the stop audit")
@@ -1190,6 +1288,8 @@ def main():
                         "same start via the navigator's direct mode")
     p.add_argument("--floor-groups", type=int, default=6,
                    help="same request twice: measures this session's noise floor")
+    p.add_argument("--signal-groups", type=int, default=0,
+                   help="visual-grounded signal-stop counterfactual groups")
     p.add_argument("--split", default="train", choices=["train", "heldout"],
                    help="'heldout' phrasings are for evaluation only")
     p.add_argument("--group-prefix", default="",
@@ -1203,7 +1303,7 @@ def main():
                         "cruise groups (DAgger corrections — no jitter added); "
                         "overrides --cruise-groups count and --start-windows")
     p.add_argument("--cruise-lane", default="both",
-                   choices=["both", "lane1", "lane2"],
+                   choices=["both", "lane1", "lane2", "match"],
                    help="restrict cruise variants to one lane (corpus "
                         "rebalancing packs; breaks lane counterfactual pairs)")
     p.add_argument("--start-windows", default=None,
@@ -1223,6 +1323,12 @@ def main():
     p.add_argument("--dry-run", action="store_true",
                    help="print the grid and exit; no sim needed")
     args = p.parse_args()
+
+    if args.obstacle_models:
+        fleet = [m.strip() for m in args.obstacle_models.split(",") if m.strip()]
+        if not fleet:
+            p.error("--obstacle-models is empty")
+        set_obstacle_fleet(fleet)
 
     rng = random.Random(args.seed)
     with open(PATHS_FILE, "r", encoding="utf-8") as f:
