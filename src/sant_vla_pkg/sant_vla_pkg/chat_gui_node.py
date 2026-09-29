@@ -4065,6 +4065,9 @@ def main(args=None):
     rclpy.init(args=args)
     node = ChatGuiNode()
     ui = str(node.declare_parameter("ui", "dashboard").value)
+    # 단기강좌 테스트 모드: 경기 선택기 숨김 + BEV 에서 장애물 추가/이동/제거
+    # (lecture_test.sh 가 켠다). 회피 감독 on/off 는 avoid_enable 파라미터 그대로.
+    node.lecture_mode = bool(node.declare_parameter("lecture_mode", False).value)
     spin = threading.Thread(target=rclpy.spin, args=(node,), daemon=True)
     spin.start()
     try:

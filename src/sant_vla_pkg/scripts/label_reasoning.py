@@ -189,7 +189,7 @@ def frame_facts(rows, k, core, lanes, zone_idx, ep):
         bearing = abs(((math.atan2(opy - y, opx - x) - heading + math.pi)
                        % (2 * math.pi)) - math.pi)
         ob_fact = {"rel": "ours" if ob.get("in_our_lane") else "other",
-                   "noun": ob.get("noun"),
+                   "noun": ob.get("noun"), "swerve": bool(ob.get("swerve")),
                    "arc_m": round(ob_arc, 2),
                    "gap_m": round(max(abs(ob_arc) - 4.6, 0.3), 2)
                    * (1 if ob_arc >= 0 else -1),
@@ -284,9 +284,17 @@ def compose(f, ep):
     # should use; pre-2026-09-22 v9 corpora have no noun and stay "car".
     noun = (f.get("obstacle") or {}).get("noun") or "car"
     parked_w = "parked" if noun == "car" else "stationary"
+    swerve = bool((f.get("obstacle") or {}).get("swerve"))
 
     # The obstacle phases ARE the story the user wants narrated — each is
     # a complete cause -> action sentence of its own.
+    if swerve:
+        # direct-swerve demos (2026-09-28): no watch phase, no braking
+        if phase == "ahead":
+            return (f"A {noun} ahead in our {lane_w} lane"
+                    f" — moving over to the {other_w} lane.")
+        if phase == "passing":
+            return (f"Passing the {noun} in the {actual_w} lane.")
     if phase == "ahead":
         return (f"A stopped {noun} ahead in our {lane_w} lane"
                 " — slowing down.")

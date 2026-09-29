@@ -178,5 +178,51 @@
         "kind": "vehicle"
       }
     ]
+  },
+  "lecture": {
+    "label": "강좌 · 장애물 테스트",
+    "description": "lane2@0.17 출발 · 장애물 2개 (prius_hybrid)",
+    "source": "lecture_test.sh",
+    "ego_pose": [
+      -16.0296,
+      -12.4997,
+      0.01265,
+      0.0,
+      0.0,
+      0.103937
+    ],
+    "lane": "lane2",
+    "entities": [
+      {
+        "entity": "obstacle1",
+        "model": "prius_hybrid",
+        "pose": [
+          -10.8179,
+          -23.023,
+          0.01265,
+          0.0,
+          0.0,
+          1.040349
+        ],
+        "kind": "vehicle",
+        "lane_hint": "lane2",
+        "frac": 0.25
+      },
+      {
+        "entity": "obstacle2",
+        "model": "prius_hybrid",
+        "pose": [
+          12.4985,
+          -15.6987,
+          0.01265,
+          0.0,
+          0.0,
+          2.968718
+        ],
+        "kind": "vehicle",
+        "lane_hint": "lane1",
+        "frac": 0.45
+      }
+    ]
   }
 }

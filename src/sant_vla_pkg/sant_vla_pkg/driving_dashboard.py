@@ -22,8 +22,10 @@ from PySide6.QtWidgets import (
 from sant_vla_pkg.dashboard_data import Telemetry, StatusSummary, fresh, integrate_actions, project_ground_path
 from sant_vla_pkg.dashboard_voice import VoiceInput
 from sant_vla_pkg.dashboard_language import DisplayLanguage
-from sant_vla_pkg.gazebo_services import move_camera, request, top_camera_pose
-from sant_vla_pkg.race_scenarios import load_scenarios, model_directory, reset_scenario, set_signal
+from sant_vla_pkg.gazebo_services import move_camera, pose_message, request, top_camera_pose
+from sant_vla_pkg.race_scenarios import (atomic_json, load_scenarios, model_directory,
+                                         obstacle_body_yaw, reset_scenario, set_signal,
+                                         static_model)
 from sant_vla_pkg.gazebo_panel import GazeboPanel
 from sant_vla_pkg.gz_pose import WorldPoseStream, resolve_gz_bin
 
@@ -114,11 +116,54 @@ class CameraView(QWidget):
             painter.drawText(self.rect().adjusted(10, 0, -10, 0), Qt.AlignTop, self.note)
 
 
+# BEV footprint (half-extents along/across the body, metres) per obstacle model
+# family, for drawing only. Cars keep the original 1.8 x 4.4 m rectangle.
+OBSTACLE_FOOTPRINT = {"ob_box": (.8, .8), "ob_barrel": (.5, .5), "ob_cone": (.6, .6),
+                      "ob_barrier": (.25, 1.2), "ob_person": (.25, .25), "cone": (.4, .4)}
+OBSTACLE_Z = 0.01265
+# Palette labels (Korean; DisplayLanguage translates known pairs)
+OBSTACLE_LABEL = {"prius_hybrid": "차량 (ego 와 동일)", "hatchback": "해치백", "hatchback_red": "해치백 빨강",
+                  "hatchback_blue": "해치백 파랑", "hatchback_green": "해치백 초록",
+                  "hatchback_yellow": "해치백 노랑", "ob_box": "박스", "ob_barrel": "드럼통",
+                  "ob_cone": "꼬깔", "ob_barrier": "바리케이드", "ob_person": "사람"}
+
+
+def obstacle_models():
+    """Model dirs the lecture editor may spawn: the ego car itself, the hatchbacks
+    and the ob_* props (simulation_pkg/models). prius_hybrid_ob* are legacy copies."""
+    names = []
+    try:
+        for d in sorted(model_directory().iterdir()):
+            n = d.name
+            if (d / "model.sdf").is_file() and (
+                    n == "prius_hybrid" or n.startswith("hatchback") or n.startswith("ob_")):
+                names.append(n)
+    except OSError:
+        pass
+    return names
+
+
 class BevView(QWidget):
-    """World-frame map, actual trajectory and raw VLA chunk with shared scale."""
+    """World-frame map, actual trajectory and raw VLA chunk with shared scale.
+
+    With `editable` (lecture mode) obstacles can be dragged, and a right-click
+    adds or removes one; the widget only emits signals, the window talks to gz.
+    """
+    obstacle_add = Signal(str, float, float)      # model, world x, y
+    obstacle_move = Signal(str, float, float)     # entity, world x, y
+    obstacle_remove = Signal(str)                 # entity
+    obstacle_selected = Signal(str)               # entity ("" = none)
+    place_done = Signal()                         # placement click consumed
 
     def __init__(self, lanes, zones):
         super().__init__()
+        self.editable = False
+        self.place_model = None      # model to drop on the next left click
+        self.selected = None         # entity highlighted (Delete removes it)
+        self.drag_ob = None          # entity being dragged (editable only)
+        self._press_pos = None
+        self._frame = None           # (cx, cy, scale) of the last paint
+        self.setFocusPolicy(Qt.ClickFocus)
         self.lanes = lanes or {}
         self.zones = zones
         self.pose = None
@@ -144,18 +189,96 @@ class BevView(QWidget):
         self.zoom = max(0.5, min(12.0, self.zoom * (1.15 if event.angleDelta().y() > 0 else 1 / 1.15)))
         self.update()
 
+    # ---- pixel <-> world (inverse of pt() in paintEvent, same frame) ----
+    def to_world(self, pos):
+        if not self._frame:
+            return None
+        cx, cy, scale = self._frame
+        dx = (pos.x() - self.width() / 2 - self.pan.x()) / scale
+        dy = (self.height() / 2 - pos.y() + self.pan.y()) / scale
+        if self.rotated:
+            dx, dy = -dy, dx
+        return cx + dx, cy + dy
+
+    def obstacle_at(self, pos):
+        w = self.to_world(pos)
+        if w is None:
+            return None
+        best, best_d = None, 2.8
+        for ob in self.obstacles:
+            d = math.hypot(ob["x"] - w[0], ob["y"] - w[1])
+            if d < best_d:
+                best, best_d = ob, d
+        return best
+
+    def set_place_model(self, model):
+        self.place_model = model
+        self.setCursor(Qt.CrossCursor if model else Qt.ArrowCursor)
+        self.update()
+
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() != Qt.LeftButton:
+            return
+        self._press_pos = event.position()
+        if self.editable and self.place_model:
+            w = self.to_world(event.position())
+            if w is not None:
+                model, self.place_model = self.place_model, None
+                self.setCursor(Qt.ArrowCursor)
+                self.obstacle_add.emit(model, w[0], w[1])
+                self.place_done.emit()
+            return
+        hit = self.obstacle_at(event.position()) if self.editable else None
+        if hit is not None and hit.get("entity"):
+            self.drag_ob = hit["entity"]
+            self.selected = hit["entity"]
+            self.obstacle_selected.emit(self.selected)
+            self.setCursor(Qt.ClosedHandCursor)
+            self.update()
+        else:
             self.drag = event.position()
 
     def mouseMoveEvent(self, event):
-        if self.drag is not None:
+        if self.drag_ob is not None:
+            w = self.to_world(event.position())
+            for ob in self.obstacles:
+                if ob.get("entity") == self.drag_ob and w is not None:
+                    ob["x"], ob["y"] = w
+            self.update()
+        elif self.drag is not None:
             self.pan += event.position() - self.drag
             self.drag = event.position()
             self.update()
+        elif self.editable and not self.place_model:
+            self.setCursor(Qt.OpenHandCursor if self.obstacle_at(event.position()) else Qt.ArrowCursor)
 
-    def mouseReleaseEvent(self, _event):
+    def mouseReleaseEvent(self, event):
+        if self.drag_ob is not None:
+            entity, self.drag_ob = self.drag_ob, None
+            self.setCursor(Qt.ArrowCursor)
+            moved = (self._press_pos is not None
+                     and (event.position() - self._press_pos).manhattanLength() > 4)
+            w = self.to_world(event.position())
+            if moved and w is not None:
+                self.obstacle_move.emit(entity, w[0], w[1])
+        elif (self.editable and self.selected and self._press_pos is not None
+              and (event.position() - self._press_pos).manhattanLength() <= 4):
+            self.selected = None            # plain click on empty map: deselect
+            self.obstacle_selected.emit("")
+            self.update()
         self.drag = None
+        self._press_pos = None
+
+    def keyPressEvent(self, event):
+        if self.editable and event.key() == Qt.Key_Escape and self.place_model:
+            self.set_place_model(None)
+            self.place_done.emit()
+        elif self.editable and event.key() in (Qt.Key_Delete, Qt.Key_Backspace) and self.selected:
+            entity, self.selected = self.selected, None
+            self.obstacle_selected.emit("")
+            self.obstacle_remove.emit(entity)
+        else:
+            super().keyPressEvent(event)
 
     def paintEvent(self, _event):
         p = QPainter(self)
@@ -175,6 +298,7 @@ class BevView(QWidget):
                     (self.height() - 40) / max(1, extent_y)) * self.zoom
         if self.follow and self.pose:
             cx, cy = self.pose[:2]
+        self._frame = (cx, cy, scale)
         def pt(x, y):
             dx, dy = x-cx, y-cy
             if self.rotated:
@@ -214,12 +338,18 @@ class BevView(QWidget):
             p.drawText(center + QPointF(5, -5), name)
         for obstacle in self.obstacles:
             x, y, yaw = obstacle["x"], obstacle["y"], obstacle.get("yaw", 0)
+            model = obstacle.get("model", "") or ""
+            hx, hy = OBSTACLE_FOOTPRINT.get(model, (.9, 2.2))
             c, s = math.cos(yaw), math.sin(yaw)
             corners = [pt(x+c*dx-s*dy, y+s*dx+c*dy)
-                       for dx,dy in [(-.9,-2.2),(.9,-2.2),(.9,2.2),(-.9,2.2)]]
-            p.setPen(QPen(QColor("#ffead0"), 1))
-            p.setBrush(QColor("#ffb76b"))
+                       for dx,dy in [(-hx,-hy),(hx,-hy),(hx,hy),(-hx,hy)]]
+            active = self.editable and obstacle.get("entity") in (self.drag_ob, self.selected)
+            p.setPen(QPen(QColor("#ffffff" if active else "#ffead0"), 2 if active else 1))
+            p.setBrush(QColor("#ff8c42" if model.startswith("ob_") else "#ffb76b"))
             p.drawPolygon(QPolygonF(corners))
+            if self.editable and self.zoom >= 1.5:
+                p.setPen(QColor("#ffead0"))
+                p.drawText(pt(x, y) + QPointF(6, -6), obstacle.get("entity", ""))
         path_line(self.trail, "#59b9f7", 3)
         path_line(self.prediction, "#6dfbd0", 3)
         p.setBrush(QColor("#6dfbd0"))
@@ -238,6 +368,11 @@ class BevView(QWidget):
         p.drawLine(QPointF(14, self.height()-16), QPointF(14+5*scale, self.height()-16))
         p.drawText(QPointF(14, self.height()-23), "5 m")
         p.drawText(QPointF(self.width()-45, 20), "N →" if self.rotated else "N ↑")
+        if self.editable and self.place_model:
+            p.fillRect(0, 0, self.width(), 24, QColor("#1d3a2f"))
+            p.setPen(QColor("#9ff2c9"))
+            p.drawText(self.rect().adjusted(8, 0, -8, 0), Qt.AlignTop | Qt.AlignLeft,
+                       self.translate("지도를 클릭해 놓기") + f" · {self.place_model} · Esc")
 
 
 class ResultBus(QObject):
@@ -268,6 +403,8 @@ class DashboardWindow(QMainWindow):
         self.paused_snapshot = None
         self.pause_time = None
         self.require_connection = launch_gazebo
+        self.lecture_mode = bool(getattr(node, "lecture_mode", False))
+        self.avoid_default = bool(getattr(node, "avoid_enable", True))
         self.scenarios = load_scenarios()
         self.registry_path = Path(getattr(node, "avoid_obstacle_file", "/tmp/navvla-dashboard/obstacles.json"))
         self.language_path = self.registry_path.with_name("ui_language.json")
@@ -330,6 +467,13 @@ class DashboardWindow(QMainWindow):
         bev_tools = QHBoxLayout()
         self.bev = BevView(node._track_lanes, node.zones)
         self.bev.translate = self.display_language.text
+        if self.lecture_mode:
+            self.bev.editable = True
+            self.bev.obstacle_add.connect(self.obstacle_add)
+            self.bev.obstacle_move.connect(self.obstacle_move)
+            self.bev.obstacle_remove.connect(self.obstacle_remove)
+            self.bev.obstacle_selected.connect(self.on_obstacle_selected)
+            self.bev.place_done.connect(lambda: self.place_button.setChecked(False))
         follow = QPushButton("차량 중심")
         follow.setCheckable(True)
         follow.toggled.connect(lambda enabled: setattr(self.bev, "follow", enabled))
@@ -443,6 +587,34 @@ class DashboardWindow(QMainWindow):
         self.race_status = label(self.scenarios["qualifying"]["description"], "muted")
         self.race_status.setWordWrap(True)
         controls_layout.addWidget(self.race_status)
+        if self.lecture_mode:
+            # 단기강좌: 경기 종류는 쓰지 않는다. 리셋은 lecture 배치로 되돌리는 용도.
+            self.race_selector.hide()
+            if "lecture" in self.scenarios:
+                self.race_selector.setCurrentIndex(self.race_selector.findData("lecture"))
+                self.race_status.setText(self.scenarios["lecture"]["description"])
+            self.reset_button.setText("출발 위치로 리셋")
+            # 장애물 팔레트: [모델][지도에 추가][선택 제거]. 추가를 누르면 다음 BEV
+            # 클릭 지점에 놓인다(차선 2.5 m 안이면 스냅). 장애물 클릭=선택, 드래그=
+            # 이동, Delete=제거.
+            ob_row = QHBoxLayout()
+            self.obstacle_model = QComboBox()
+            for model in obstacle_models():
+                self.obstacle_model.addItem(OBSTACLE_LABEL.get(model, model), model)
+            self.obstacle_model.setCurrentIndex(max(0, self.obstacle_model.findData("prius_hybrid")))
+            ob_row.addWidget(self.obstacle_model, 1)
+            self.place_button = QPushButton("지도에 추가")
+            self.place_button.setCheckable(True)
+            self.place_button.toggled.connect(
+                lambda on: self.bev.set_place_model(self.obstacle_model.currentData() if on else None))
+            ob_row.addWidget(self.place_button)
+            self.remove_button = QPushButton("선택 제거")
+            self.remove_button.setEnabled(False)
+            self.remove_button.clicked.connect(self.remove_selected_obstacle)
+            ob_row.addWidget(self.remove_button)
+            controls_layout.addLayout(ob_row)
+            self.race_status.setText(self.race_status.text()
+                                     + " · 장애물: 추가 후 지도 클릭, 클릭=선택, 드래그=이동, Delete=제거")
         sidebar_layout.addWidget(controls)
 
         self.right_splitter = right = QSplitter(Qt.Vertical)
@@ -827,13 +999,112 @@ class DashboardWindow(QMainWindow):
         self.race_selector.setCurrentIndex(self.race_selector.findData(key))
         self.race_status.setText(scenario["description"])
         self.node.current_lane = self.node._vla_lane = scenario["lane"]
-        self.node.avoid_enable = key == "mission1"
+        # lecture: keep the avoid_enable the launcher asked for (--avoidance on|off)
+        self.node.avoid_enable = key == "mission1" or (key == "lecture" and self.avoid_default)
         self.node._avoid_home_lane = None
         if getattr(self.node, "_avoid_stopped", False):
             self.node._set_avoid_stopped(False)
         self.node._avoid_clear_since = None
         self.node._avoid_obstacles_mtime = None
         self.bev.trail.clear()
+
+    # ------------------------------------------------ lecture obstacle editor
+    def on_obstacle_selected(self, entity):
+        self.remove_button.setEnabled(bool(entity))
+        self.remove_button.setText(f"제거 · {entity}" if entity else "선택 제거")
+
+    def remove_selected_obstacle(self):
+        entity, self.bev.selected = self.bev.selected, None
+        self.on_obstacle_selected("")
+        if entity:
+            self.obstacle_remove(entity)
+            self.bev.update()
+
+    def _registry(self):
+        try:
+            return [o for o in json.loads(self.registry_path.read_text()) if isinstance(o, dict)]
+        except (OSError, ValueError):
+            return []
+
+    def _snap_lane(self, x, y):
+        """Nearest lane point within 2.5 m -> (x, y, travel_yaw, lane); else free."""
+        best = (x, y, 0.0, "parking", 2.5)
+        for lane, pts in (self.node._track_lanes or {}).items():
+            for i, (px, py) in enumerate(pts):
+                d = math.hypot(px - x, py - y)
+                if d < best[4]:
+                    nx, ny = pts[(i + 1) % len(pts)]
+                    best = (px, py, math.atan2(ny - py, nx - px), lane, d)
+        return best[:4]
+
+    def _obstacle_job(self, job, done=None):
+        """Run one gz + registry edit off the GUI thread. Jobs are serialised
+        under one lock and each re-reads the registry inside the lock: three
+        quick right-click adds otherwise all picked "obstacle1" and the last
+        writer dropped the other two (offscreen test, 2026-09-22)."""
+        if not hasattr(self, "_obstacle_lock"):
+            self._obstacle_lock = threading.Lock()
+        def worker():
+            try:
+                with self._obstacle_lock:
+                    text = job()
+            except Exception as exc:                            # noqa: BLE001
+                text = f"장애물 작업 실패: {exc}"
+            if not self.closing:
+                self.bus.service.emit(text)
+                if done:
+                    done()
+        threading.Thread(target=worker, daemon=True).start()
+
+    def obstacle_add(self, model, x, y):
+        sx, sy, travel, lane = self._snap_lane(x, y)
+        yaw = obstacle_body_yaw(model, travel)
+        def job():
+            entries = self._registry()
+            used = {o.get("entity") for o in entries}
+            n = 1
+            while f"obstacle{n}" in used:
+                n += 1
+            name = f"obstacle{n}"       # matches reset_scenario's cleanup pattern
+            cache = self.registry_path.parent / "scene_models"
+            cache.mkdir(parents=True, exist_ok=True)
+            filename = cache / f"{name}.sdf"
+            ET.ElementTree(static_model(model, name)).write(filename, encoding="unicode")
+            pose = (sx, sy, OBSTACLE_Z, 0.0, 0.0, yaw)
+            request("/world/default/create", "gz.msgs.EntityFactory",
+                    f"sdf_filename: {json.dumps(str(filename))} name: {json.dumps(name)} "
+                    f"allow_renaming: false pose: {{{pose_message(pose)}}}")
+            entries.append({"entity": name, "model": model, "kind": "vehicle",
+                            "x": sx, "y": sy, "yaw": yaw, "lane": lane})
+            atomic_json(self.registry_path, entries)
+            return f"장애물 추가: {name} {model} ({lane})"
+        self._obstacle_job(job)
+
+    def obstacle_move(self, entity, x, y):
+        sx, sy, travel, lane = self._snap_lane(x, y)
+        def job():
+            entries = self._registry()
+            entry = next((o for o in entries if o.get("entity") == entity), None)
+            if entry is None:
+                return f"장애물 이동 실패: {entity} 없음"
+            yaw = (obstacle_body_yaw(entry.get("model", ""), travel)
+                   if lane != "parking" else entry.get("yaw", 0.0))
+            pose = (sx, sy, OBSTACLE_Z, 0.0, 0.0, yaw)
+            request("/world/default/set_pose", "gz.msgs.Pose",
+                    f"name: {json.dumps(entity)} " + pose_message(pose))
+            entry.update({"x": sx, "y": sy, "yaw": yaw, "lane": lane})
+            atomic_json(self.registry_path, entries)
+            return f"장애물 이동: {entity} ({lane})"
+        self._obstacle_job(job)
+
+    def obstacle_remove(self, entity):
+        def job():
+            entries = [o for o in self._registry() if o.get("entity") != entity]
+            request("/world/default/remove", "gz.msgs.Entity",
+                    f"name: {json.dumps(entity)} type: MODEL")
+            atomic_json(self.registry_path, entries)
+            return f"장애물 제거: {entity}"
+        self._obstacle_job(job)
 
     def refresh_scene(self):
         for path, attr in ((self.registry_path, "registry_mtime"),
@@ -844,6 +1115,8 @@ class DashboardWindow(QMainWindow):
                     continue
                 data = json.loads(path.read_text())
                 if attr == "registry_mtime":
+                    if self.bev.drag_ob is not None:
+                        continue        # do not yank the obstacle out of the hand
                     self.bev.obstacles = [o for o in data if "x" in o and "y" in o]
                 elif data.get("scenario") in self.scenarios:
                     self.apply_scenario(data["scenario"])

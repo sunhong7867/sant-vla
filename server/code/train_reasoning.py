@@ -29,6 +29,30 @@ import time
 import torch
 
 
+# Reasoning labels name the obstacle by noun since the multi-object axis
+# (2026-09-22: box, barrel, cone, barrier, person); older corpora say "car".
+OBSTACLE_NOUNS = ("car", "box", "barrel", "cone", "barrier", "person",
+                  "obstacle")
+
+
+def _multiobj_avoid(row):
+    """nav_vla_index row -> is this a multi-object AVOIDANCE demo (v1)?
+
+    Multi-object sessions start 2026-09-22 (packed name session_20260922+).
+    Only the variant with the obstacle in OUR lane is the avoidance demo;
+    v0 (clear) and v2 (other lane) are plain pure-pursuit cruise.
+    """
+    name = row.get("packed_episode", "")
+    try:
+        day = int(name.split("session_")[1][:8])
+    except (IndexError, ValueError):
+        return False
+    if day < 20260922:
+        return False
+    ob = (row.get("intent_slots") or {}).get("obstacle") or {}
+    return bool(ob.get("present") and ob.get("in_our_lane"))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", required=True)
@@ -62,6 +86,16 @@ def main():
                     ">1 amplifies the rare closed-loop correction signal r22 "
                     "proved works but was diluted at 10%% (recovery gain "
                     "+0.01 vs demo -0.10). Applied before other v10 rules.")
+    ap.add_argument("--action-signal-weight", type=float, default=1.0,
+                    help="boost visual-grounded signal-stop episodes "
+                    "(session_20260918: red->stop, green->pass)")
+    ap.add_argument("--action-multiobj-weight", type=float, default=1.0,
+                    help="r29/r30: ABSOLUTE action-loss weight for multi-"
+                    "object AVOIDANCE episodes (session_2026092x+, obstacle "
+                    "in our lane: brake, watch, pass, return), replacing the "
+                    "1/w resample compensation on those frames. Their v0/v2 "
+                    "cruise siblings stay under the v3y-cruise rule (pure-"
+                    "pursuit line, not the Stanley cruise teacher).")
     ap.add_argument("--action-v10-weight", type=float, default=1.0,
                     help="r21: action-loss multiplier for v10 sessions "
                     "(2026-09-14+). 0.0 = bank v10's language win while "
@@ -132,9 +166,12 @@ def main():
     bad = [k for k in missing if not k.startswith("reasoning_head")]
     assert not bad and not unexpected, (bad, unexpected)
     # head init from the checkpoint's lm_head (the ctor used base weights)
-    with torch.no_grad():
-        policy.reasoning_head.weight.copy_(
-            sd["model.vlm_with_expert.vlm.lm_head.weight"])
+    if "reasoning_head.weight" not in sd:
+        with torch.no_grad():
+            policy.reasoning_head.weight.copy_(
+                sd["model.vlm_with_expert.vlm.lm_head.weight"])
+    else:
+        print("base is a reasoning checkpoint — keeping its trained head")
     policy = policy.to(device).train()
 
     n_train = sum(p.numel() for p in policy.parameters() if p.requires_grad)
@@ -184,7 +221,7 @@ def main():
                         w[i] = args.obstacle_boost * 4.0
                     elif any(p in joined for p in PHASE_PAT):
                         w[i] = args.obstacle_boost * 2.0
-                    elif "car" in joined:
+                    elif any(n in joined for n in OBSTACLE_NOUNS):
                         w[i] = args.obstacle_boost
                     break
         n_go = int((w == args.obstacle_boost * 6.0).sum())
@@ -222,14 +259,25 @@ def main():
                         elif (row.get("intent_id") == "cruise"
                               and "session_20260" in row["packed_episode"]
                               and "session_2026091"
-                              not in row["packed_episode"]):
+                              not in row["packed_episode"]
+                              and "session_20260917"
+                              not in row["packed_episode"]
+                              and "session_20260918"
+                              not in row["packed_episode"]  # Stanley/signal kept
+                              and not _multiobj_avoid(row)):
                             # v3y-era (July/Aug) cruise: the OTHER teacher's
-                            # line for the same sentences (r18 mode-mix fix)
+                            # line for the same sentences (r18 mode-mix fix).
+                            # Multi-object v0/v2 (2026-09-22+, pure-pursuit
+                            # cruise, no obstacle in our lane) land here too
+                            # and are damped like v3y cruise; the v1
+                            # avoidance demos get --action-multiobj-weight.
                             v3y_cruise_eps.add(row["lerobot_episode_index"])
             except OSError:
                 print("WARNING: no nav_vla_index.jsonl — v9 damping off")
             v10_eps = set()
             v10p_eps = set()
+            signal_eps = set()
+            multiobj_eps = set()
             try:
                 with open(os.path.join(args.dataset,
                                        "nav_vla_index.jsonl")) as f:
@@ -241,13 +289,30 @@ def main():
                         # v10p recovery demos (jittered-start, 2026-09-15):
                         # the rare correction signal r22 proved works but was
                         # diluted at 10%. r23 boosts them in the action loss.
+                        if "session_20260918" in name:
+                            signal_eps.add(row["lerobot_episode_index"])
+                        if _multiobj_avoid(row):
+                            multiobj_eps.add(row["lerobot_episode_index"])
                         if "session_20260915" in name:
                             v10p_eps.add(row["lerobot_episode_index"])
             except OSError:
                 pass
-            n_damp = n_cruise = n_nonv10 = n_v10 = n_v10p = 0
+            n_damp = n_cruise = n_nonv10 = n_v10 = n_v10p = n_signal = 0
+            n_multiobj = 0
             for i in range(len(ds)):
                 e = int(epi[i])
+                if args.action_multiobj_weight != 1.0 and e in multiobj_eps:
+                    # ABSOLUTE, not compounded with the 1/w resample
+                    # compensation: those frames carry w = 4..24 from the
+                    # obstacle boost, so "x4" on top of 1/w netted 0.17..1.0
+                    # (r29 used the multiplier form; see docs/ver/20260922_2113).
+                    aw[i] = args.action_multiobj_weight
+                    n_multiobj += 1
+                    continue
+                if args.action_signal_weight != 1.0 and e in signal_eps:
+                    aw[i] *= args.action_signal_weight
+                    n_signal += 1
+                    continue
                 if args.action_v10p_weight != 1.0 and e in v10p_eps:
                     aw[i] *= args.action_v10p_weight
                     n_v10p += 1
@@ -267,6 +332,13 @@ def main():
                       and e in v3y_cruise_eps):
                     aw[i] *= args.action_v3y_cruise_weight
                     n_cruise += 1
+            if args.action_multiobj_weight != 1.0:
+                print(f"MULTIOBJ-AVOID action x{args.action_multiobj_weight} "
+                      f"on {n_multiobj} frames ({len(multiobj_eps)} avoidance "
+                      "episodes)")
+            if args.action_signal_weight != 1.0:
+                print(f"SIGNAL-STOP action x{args.action_signal_weight} on "
+                      f"{n_signal} frames ({len(signal_eps)} signal episodes)")
             if args.action_v10p_weight != 1.0:
                 print(f"v10p RECOVERY action x{args.action_v10p_weight} on "
                       f"{n_v10p} frames ({len(v10p_eps)} v10p episodes)")

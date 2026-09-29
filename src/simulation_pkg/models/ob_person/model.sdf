@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- Lane obstacle for the multi-object avoidance axis (2026-09-22).
+     Origin is at GROUND level so the collector can teleport every fleet
+     member with the same z (OB_Z) it uses for the hatchbacks. -->
+<sdf version="1.9">
+  <model name="ob_person">
+    <static>true</static>
+    <link name="link">
+      <visual name="v_legs"><pose>0 0 0.4 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>0.8</length></cylinder></geometry>
+        <material><ambient>0.1 0.1 0.15 1</ambient><diffuse>0.15 0.15 0.2 1</diffuse></material></visual>
+      <visual name="v_torso"><pose>0 0 1.1 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>0.6</length></cylinder></geometry>
+        <material><ambient>0.8 0.05 0.05 1</ambient><diffuse>0.9 0.08 0.08 1</diffuse></material></visual>
+      <visual name="v_head"><pose>0 0 1.58 0 0 0</pose><geometry><sphere><radius>0.16</radius></sphere></geometry>
+        <material><ambient>0.85 0.65 0.5 1</ambient><diffuse>0.95 0.75 0.6 1</diffuse></material></visual>
+      <collision name="c"><pose>0 0 0.875 0 0 0</pose><geometry><cylinder><radius>0.25</radius><length>1.75</length></cylinder></geometry></collision>
+    </link>
+  </model>
+</sdf>

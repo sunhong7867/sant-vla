@@ -8,6 +8,7 @@
 #   sh smolvla_demo.sh --legacy-gui  # 기존 채팅 + 별도 Gazebo 창
 #   ./smolvla_demo.sh check          # 실행 전 환경만 점검
 #   ./smolvla_demo.sh down           # 전체 종료 + gz 로그 정리
+#   NAVVLA_GUI_ARGS="-p avoid_enable:=false" ./smolvla_demo.sh   # chat_gui 파라미터 추가 (lecture_test.sh 가 사용)
 #
 # 로그: eval_out/demo/*.log
 [ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
@@ -178,7 +179,7 @@ if [ "$GUI" = 1 ] && [ "$GUI_UI" = dashboard ]; then
     SCENE_ARGS="-p scene_model:=qwen2.5vl:7b -p scene_host:=http://127.0.0.1:11501 -p ollama_host:=http://127.0.0.1:11501 -p parser_model:=qwen2.5vl:7b"
   fi
   echo "[demo] 통합 Driving Studio 기동 — 3D / BEV / 채팅 / reasoning"
-  setsid nohup ros2 run sant_vla_pkg chat_gui_node --ros-args \
+  setsid nohup ros2 run sant_vla_pkg chat_gui_node --ros-args ${NAVVLA_GUI_ARGS:-} \
     -p control_backend:=smolvla -p ui:=dashboard ${SCENE_ARGS:-} \
     > "$LOGD/chat_gui.log" 2>&1 < /dev/null &
 fi
@@ -320,7 +321,7 @@ grep -q latency_ms "$LOGD/bridge_ready.log" || {
 
 if [ "$GUI" = 1 ] && [ "$GUI_UI" = legacy ]; then
   echo "[demo] 5/5 채팅 GUI 기동..."
-  setsid nohup ros2 run sant_vla_pkg chat_gui_node --ros-args -p control_backend:=smolvla -p ui:=legacy \
+  setsid nohup ros2 run sant_vla_pkg chat_gui_node --ros-args ${NAVVLA_GUI_ARGS:-} -p control_backend:=smolvla -p ui:=legacy \
     $SCENE_ARGS \
     > "$LOGD/chat_gui.log" 2>&1 < /dev/null &
 elif [ "$GUI" = 0 ]; then

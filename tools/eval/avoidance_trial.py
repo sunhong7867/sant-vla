@@ -41,7 +41,35 @@ LANE_WORDS = {"lane1": "the inner lane", "lane2": "the outer lane"}
 MODELS = ["hatchback_green", "hatchback_red", "hatchback_blue",
           "hatchback_yellow"]
 PASS_RADIUS = 8.0        # an encounter opens under this distance...
-COLLIDE_D = 2.0          # ...and counts as a hit under this one
+COLLIDE_D = 2.0          # ...and counts as a hit under this one (car-vs-car legacy)
+# Geometric hit test for the multi-object fleet (2026-09-23): centre distance
+# alone misread "drove into the mannequin" as a clean 2.16 m stop. Obstacle
+# half-extents (metres); cars keep the legacy centre-distance rule.
+EGO_HALF_LEN, EGO_HALF_WID = 2.4, 0.95
+# (half_along, half_across) in the lane frame; obstacles sit parallel to the lane.
+OBJ_EXTENT = {"ob_box": (0.85, 0.85), "ob_barrel": (0.5, 0.5), "ob_cone": (0.6, 0.6),
+              "ob_barrier": (0.3, 1.2), "ob_person": (0.3, 0.3), "cone": (0.4, 0.4)}
+CAR_EXTENT = (2.2, 0.9)           # hatchback / prius as an obstacle
+BODY_TO_TRAVEL = -math.pi / 2.0   # gz body yaw -> travel heading
+
+
+def hit_geometric(ego, spec):
+    """True when the ego body rectangle overlaps the obstacle's footprint
+    (both taken parallel to the ego's travel direction). For cars this is the
+    r10 head-on rule: centre gap < 4.6 m along the lane = bumper contact —
+    r28 baseline "stopped" at 3.6-3.9 m centre, i.e. inside the other car."""
+    model = spec["model"]
+    ext = OBJ_EXTENT.get(model)
+    if ext is None:
+        ext = CAR_EXTENT if (model.startswith("hatchback") or model.startswith("prius")) else None
+    if ext is None:
+        return False
+    x, y, yaw = ego
+    h = yaw + BODY_TO_TRAVEL
+    dx, dy = spec["x"] - x, spec["y"] - y
+    along = dx * math.cos(h) + dy * math.sin(h)
+    across = -dx * math.sin(h) + dy * math.cos(h)
+    return abs(along) < EGO_HALF_LEN + ext[0] and abs(across) < EGO_HALF_WID + ext[1]
 STUCK_S = 20.0           # standstill this long near an obstacle = stuck
 
 
@@ -162,10 +190,21 @@ def main():
 
     pub_instruction("")               # silence the VLA before moving anything
     time.sleep(1.0)
+    # Static spawn via race_scenarios.static_model (sensors, plugins and the
+    # camera/lidar mount links stripped): prius_hybrid as an obstacle would
+    # otherwise bring its own camera topics up next to the ego's (2026-09-23).
+    import xml.etree.ElementTree as ET
+    from sant_vla_pkg.gazebo_services import pose_message, request
+    from sant_vla_pkg.race_scenarios import obstacle_body_yaw, static_model
+    cache = REGISTRY.parent / "scene_models"
+    cache.mkdir(parents=True, exist_ok=True)
     for s in specs:
-        basic.load_model(s["entity"], s["model"],
-                         (s["x"], s["y"], 0.01265, 0.0, 0.0, s["yaw"]),
-                         skip_if_exists=False)
+        f = cache / f"{s['entity']}.sdf"
+        ET.ElementTree(static_model(s["model"], s["entity"])).write(f, encoding="unicode")
+        pose = (s["x"], s["y"], 0.01265, 0.0, 0.0, obstacle_body_yaw(s["model"], s["yaw"]))
+        request("/world/default/create", "gz.msgs.EntityFactory",
+                f"sdf_filename: {json.dumps(str(f))} name: {json.dumps(s['entity'])} "
+                f"allow_renaming: false pose: {{{pose_message(pose)}}}")
     REGISTRY.parent.mkdir(parents=True, exist_ok=True)
     REGISTRY.write_text(json.dumps(
         [{"entity": s["entity"], "model": s["model"], "x": s["x"],
@@ -202,7 +241,14 @@ def main():
         return min(math.hypot(px - x, py - y)
                    for ln in lane_pts for px, py in lane_pts[ln]) > 4.0
 
-    state = {s["entity"]: {"phase": "far", "min_d": 1e9} for s in specs}
+    state = {s["entity"]: {"phase": "far", "min_d": 1e9, "lat_at_min": None} for s in specs}
+    own_pts = paths[args.start_lane]
+    def lateral_off(x, y):
+        """signed offset from the ego's own lane polyline (+ = left of travel)."""
+        i = min(range(len(own_pts)), key=lambda k: (own_pts[k][0] - x) ** 2 + (own_pts[k][1] - y) ** 2)
+        px, py = own_pts[i]; nx, ny = own_pts[(i + 1) % len(own_pts)]
+        h = math.atan2(ny - py, nx - px)
+        return -math.sin(h) * (x - px) + math.cos(h) * (y - py)
     t0 = time.monotonic()
     last_pose, last_move_t = None, time.monotonic()
     result, detail = "TIMEOUT", ""
@@ -221,15 +267,17 @@ def main():
         for s in specs:
             st = state[s["entity"]]
             d = math.hypot(s["x"] - x, s["y"] - y)
-            st["min_d"] = min(st["min_d"], d)
+            if d < st["min_d"]:
+                st["min_d"] = d
+                st["lat_at_min"] = round(lateral_off(x, y), 2)   # how far it had swerved
             if d < PASS_RADIUS:
                 near_any = True
                 if st["phase"] == "far":
                     st["phase"] = "near"
             elif st["phase"] == "near":
                 st["phase"] = "passed"
-            if d < COLLIDE_D:
-                result, detail = "COLLISION", s["entity"]
+            if d < COLLIDE_D or hit_geometric(pose, s):
+                result, detail = "COLLISION", f"{s['entity']} d={d:.2f}"
                 break
         if result == "COLLISION":
             break
@@ -254,7 +302,8 @@ def main():
         "obstacles": [{"entity": s["entity"], "lane": s["lane"],
                        "frac": s["frac"],
                        "phase": state[s["entity"]]["phase"],
-                       "min_d": round(state[s["entity"]]["min_d"], 2)}
+                       "min_d": round(state[s["entity"]]["min_d"], 2),
+                       "lat_at_min": state[s["entity"]]["lat_at_min"]}
                       for s in specs],
     }
     print(json.dumps(report, ensure_ascii=False, indent=1))

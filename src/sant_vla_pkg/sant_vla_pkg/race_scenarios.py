@@ -31,6 +31,13 @@ def model_directory():
     return Path(get_package_share_directory("simulation_pkg")) / "models"
 
 
+def obstacle_body_yaw(model, travel_yaw):
+    """gz body yaw for an obstacle placed along a lane. prius mesh: travel
+    + 90 deg (ego teleport convention, verified against qualifying/mission1
+    poses); hatchbacks and ob_* props: travel yaw (collect_corpus teleport)."""
+    return travel_yaw + math.pi / 2 if model.startswith("prius") else travel_yaw
+
+
 def static_model(asset, entity, signal="green"):
     """Reuse actual visual/collision geometry, remove sensors and controllers."""
     root = ET.parse(model_directory() / asset / "model.sdf").getroot()
@@ -44,6 +51,19 @@ def static_model(asset, entity, signal="green"):
         for child in list(parent):
             if child.tag in {"sensor", "plugin"}:
                 parent.remove(child)
+    # Sensor mounts (camera_frame, rear_camera_frame, lidar_link ...) carry
+    # their own visual meshes: without the sensor they are just bodies floating
+    # over the roof. An obstacle car needs neither, so drop those links and the
+    # joints that referenced them (2026-09-22, user: "차량 위 카메라가 떠 있다").
+    dropped = set()
+    for link in list(model.findall("link")):
+        name = link.get("name", "")
+        if "camera" in name or "lidar" in name:
+            model.remove(link)
+            dropped.add(name)
+    for joint in list(model.findall("joint")):
+        if joint.findtext("child") in dropped or joint.findtext("parent") in dropped:
+            model.remove(joint)
     for uri in model.iter("uri"):
         if uri.text and uri.text.startswith("model://"):
             uri.text = str(model_directory() / uri.text.removeprefix("model://"))

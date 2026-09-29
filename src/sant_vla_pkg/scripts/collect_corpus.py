@@ -155,6 +155,11 @@ OB_WAIT_S = 2.5             # observation hold before committing to the pass
 OB_STOP_TIMEOUT_S = 12.0    # standstill never reached -> go anyway
 OB_ACCEL = 0.55             # oracle accel_limit, for the braking distance
 OB_RETURN_BEHIND_M = 6.0    # obstacle this far behind -> return to lane
+# Direct-swerve variant (2026-09-28, user decision): no brake/watch, the oracle
+# simply switches to the other lane this far ahead of the obstacle and comes
+# back OB_RETURN_BEHIND_M past it. Continuous steering only — the stop/go
+# demos of r29~r32 never reached the action expert (docs/ver/20260922_2113).
+OB_SWERVE_TRIGGER_M = 8.0   # user 2026-09-28: swerve close in (8 m = 2.8 s at the fast tier vs ~3 s lane change — fast-tier v1 may trip the 2 m guard and drop). Stop branch bypassed in swerve mode
 
 # Ring waypoints that are far enough apart to be distinct goals. T3 (index 124)
 # and crosswalk_stop (125) are the same point on the loop, as are Start (325) and
@@ -562,17 +567,31 @@ def build_plan(args, paths, bank, rng):
     # mentions the car — the lane change is a *reaction*, so it belongs in
     # the reasoning label, and the v0/v1/v2 contrast makes the camera the
     # only way to tell the three narrations apart.
-    ob_sps = lane_starts(
-        paths, getattr(args, "obstacle_groups", 0), rng,
-        args.lat_jitter, args.yaw_jitter)
     spacing = paths["meta"]["spacing_m"]
+    fixed = getattr(args, "ob_fixed_index", None)
+    if fixed is not None:
+        # one obstacle spot for the whole corpus: starts 20-30 m upstream of it
+        n_ring = len(paths["lane1"])
+        win = [((fixed - int(30.0 / spacing)) % n_ring,
+                (fixed - int(20.0 / spacing)) % n_ring)]
+        ob_sps = lane_starts(paths, getattr(args, "obstacle_groups", 0), rng,
+                             args.lat_jitter, args.yaw_jitter, windows=win)
+    else:
+        ob_sps = lane_starts(
+            paths, getattr(args, "obstacle_groups", 0), rng,
+            args.lat_jitter, args.yaw_jitter)
+    swerve = bool(getattr(args, "ob_swerve_only", False))
     for gi, sp in enumerate(ob_sps):
         lane = sp["lane"]
         other = "lane2" if lane == "lane1" else "lane1"
         level = speeds[gi % len(speeds)]
         n_pts = len(paths[lane])
-        gap_m = rng.uniform(20.0, 30.0)
-        ob_idx = (sp["lane_index"] + int(gap_m / spacing)) % n_pts
+        if fixed is not None:
+            ob_idx = fixed % n_pts
+            gap_m = ((ob_idx - sp["lane_index"]) % n_pts) * spacing
+        else:
+            gap_m = rng.uniform(20.0, 30.0)
+            ob_idx = (sp["lane_index"] + int(gap_m / spacing)) % n_pts
         # long enough to reach the car, pass it, and settle back
         dur = round(gap_m / bank.speed_map[level] + 14.0, 1)
         model = OB_MODELS[gi % len(OB_MODELS)]
@@ -587,13 +606,14 @@ def build_plan(args, paths, bank, rng):
                 nx2, ny2 = paths[ob_lane][(ob_idx + 1) % n_pts]
                 ob = {"present": True, "entity": f"v9_{model}",
                       "model": model, "noun": ob_noun(model),
+                      "swerve": swerve,
                       "lane": ob_lane, "index": ob_idx,
                       "x": ox, "y": oy,
                       "yaw": math.atan2(ny2 - oy, nx2 - ox),
                       "in_our_lane": ob_lane == lane}
             # v1 spends extra window braking, watching (OB_WAIT_S) and
             # re-accelerating; without it the pass gets clipped mid-swerve
-            vdur = dur + (14.0 if ob.get("in_our_lane") else 0.0)
+            vdur = dur + ((6.0 if swerve else 14.0) if ob.get("in_our_lane") else 0.0)
             variants.append({
                 "cf_variant_id": f"v{vi}",
                 "intent_id": "cruise",
@@ -1046,7 +1066,7 @@ class Collector(Node):
             if avoid_phase in ("approach", "stopping", "waiting") and \
                     ob.get("present"):
                 fwd_g, _ = self._ob_arc_gap(ob)
-                if fwd_g is not None and -4.8 < fwd_g < 6.0:
+                if fwd_g is not None and -4.8 < fwd_g < 6.0 and not ob.get("swerve"):
                     # < 4.8 m center = body contact; 4.8-6.0 = stopped too
                     # short of the demonstrated line. Both are corpus
                     # poison (r10 audit: 7/16 v1 demos taught contact), so
@@ -1058,8 +1078,18 @@ class Collector(Node):
             if avoid_phase in ("approach", "stopping", "waiting", "passing"):
                 fwd, behind = self._ob_arc_gap(ob)
                 now = time.monotonic()
-                if avoid_phase == "approach" and fwd is not None \
-                        and 0.0 < fwd <= stop_at_m:
+                if avoid_phase == "approach" and ob.get("swerve") \
+                        and fwd is not None and 0.0 < fwd <= OB_SWERVE_TRIGGER_M:
+                    # direct swerve: change lane now, keep the cruise speed
+                    self.goal_pub.publish(String(data=json.dumps(
+                        {**variant["oracle_goal"], "lane": avoid_lane})))
+                    self.rec_pub.publish(String(data=json.dumps(
+                        {"cmd": "event", "kind": "avoid_go",
+                         "data": {"fwd_m": round(fwd, 2), "swerve": True,
+                                  "to_lane": avoid_lane}})))
+                    avoid_phase = "passing"
+                elif avoid_phase == "approach" and not ob.get("swerve") \
+                        and fwd is not None and 0.0 < fwd <= stop_at_m:
                     self.goal_pub.publish(String(data=json.dumps(
                         {**variant["oracle_goal"], "target_speed": 0.0})))
                     self.rec_pub.publish(String(data=json.dumps(
@@ -1273,6 +1303,20 @@ def main():
                         "obstacle fleet (default: the four hatchbacks). The "
                         "collection script must pre-spawn exactly this fleet "
                         "as v9_<model> — e.g. hatchback_red,ob_box,ob_cone")
+    p.add_argument("--ob-swerve-only", action="store_true",
+                   help="v1 demos change lane directly OB_SWERVE_TRIGGER_M "
+                        "ahead of the obstacle (no brake/watch), cruise speed kept")
+    p.add_argument("--ob-fixed-index", type=int, default=None,
+                   help="put every obstacle at this lane index (starts 20-30 m "
+                        "upstream). lane2 frac 0.35 = 142 (bottom straight)")
+    p.add_argument("--ob-stop-margin", type=float, default=None,
+                   help="override OB_STOP_MARGIN_M (centre-to-centre standstill "
+                        "gap, default 12.0). 'hard' demos (2026-09-23): 9.0")
+    p.add_argument("--ob-accel", type=float, default=None,
+                   help="override OB_ACCEL (must equal the route_oracle "
+                        "accel_limit param, default 0.55). 'hard' demos: 1.5 "
+                        "— the 0.55 ramp gave only -0.28 m/s per 3 s chunk, "
+                        "too faint for the action expert (r29/r30 probes)")
     p.add_argument("--obstacle-v1-only", action="store_true",
                    help="obstacle groups emit only the avoidance variant "
                         "(v1) — repair collection after the stop audit")
@@ -1324,6 +1368,11 @@ def main():
                    help="print the grid and exit; no sim needed")
     args = p.parse_args()
 
+    global OB_STOP_MARGIN_M, OB_ACCEL
+    if args.ob_stop_margin is not None:
+        OB_STOP_MARGIN_M = float(args.ob_stop_margin)
+    if args.ob_accel is not None:
+        OB_ACCEL = float(args.ob_accel)
     if args.obstacle_models:
         fleet = [m.strip() for m in args.obstacle_models.split(",") if m.strip()]
         if not fleet:
