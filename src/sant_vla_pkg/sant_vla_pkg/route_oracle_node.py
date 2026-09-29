@@ -28,7 +28,15 @@ Topics
 sub  ``/oracle_goal``    ``std_msgs/String`` JSON::
 
         {"goal": "T2", "lane": "lane1"|"lane2", "target_speed": 1.2}
+        {"goal": "cruise", "lane": "lane1", "lane_ramp_m": 9.0}
         {"goal": "stop"}
+
+    ``lane_ramp_m`` (cruise -> cruise lane switch only, default 0 = the old
+    instant swap): the reference slides from the old lane to the new one over
+    that much arc length on a raised-cosine profile instead of jumping 3.15 m
+    in one tick. The instant swap saturated the steering for one frame
+    (+0.14 -> -0.58 rad, packed_swerve 2026-09-28) — a step no 3 s action
+    chunk can place, and the reason Stanley could not change lanes at all.
 
 pub  ``/cmd_vel``        ``geometry_msgs/Twist``  — sole controller, continuous
 pub  ``/oracle_action``  ``std_msgs/String`` JSON — every pre-quantization float,
@@ -235,6 +243,7 @@ class RouteOracle(Node):
         self.speed = 0.0
         self.clamped = False
         self.path_i = None
+        self.ramp = None            # dict: from (lane), len (m), i0 (index)
         self.create_timer(1.0 / self.rate_hz, self._control)
         self._last_log = 0.0
         self.get_logger().info("route_oracle ready — waiting on /oracle_goal")
@@ -276,6 +285,7 @@ class RouteOracle(Node):
         zone = str(req.get("goal", "")).strip()
         if zone.lower() in ("stop", "cancel", ""):
             self.goal = None
+            self.ramp = None
             self._halt()
             self._status("idle: cancelled")
             return
@@ -283,7 +293,16 @@ class RouteOracle(Node):
         if lane not in self.lanes:
             self._status(f"error: unknown lane '{lane}'")
             return
+        prev = self.goal
+        self.ramp = None
         if zone.lower() == "cruise":
+            ramp_m = float(req.get("lane_ramp_m", 0.0))
+            if (ramp_m > 0.0 and prev is not None and prev["kind"] == "cruise"
+                    and prev["lane"] != lane):
+                # Lanes are index-aligned parallel offsets (3.152 m at every
+                # index), so the blend is a per-index lerp. i0 is fixed on the
+                # first control tick.
+                self.ramp = {"from": prev["lane"], "len": ramp_m, "i0": None}
             # No endpoint: lap the lane until cancelled. The collector ends
             # these episodes by duration, so the demonstration never brakes.
             self.goal = {
@@ -293,7 +312,9 @@ class RouteOracle(Node):
             }
             self.path_i = None
             self._status(f"cruising: {lane} at "
-                         f"{self.goal['target_speed']:.2f} m/s")
+                         f"{self.goal['target_speed']:.2f} m/s"
+                         + (f" (ramp {ramp_m:.1f} m from {prev['lane']})"
+                            if self.ramp else ""))
             return
         if zone in self.parking:
             # "from": "ring" prepends the connector, so an episode can start on
@@ -331,6 +352,25 @@ class RouteOracle(Node):
 
     # --------------------------------------------------------------- control
 
+    def _ramp_s(self, path, k):
+        """Blend weight toward the NEW lane at index k (1.0 = no ramp)."""
+        if self.ramp is None:
+            return 1.0
+        g = path.forward_gap(self.ramp["i0"], k)
+        if g > path.length / 2.0:
+            g -= path.length        # nearest-index jitter one step behind i0
+        u = max(0.0, min(1.0, g / self.ramp["len"]))
+        return 0.5 - 0.5 * math.cos(math.pi * u)
+
+    def _ref(self, path, k):
+        """Reference point at index k: the lane, or the lane blend mid-ramp."""
+        tx, ty = path.point_at(k)
+        s = self._ramp_s(path, k)
+        if s >= 1.0:
+            return tx, ty
+        fx, fy = self.lanes[self.ramp["from"]].point_at(k)
+        return fx + s * (tx - fx), fy + s * (ty - fy)
+
     def _control(self):
         if self._ego_idx is None:
             self._identify_ego()
@@ -349,6 +389,12 @@ class RouteOracle(Node):
 
         i, off = path.nearest_index(x, y, near=self.path_i)
         self.path_i = i
+        if self.ramp is not None:
+            if self.ramp["i0"] is None:
+                self.ramp["i0"] = i
+            elif self._ramp_s(path, i) >= 1.0:
+                self.ramp = None
+        ramp_s = self._ramp_s(path, i)
         if off > self.max_offpath:
             self.goal = None
             self._halt()
@@ -391,8 +437,8 @@ class RouteOracle(Node):
             # front axle. No lookahead point -> no anticipatory phase lead (the
             # 2026-09-16 diagnosis' destabiliser), and it nulls cross-track ->
             # drives dead-centre instead of cutting corners.
-            px, py = path.point_at(i)
-            nx, ny = path.point_at((i + 1) % path.n)
+            px, py = self._ref(path, i)
+            nx, ny = self._ref(path, (i + 1) % path.n)
             theta_p = math.atan2(ny - py, nx - px)
             psi = wrap_pi(theta_p - heading)                 # heading error
             fx = x + SIM_WHEEL_BASE * math.cos(heading)      # front axle
@@ -420,7 +466,7 @@ class RouteOracle(Node):
                          else self.park_lookahead)
                 gx, gy = path.point_at(path.advance_by(i, ld))
             else:
-                gx, gy = path.point_at(path.advance(i, ld))
+                gx, gy = self._ref(path, path.advance(i, ld))
             dx, dy = gx - x, gy - y
             c, s = math.cos(heading), math.sin(heading)
             local_x = dx * c + dy * s
@@ -464,6 +510,7 @@ class RouteOracle(Node):
             "heading_err": math.atan2(local_y, local_x),
             "s_remaining": remaining,
             "lane": self.goal["lane"],
+            "lane_ramp_s": ramp_s,
             "kind": self.goal["kind"],
             "goal": self.goal["zone"],
             "lookahead_m": ld,

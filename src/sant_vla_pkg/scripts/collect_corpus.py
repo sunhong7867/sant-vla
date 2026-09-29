@@ -160,6 +160,12 @@ OB_RETURN_BEHIND_M = 6.0    # obstacle this far behind -> return to lane
 # back OB_RETURN_BEHIND_M past it. Continuous steering only — the stop/go
 # demos of r29~r32 never reached the action expert (docs/ver/20260922_2113).
 OB_SWERVE_TRIGGER_M = 8.0   # user 2026-09-28: swerve close in (8 m = 2.8 s at the fast tier vs ~3 s lane change — fast-tier v1 may trip the 2 m guard and drop). Stop branch bypassed in swerve mode
+# Lane-change reference ramp for the swerve AND the return (route_oracle
+# `lane_ramp_m`). 0 = the instant lane swap packed_swerve was collected with:
+# steering jumped +0.10 -> +0.60 rad in one frame, a step the 3 s action chunk
+# cannot place (r33-r35 reacted at ~35% of the demo). 2026-09-29 pilot: trigger
+# 10 m, ramp 9 m (--ob-swerve-trigger-m / --ob-swerve-ramp-m).
+OB_SWERVE_RAMP_M = 0.0
 
 # Ring waypoints that are far enough apart to be distinct goals. T3 (index 124)
 # and crosswalk_stop (125) are the same point on the loop, as are Start (325) and
@@ -255,15 +261,17 @@ def connector_starts(paths, n, rng, lat_jitter, yaw_jitter_deg,
     return out
 
 
-def lane_starts(paths, n, rng, lat_jitter, yaw_jitter_deg, windows=None):
+def lane_starts(paths, n, rng, lat_jitter, yaw_jitter_deg, windows=None,
+                lanes=("lane1", "lane2")):
     """Sample start poses anywhere on the ring lanes (for ring-goal episodes).
 
     windows: optional list of (lo, hi) ring-index ranges; when given, start
     indices are drawn only from those ranges (used to target sparse spots
-    like the parking OUT-road junction upstream)."""
+    like the parking OUT-road junction upstream).
+    lanes: start lanes to draw from (obstacle groups: --ob-ego-lane)."""
     out = []
     for _ in range(n):
-        lane = rng.choice(["lane1", "lane2"])
+        lane = rng.choice(list(lanes))
         pts = [tuple(p) for p in paths[lane]]
         if windows:
             lo, hi = windows[rng.randrange(len(windows))]
@@ -568,6 +576,8 @@ def build_plan(args, paths, bank, rng):
     # the reasoning label, and the v0/v1/v2 contrast makes the camera the
     # only way to tell the three narrations apart.
     spacing = paths["meta"]["spacing_m"]
+    ego_lane = getattr(args, "ob_ego_lane", None)
+    ob_lanes = (ego_lane,) if ego_lane else ("lane1", "lane2")
     fixed = getattr(args, "ob_fixed_index", None)
     if fixed is not None:
         # one obstacle spot for the whole corpus: starts 20-30 m upstream of it
@@ -575,11 +585,12 @@ def build_plan(args, paths, bank, rng):
         win = [((fixed - int(30.0 / spacing)) % n_ring,
                 (fixed - int(20.0 / spacing)) % n_ring)]
         ob_sps = lane_starts(paths, getattr(args, "obstacle_groups", 0), rng,
-                             args.lat_jitter, args.yaw_jitter, windows=win)
+                             args.lat_jitter, args.yaw_jitter, windows=win,
+                             lanes=ob_lanes)
     else:
         ob_sps = lane_starts(
             paths, getattr(args, "obstacle_groups", 0), rng,
-            args.lat_jitter, args.yaw_jitter)
+            args.lat_jitter, args.yaw_jitter, lanes=ob_lanes)
     swerve = bool(getattr(args, "ob_swerve_only", False))
     for gi, sp in enumerate(ob_sps):
         lane = sp["lane"]
@@ -638,6 +649,10 @@ def build_plan(args, paths, bank, rng):
             # repair batches: only the avoidance variant, to replace v1
             # demos disqualified by the stop-quality audit
             variants = [v for v in variants if v["avoid_lane"]]
+        keep = getattr(args, "ob_variants", None)
+        if keep:
+            variants = [v for v in variants
+                        if v["cf_variant_id"] in keep.split(",")]
         groups.append({"cf_group_id": f"{args.group_prefix}o{gi:04d}",
                        "kind": "obstacle", "cf_axis": "obstacle", "start": sp,
                        "variants": variants})
@@ -1082,11 +1097,13 @@ class Collector(Node):
                         and fwd is not None and 0.0 < fwd <= OB_SWERVE_TRIGGER_M:
                     # direct swerve: change lane now, keep the cruise speed
                     self.goal_pub.publish(String(data=json.dumps(
-                        {**variant["oracle_goal"], "lane": avoid_lane})))
+                        {**variant["oracle_goal"], "lane": avoid_lane,
+                         "lane_ramp_m": OB_SWERVE_RAMP_M})))
                     self.rec_pub.publish(String(data=json.dumps(
                         {"cmd": "event", "kind": "avoid_go",
                          "data": {"fwd_m": round(fwd, 2), "swerve": True,
-                                  "to_lane": avoid_lane}})))
+                                  "to_lane": avoid_lane,
+                                  "ramp_m": OB_SWERVE_RAMP_M}})))
                     avoid_phase = "passing"
                 elif avoid_phase == "approach" and not ob.get("swerve") \
                         and fwd is not None and 0.0 < fwd <= stop_at_m:
@@ -1119,8 +1136,10 @@ class Collector(Node):
                     avoid_phase = "passing"
                 elif avoid_phase == "passing" and behind is not None \
                         and OB_RETURN_BEHIND_M <= behind < 40.0:
-                    self.goal_pub.publish(String(
-                        data=json.dumps(variant["oracle_goal"])))
+                    ret = dict(variant["oracle_goal"])
+                    if ob.get("swerve"):
+                        ret["lane_ramp_m"] = OB_SWERVE_RAMP_M
+                    self.goal_pub.publish(String(data=json.dumps(ret)))
                     self.rec_pub.publish(String(data=json.dumps(
                         {"cmd": "event", "kind": "avoid_return",
                          "data": {"behind_m": round(behind, 2)}})))
@@ -1306,6 +1325,20 @@ def main():
     p.add_argument("--ob-swerve-only", action="store_true",
                    help="v1 demos change lane directly OB_SWERVE_TRIGGER_M "
                         "ahead of the obstacle (no brake/watch), cruise speed kept")
+    p.add_argument("--ob-swerve-trigger-m", type=float, default=None,
+                   help="override OB_SWERVE_TRIGGER_M (centre-to-centre arc "
+                        "distance at which the swerve starts, default 8.0)")
+    p.add_argument("--ob-swerve-ramp-m", type=float, default=None,
+                   help="override OB_SWERVE_RAMP_M: route_oracle lane_ramp_m "
+                        "for the swerve and the return (default 0 = instant "
+                        "lane swap, the packed_swerve demos)")
+    p.add_argument("--ob-ego-lane", choices=("lane1", "lane2"), default=None,
+                   help="obstacle groups start only in this lane (default: "
+                        "either). lane2 + --ob-fixed-index 142 = swerve to "
+                        "lane1 on the bottom straight")
+    p.add_argument("--ob-variants", default=None,
+                   help="comma list of obstacle variants to keep, e.g. v0,v1 "
+                        "(default all three)")
     p.add_argument("--ob-fixed-index", type=int, default=None,
                    help="put every obstacle at this lane index (starts 20-30 m "
                         "upstream). lane2 frac 0.35 = 142 (bottom straight)")
@@ -1368,7 +1401,11 @@ def main():
                    help="print the grid and exit; no sim needed")
     args = p.parse_args()
 
-    global OB_STOP_MARGIN_M, OB_ACCEL
+    global OB_STOP_MARGIN_M, OB_ACCEL, OB_SWERVE_TRIGGER_M, OB_SWERVE_RAMP_M
+    if args.ob_swerve_trigger_m is not None:
+        OB_SWERVE_TRIGGER_M = float(args.ob_swerve_trigger_m)
+    if args.ob_swerve_ramp_m is not None:
+        OB_SWERVE_RAMP_M = float(args.ob_swerve_ramp_m)
     if args.ob_stop_margin is not None:
         OB_STOP_MARGIN_M = float(args.ob_stop_margin)
     if args.ob_accel is not None:

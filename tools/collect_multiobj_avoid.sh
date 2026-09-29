@@ -20,6 +20,9 @@
 #       bash tools/collect_multiobj_avoid.sh              # 강한 제동 시연 (청크당 감속 크게)
 #   TAG=swerve SWERVE=1 FIXED_INDEX=142 TRAIN_GROUPS=24 HELDOUT_GROUPS=6 \
 #       bash tools/collect_multiobj_avoid.sh              # 정지 없는 직접 차선변경, 위치 고정
+#   TAG=ramp SWERVE=1 FIXED_INDEX=142 EGO_LANE=lane2 OB_VARIANTS=v0,v1 \
+#       SWERVE_TRIGGER=10 SWERVE_RAMP=9 CONTROLLER=stanley TRAIN_GROUPS=36 HELDOUT_GROUPS=0 \
+#       bash tools/collect_multiobj_avoid.sh              # 램프 차선변경(2026-09-29): 2차선→1차선만, Stanley
 #   TRAIN_MODELS=hatchback_red,hatchback_blue HELDOUT_MODELS=ob_person \
 #       bash tools/collect_multiobj_avoid.sh              # 대조군: 차량만 학습
 #
@@ -54,8 +57,20 @@ OB_ACCEL=${OB_ACCEL:-0.55}
 OB_STOP_MARGIN=${OB_STOP_MARGIN:-12.0}
 SWERVE=${SWERVE:-0}                  # 1: 정지 없이 15 m 전방에서 바로 차선 변경
 FIXED_INDEX=${FIXED_INDEX:-}         # 장애물 차선 인덱스 고정 (lane2 frac 0.35 = 142)
+SWERVE_TRIGGER=${SWERVE_TRIGGER:-}   # 회피 시작 중심거리(m), 비우면 collect_corpus 기본 8
+SWERVE_RAMP=${SWERVE_RAMP:-}         # 차선 전환 램프 길이(m), 비우면 0 = 즉시 교체(packed_swerve)
+EGO_LANE=${EGO_LANE:-}               # lane2 = 2차선에서만 출발 (→ 1차선으로 회피)
+OB_VARIANTS=${OB_VARIANTS:-}         # 예: v0,v1 (v2 옆 차선 대조 제외)
+CONTROLLER=${CONTROLLER:-pure_pursuit}  # stanley = r26 순항 선생과 같은 제어기 (램프 필요)
 EXTRA_FLAGS=""
 [ "$SWERVE" = 1 ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-swerve-only"
+[ -n "$SWERVE_TRIGGER" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-swerve-trigger-m $SWERVE_TRIGGER"
+[ -n "$SWERVE_RAMP" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-swerve-ramp-m $SWERVE_RAMP"
+[ -n "$EGO_LANE" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-ego-lane $EGO_LANE"
+[ -n "$OB_VARIANTS" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-variants $OB_VARIANTS"
+if [ "$CONTROLLER" = stanley ] && [ "$SWERVE" = 1 ] && [ -z "$SWERVE_RAMP" ]; then
+  echo "[multiobj] Stanley 는 램프 없이 차선변경 못 함 — SWERVE_RAMP 를 지정"; exit 2
+fi
 [ -n "$FIXED_INDEX" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-fixed-index $FIXED_INDEX"
 
 source /opt/ros/jazzy/setup.bash
@@ -170,9 +185,11 @@ PYEOF
 
 echo "[multiobj] 오라클 기동..."
 # lookahead_gain 0.6: v10p 가 전 매트릭스 무접촉으로 실측한 값. 기본 0.9 는 v9 의
-# 차선중심 회귀(중앙값 0.54~0.88 m) 원인 후보였다. 회피 차선변경은 pure-pursuit 이
-# 필요해 Stanley(단일 차선 전용)는 못 쓴다.
+# 차선중심 회귀(중앙값 0.54~0.88 m) 원인 후보였다. 즉시 차선 교체는 Stanley 가
+# 3.15 m 오차를 한 번에 봐서 못 쓰지만, lane_ramp_m 램프(2026-09-29)가 있으면
+# CONTROLLER=stanley 로 r26 순항 선생과 같은 제어기를 쓸 수 있다.
 setsid nohup ros2 run sant_vla_pkg route_oracle_node --ros-args -p lookahead_gain:=${LG:-0.6} -p accel_limit:=$OB_ACCEL \
+  -p controller:=$CONTROLLER \
   -p use_sim_time:=true > "$OUT/oracle.log" 2>&1 < /dev/null &
 sleep 3
 
