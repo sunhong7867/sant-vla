@@ -1468,6 +1468,9 @@ class DashboardWindow(QMainWindow):
         if sv_goal:
             state += f", 마지막 이동 요청: '{sv_goal}'"
         known = "빨간·노란·흰·파란 꼬깔, 소화전, 의자, 쓰레기통, 강아지, 드럼통, 상자, 바리케이드, 말"
+        if "color" in os.environ.get("NAVVLA_L5_HEAD", ""):
+            # L7 head: colour phrases are also requests ("파란색 물체로 가줘")
+            known += "(그리고 빨강·파랑·검정·노랑·흰색·갈색 물체를 색으로 부르는 것)"
         system = ("당신은 시뮬레이션 자율주행차에 타고 있는 대화 도우미입니다. 사람과 이야기하듯 자연스러운 존댓말로 "
                   "1~3문장만 답하세요. 목록, 번호, 괄호, 마크다운, 이모지는 쓰지 마세요.\n"
                   "규칙:\n"

@@ -107,7 +107,9 @@ def _ko_label(label):
 
 def _where(bearing, dist):
     deg = math.degrees(bearing)
-    side = "정면" if abs(deg) < 5.0 else ("왼쪽 앞" if deg > 0 else "오른쪽 앞")
+    # 10-14: a trash can 9 deg right of centre was called "오른쪽 앞" while the user saw it "in the middle"
+    side = ("정면" if abs(deg) < 5.0 else ("정면 약간 왼쪽" if deg > 0 else "정면 약간 오른쪽") if abs(deg) < 15.0
+            else ("왼쪽 앞" if deg > 0 else "오른쪽 앞"))
     return f"{side} 약 {dist:.0f} m"
 
 
@@ -205,6 +207,9 @@ class GoalFromScene(Node):
             self._sv = SmolVLAPerceiver(base, f"{l5}/{head}", f"{l5}/names.npz")
             import sant_vla_pkg.smolvla_perceiver as svp
             self._trained = svp.TRAINED_ALL if "_all" in head else svp.TRAINED
+            self._look_names = self._trained                       # "뭐가 보여?" lists object names only
+            if "color" in head:                                     # L7 head also answers colour phrases
+                self._trained = self._trained + svp.COLOR_PHRASES
             self.period_s = float(dp("smolvla_period_s", 0.5).value)
 
         qos_d = QoSProfile(depth=1, reliability=QoSReliabilityPolicy.RELIABLE,
@@ -621,7 +626,7 @@ class GoalFromScene(Node):
         if self._sv is None or img is None:
             self._status("LOOK: 지금은 SmolVLA 로 화면을 볼 수 없습니다(카메라 없음 또는 Qwen 모드).")
             return
-        res = self._sv.find(self._sv.tokens(self._rgb(img)), list(self._trained), img.width)
+        res = self._sv.find(self._sv.tokens(self._rgb(img)), list(self._look_names), img.width)
         seen = []
         for p, x, n in sorted(((p, x, n) for n, (p, x) in res.items() if p < 0.5), key=lambda t: t[1]):
             if any(abs(x - q) < 30 for q, _ in seen):        # one object answering to two names

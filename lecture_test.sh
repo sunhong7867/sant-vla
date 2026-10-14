@@ -10,7 +10,7 @@
 #   sh lecture_test.sh --goto                  # 목표 지점 이동 (2026-10-13): 점 목표 모델 g5d 15k + Qwen2.5-VL 목표 노드, 감독 OFF, 장애물 없이 시작
 #                                              #   GUI: [앞에 물체 3개] → "빨간 꼬깔로 가줘" / "공룡으로 가줘" / "상자 오른쪽에 서줘"
 #                                              #   Qwen 이 화면에서 물체를 찾고 라이다로 거리를 재서 정책에 방향·거리를 준다. 정차는 코드 게이트.
-#   sh lecture_test.sh --goto-smolvla          # 목표 찾기도 SmolVLA 로 (Qwen 없음, L5 위치 층; 학습한 이름만)
+#   sh lecture_test.sh --goto-smolvla          # 목표 찾기도 SmolVLA 로 (Qwen 없음, L5/L7 위치 층; 학습한 이름·색만)
 #   sh lecture_test.sh --goto-sector           # 예전 섹터 모델 s3 (문장 방향 단어 방식)
 #                                              #   전방 카메라 클릭 후 WASD = 수동주행, 다른 곳 클릭 = 해제
 #   sh lecture_test.sh down                    # 전체 종료
@@ -53,6 +53,8 @@ while [ $# -gt 0 ]; do
     --goto-smolvla) AVOID=off; OBSTACLES=""; START_FRAC=${START_FRAC:-0.1}
             # 2026-10-13 L5: 목표 찾기도 SmolVLA(얼린 VLM + 위치 층, Qwen 없음). 학습한 이름만, 나머지는 되묻기
             export REMOTE_CKPT=${REMOTE_CKPT:-runs/course/navvla_reasoning_g5d/checkpoints/015000/pretrained_model}
+            # 2026-10-14 L7: 색 문장("파란색 물체")도 학습한 위치 층. 학습한 색-물체 조합만(다른 물체로 일반화 0 %)
+            export NAVVLA_L5_HEAD=${NAVVLA_L5_HEAD:-head_color_all.pt}
             export NAVVLA_POINT_GOAL=1 NAVVLA_PERCEIVER=smolvla XTRACK_GAIN=${XTRACK_GAIN:-0.0} POLICY_GUIDE=${POLICY_GUIDE:-1.0} NAVVLA_REASONING_EVERY=${NAVVLA_REASONING_EVERY:-0}; shift ;;
     --goto-sector) AVOID=off; OBSTACLES=""; START_FRAC=${START_FRAC:-0.1}
             export REMOTE_CKPT=${REMOTE_CKPT:-runs/course/navvla_reasoning_s3/checkpoints/015000/pretrained_model}; shift ;;

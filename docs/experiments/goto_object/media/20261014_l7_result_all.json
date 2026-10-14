@@ -1,0 +1,108 @@
+{
+ "E2/black:chair": {
+  "hit": 721,
+  "n": 726,
+  "rate": 0.993,
+  "chance": 0.547
+ },
+ "E2/black:trash can": {
+  "hit": 445,
+  "n": 447,
+  "rate": 0.996,
+  "chance": 0.536
+ },
+ "E2/blue:barrel": {
+  "hit": 637,
+  "n": 639,
+  "rate": 0.997,
+  "chance": 0.534
+ },
+ "E2/blue:blue cone": {
+  "hit": 632,
+  "n": 632,
+  "rate": 1.0,
+  "chance": 0.597
+ },
+ "E2/brown:box": {
+  "hit": 282,
+  "n": 282,
+  "rate": 1.0,
+  "chance": 0.461
+ },
+ "E2/red:fire hydrant": {
+  "hit": 687,
+  "n": 687,
+  "rate": 1.0,
+  "chance": 0.515
+ },
+ "E2/red:red cone": {
+  "hit": 921,
+  "n": 924,
+  "rate": 0.997,
+  "chance": 0.582
+ },
+ "E2/white:white cone": {
+  "hit": 893,
+  "n": 894,
+  "rate": 0.999,
+  "chance": 0.596
+ },
+ "E2/yellow:yellow cone": {
+  "hit": 697,
+  "n": 706,
+  "rate": 0.987,
+  "chance": 0.577
+ },
+ "E3_neg/black": {
+  "hit": 3629,
+  "n": 3641,
+  "rate": 0.997,
+  "chance": 0.0
+ },
+ "E3_neg/blue": {
+  "hit": 3561,
+  "n": 3573,
+  "rate": 0.997,
+  "chance": 0.0
+ },
+ "E3_neg/brown": {
+  "hit": 4566,
+  "n": 4588,
+  "rate": 0.995,
+  "chance": 0.0
+ },
+ "E3_neg/red": {
+  "hit": 3123,
+  "n": 3133,
+  "rate": 0.997,
+  "chance": 0.0
+ },
+ "E3_neg/white": {
+  "hit": 3968,
+  "n": 3976,
+  "rate": 0.998,
+  "chance": 0.0
+ },
+ "E3_neg/yellow": {
+  "hit": 4161,
+  "n": 4164,
+  "rate": 0.999,
+  "chance": 0.0
+ },
+ "E4_name_multi": {
+  "hit": 6701,
+  "n": 6748,
+  "rate": 0.993,
+  "chance": 0.0
+ },
+ "E2": {
+  "hit": 5915,
+  "n": 5937,
+  "rate": 0.996
+ },
+ "E3_neg": {
+  "hit": 23008,
+  "n": 23075,
+  "rate": 0.997
+ }
+}

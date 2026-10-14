@@ -19,6 +19,8 @@ TRAINED = ("red cone", "yellow cone", "white cone", "fire hydrant", "chair", "tr
 # head_name_all.pt (L5_TAG=_all, 10-13 22:00): horse and blue cone were also training queries — a demo
 # head, not a generalisation result (held-out episodes: horse 99.8 %, blue cone 99.8 %)
 TRAINED_ALL = TRAINED + ("horse", "blue cone")
+# head_color_all.pt (L7, 10-14): colour phrases learned as queries — server/code/course/l7_color.py
+COLOR_PHRASES = ("red object", "blue object", "black object", "yellow object", "white object", "brown object")
 CONES = ("red cone", "yellow cone", "white cone", "blue cone", "green cone")
 # Korean words -> English names (the head's vocabulary is the corpus nouns). Longer phrases first.
 KO2EN = (
@@ -28,6 +30,13 @@ KO2EN = (
     (r"파란\s*(?:색\s*)?(?:꼬깔|고깔|콘|라바콘)", ("blue cone",)),
     (r"(?:초록|녹색)\s*(?:색\s*)?(?:꼬깔|고깔|콘|라바콘)", ("green cone",)),
     (r"꼬깔|고깔|라바콘|콘(?!센트)", CONES),
+    # bare colour words ("파란색 물체로 가봐"); a colour right before an object name stays part of that name
+    (r"(?:빨간|빨강)\s*색?(?:\s*(?:물체|물건|것|거|건))?", ("red object",)),
+    (r"(?:파란|파랑)\s*색?(?:\s*(?:물체|물건|것|거|건))?", ("blue object",)),
+    (r"(?:검은|검정|까만|까망)\s*색?(?:\s*(?:물체|물건|것|거|건))?", ("black object",)),
+    (r"(?:노란|노랑)\s*색?(?:\s*(?:물체|물건|것|거|건))?", ("yellow object",)),
+    (r"(?:흰|하얀)\s*색?(?:\s*(?:물체|물건|것|거|건))?", ("white object",)),
+    (r"갈색(?:\s*(?:물체|물건|것|거|건))?", ("brown object",)),
     (r"소화전", ("fire hydrant",)),
     (r"의자", ("chair",)),
     (r"쓰레기통|휴지통", ("trash can",)),
@@ -43,7 +52,9 @@ KO2EN = (
 EN2KO = {"red cone": "빨간 꼬깔", "yellow cone": "노란 꼬깔", "white cone": "흰 꼬깔", "blue cone": "파란 꼬깔",
          "green cone": "초록 꼬깔", "fire hydrant": "소화전", "chair": "의자", "trash can": "쓰레기통", "dog": "강아지",
          "barrel": "드럼통", "box": "상자", "barrier": "바리케이드", "horse": "말", "dinosaur": "공룡",
-         "robot": "로봇", "person": "사람"}
+         "robot": "로봇", "person": "사람", "red object": "빨간색 물체", "blue object": "파란색 물체",
+         "black object": "검은색 물체", "yellow object": "노란색 물체", "white object": "흰색 물체",
+         "brown object": "갈색 물체"}
 
 
 def names_in(req):
@@ -53,7 +64,12 @@ def names_in(req):
         for m in re.finditer(rx, req):
             if not any(m.start() < e and s < m.end() for s, e, _, _ in spans):
                 spans.append((m.start(), m.end(), m.group(0), en))
-    return [(w, en) for _, _, w, en in sorted(spans)]
+    spans.sort()
+    # "파란색 드럼통": the colour only describes the next name — keep the name, drop the colour
+    spans = [sp for k, sp in enumerate(spans)
+             if not (sp[3][0] in COLOR_PHRASES and k + 1 < len(spans) and spans[k + 1][0] - sp[1] <= 2
+                     and spans[k + 1][3][0] not in COLOR_PHRASES)]
+    return [(w, en) for _, _, w, en in spans]
 
 
 class SmolVLAPerceiver:
@@ -75,6 +91,10 @@ class SmolVLAPerceiver:
         tok = AutoTokenizer.from_pretrained(MID)
         self.lang = tok("Target.\n", return_tensors="pt").input_ids.to(device)
         self.names = {k: torch.from_numpy(v).float().to(device) for k, v in np.load(names_path).items()}
+        import os
+        colors = os.path.join(os.path.dirname(names_path), "colors.npz")
+        if os.path.exists(colors):                       # L7 colour phrase vectors (same text encoding)
+            self.names.update({k: torch.from_numpy(v).float().to(device) for k, v in np.load(colors).items()})
         self.head = _head_class(torch)(True).to(device).eval()
         self.head.load_state_dict(torch.load(head_path, map_location=device))
 

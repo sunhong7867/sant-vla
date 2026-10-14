@@ -350,7 +350,7 @@ fi
 # NAVVLA_STOP_GAP: 정지 간격(기본 0.8 → 실측 물체 표면까지 약 0.9 m·전방 카메라에 물체가 보임; 0.4 → 0.47 m, 너무 가까움)
 if [ "${NAVVLA_POINT_GOAL:-0}" = 1 ]; then
   setsid nohup python3 "$WS/src/sant_vla_pkg/sant_vla_pkg/goal_from_scene_node.py" --ros-args -p use_sim_time:=true \
-    -p ollama_host:=http://127.0.0.1:11501 -p scan_topic:=/scan -p hfov_deg:=62.2 -p stop_gap_m:="${NAVVLA_STOP_GAP:-0.8}" -p perceiver:="${NAVVLA_PERCEIVER:-qwen}" \
+    -p ollama_host:=http://127.0.0.1:11501 -p scan_topic:=/scan -p hfov_deg:=62.2 -p stop_gap_m:="${NAVVLA_STOP_GAP:-0.8}" -p perceiver:="${NAVVLA_PERCEIVER:-qwen}" -p l5_head:="${NAVVLA_L5_HEAD:-head_name_all.pt}" \
     > "$LOGD/goal_from_scene.log" 2>&1 < /dev/null &
 fi
 sleep 6
