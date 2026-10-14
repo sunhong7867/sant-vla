@@ -414,10 +414,12 @@ class GoalFromScene(Node):
             if d < standoff and not self._hold:
                 self._set_hold(True)
                 self._status(f"gate: dist {d:.2f} < standoff {standoff:.2f} -> hold")
+                self._finish(req)
             elif abs(b) > math.radians(100.0) and d < 3.0 * standoff and not self._hold:
                 # the dead-reckoned target slid behind the car (missed it): stop instead of circling
                 self._set_hold(True)
                 self._status(f"gate: target passed (bearing {math.degrees(b):.0f} deg, {d:.2f} m) -> hold")
+                self._finish(req)
         now = time.monotonic()
         with self._lock:
             tracking = self._track is not None and now - self._track[2] < self.track_lost_s
@@ -425,6 +427,14 @@ class GoalFromScene(Node):
                 and now - self._last_vlm >= self.period_s and self._img is not None):
             self._busy = True
             threading.Thread(target=self._refresh, args=(req, self._img, self._scan, self._ego), daemon=True).start()
+
+    def _finish(self, req):
+        # 10-14 GUI test: after arriving the request stayed live, so the node kept re-finding "드럼통"
+        # in the next placed layout (and counted misses 7/6 … 18/6). Arrival ends the request; the hold stays.
+        with self._lock:
+            if self._req == req:
+                self._req, self._goal, self._track = None, None, None
+                self.goal_pub.publish(String(data="none"))
 
     def _set_hold(self, on):
         if on != self._hold:
@@ -619,7 +629,7 @@ class GoalFromScene(Node):
             pt = self._x_to_point(x, img.width, scan)
             where = _where(math.atan2(pt[1], pt[0]), math.hypot(*pt))
             if abs(math.hypot(*pt) - self.policy_max_dist_m) < 1e-3:      # no LiDAR return: range unknown
-                where = where.rsplit(" 약 ", 1)[0] + f" {self.lidar_range_m:.0f} m 넘게"
+                where = where.rsplit(" 약 ", 1)[0] + f" 멀리, 라이다 {self.lidar_range_m:.0f} m 밖이라 거리 모름"
             seen.append((x, f"{EN2KO.get(n, n)}({where}, 확신 {1 - p:.2f})"))
         # facts only; the GUI words the reply (SmolVLA-only chat, 10-13 user: "talk like a person")
         self._status("LOOK: " + ("; ".join(t for _, t in seen) if seen else "알아본 물체 없음"))

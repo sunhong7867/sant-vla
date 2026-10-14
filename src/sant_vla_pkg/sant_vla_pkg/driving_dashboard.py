@@ -91,6 +91,10 @@ def card(title, subtitle=None):
 SMOLVLA_ONLY = os.environ.get("NAVVLA_PERCEIVER", "qwen") == "smolvla"
 LOOK_RE = re.compile(r"보여|보이|보입|뭐가\s*있|뭐\s*있|what.*see", re.I)
 REVERSE_RE = re.compile(r"뒤로|후진|빠꾸|back\s*up|reverse|backward", re.I)
+# "그럼 바리케이트로" — a known name with the verb left out (10-14: went to the chat, which promised to drive)
+ELLIPTIC_GOTO_RE = re.compile(r"(으로|로|쪽으로|쪽)\s*[.!~]*\s*$")
+# a text-only chat model cannot move the car; sentences that promise to (10-14: "바리케이드 쪽으로 이동하겠습니다")
+PROMISE_RE = re.compile(r"(이동|출발|접근|조정|주행|향|움직이|가|가\s?보|찾아\s?보|확인해\s?보)(하|해)?\s*겠")
 
 class CameraView(QWidget):
     def __init__(self):
@@ -933,6 +937,12 @@ class DashboardWindow(QMainWindow):
             self.add_chat("user", text)
             self.send_point_goal(text)
             return
+        if self.point_goal and SMOLVLA_ONLY and ELLIPTIC_GOTO_RE.search(text) and not REVERSE_RE.search(text):
+            from sant_vla_pkg.smolvla_perceiver import names_in
+            if names_in(text):
+                self.add_chat("user", text)
+                self.send_point_goal(text)
+                return
         if self.point_goal and SMOLVLA_ONLY:
             # 2026-10-13: SmolVLA-only mode makes no Qwen call at all — "what do you see" is answered
             # by the goal node's SmolVLA head, everything else is out of scope
@@ -1469,7 +1479,10 @@ class DashboardWindow(QMainWindow):
                   "'쓰레기통으로 가줘'처럼 말하는 것과 '정지'뿐이니, 다른 방법을 제안하지 않습니다.\n"
                   "4. [관찰]에 요청 처리 결과가 있으면 그 일은 이미 끝났습니다. 왜 출발하지 않았는지 쉬운 말로 설명하고, 기다려 달라거나 다시 찾겠다고 하지 않습니다.\n"
                   "5. 알아볼 수 있는 물체 종류를 말할 때 그것들이 지금 주변에 있다고 말하지 않습니다. 주변에 있는 것은 [관찰]의 물체뿐입니다.\n"
-                  "6. 차가 움직이는지 서 있는지는 [차 상태]만 따릅니다.")
+                  "6. 차가 움직이는지 서 있는지는 [차 상태]만 따릅니다.\n"
+                  "7. [관찰]은 매번 새로 본 것입니다. 이전 답에서 말한 물체라도 이번 [관찰]에 없으면 지금은 보이지 않는다고 말합니다. "
+                  "물체끼리 어느 쪽이 더 가깝다는 비교는 [관찰]의 거리로만 합니다.\n"
+                  "8. '거리 모름'으로 적힌 물체는 숫자 거리를 말하지 말고 '멀리'라고만 합니다.")
         msgs = [{"role": "system", "content": system}, *list(hist),
                 {"role": "user", "content": f"[관찰]\n{facts}\n[차 상태]\n{state}\n[사용자]\n{user or '(요청 없음)'}"}]
         host = os.environ.get("NAVVLA_CHAT_HOST", "http://127.0.0.1:11501")
@@ -1484,6 +1497,8 @@ class DashboardWindow(QMainWindow):
                     reply = json.loads(r.read().decode("utf-8"))["message"]["content"].strip()
             except Exception:                                   # noqa: BLE001
                 reply = None
+            if reply:
+                reply = self._drop_promises(reply)
             if not reply:
                 reply = facts                                   # no LLM: the facts themselves, unvarnished
             hist.append({"role": "user", "content": user or "(요청 없음)"})
@@ -1491,6 +1506,17 @@ class DashboardWindow(QMainWindow):
             if not self.closing:
                 self.bus.replied.emit(reply)
         threading.Thread(target=worker, daemon=True).start()
+
+    @staticmethod
+    def _drop_promises(reply):
+        """Remove sentences in which the chat model says it will drive somewhere; it cannot."""
+        sents = re.split(r"(?<=[.!?。])\s+", reply.strip())
+        keep = [x for x in sents if not PROMISE_RE.search(x)]
+        if len(keep) == len(sents):
+            return reply
+        keep = [x for x in keep if not re.fullmatch(r"(잠시만?\s*기다려\s*주세요|알겠습니다)[.!]?|잠시만?\s*기다려\s*주세요[.!]?", x.strip())]
+        keep.append("대화로는 차가 움직이지 않아요. 움직이려면 '바리케이드로 가줘'처럼 물체 이름으로 말씀해 주세요.")
+        return " ".join(keep)
 
     def _goal_sub_ready(self):
         from std_msgs.msg import String
