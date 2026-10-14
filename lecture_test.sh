@@ -7,6 +7,12 @@
 #   sh lecture_test.sh --obstacles lane2:0.25,lane1:0.45 --start-frac 0.15
 #   sh lecture_test.sh --ckpt models/ckpt_r30   # 학생 학습 모델로
 #   sh lecture_test.sh --scenario-only         # 시나리오 JSON 만 갱신 (스택 안 띄움)
+#   sh lecture_test.sh --goto                  # 목표 지점 이동 (2026-10-13): 점 목표 모델 g5d 15k + Qwen2.5-VL 목표 노드, 감독 OFF, 장애물 없이 시작
+#                                              #   GUI: [앞에 물체 3개] → "빨간 꼬깔로 가줘" / "공룡으로 가줘" / "상자 오른쪽에 서줘"
+#                                              #   Qwen 이 화면에서 물체를 찾고 라이다로 거리를 재서 정책에 방향·거리를 준다. 정차는 코드 게이트.
+#   sh lecture_test.sh --goto-smolvla          # 목표 찾기도 SmolVLA 로 (Qwen 없음, L5 위치 층; 학습한 이름만)
+#   sh lecture_test.sh --goto-sector           # 예전 섹터 모델 s3 (문장 방향 단어 방식)
+#                                              #   전방 카메라 클릭 후 WASD = 수동주행, 다른 곳 클릭 = 해제
 #   sh lecture_test.sh down                    # 전체 종료
 #
 # 하는 일:
@@ -39,9 +45,20 @@ while [ $# -gt 0 ]; do
     --start-lane) START_LANE="$2"; shift 2 ;;
     --avoidance) AVOID="$2"; shift 2 ;;
     --scenario-only) SCENARIO_ONLY=1; shift ;;
+    --goto) AVOID=off; OBSTACLES=""; START_FRAC=${START_FRAC:-0.1}
+            # g5d 평가(goto_stat_eval.sh)와 같은 서빙 설정: 차선 보정 0
+            export REMOTE_CKPT=${REMOTE_CKPT:-runs/course/navvla_reasoning_g5d/checkpoints/015000/pretrained_model}
+            # g5d 는 해설 헤드를 학습하지 않았다(ce 0) → 해설이 'numerable…' 반복이 되므로 끈다
+            export NAVVLA_POINT_GOAL=1 XTRACK_GAIN=${XTRACK_GAIN:-0.0} POLICY_GUIDE=${POLICY_GUIDE:-1.0} NAVVLA_REASONING_EVERY=${NAVVLA_REASONING_EVERY:-0}; shift ;;
+    --goto-smolvla) AVOID=off; OBSTACLES=""; START_FRAC=${START_FRAC:-0.1}
+            # 2026-10-13 L5: 목표 찾기도 SmolVLA(얼린 VLM + 위치 층, Qwen 없음). 학습한 이름만, 나머지는 되묻기
+            export REMOTE_CKPT=${REMOTE_CKPT:-runs/course/navvla_reasoning_g5d/checkpoints/015000/pretrained_model}
+            export NAVVLA_POINT_GOAL=1 NAVVLA_PERCEIVER=smolvla XTRACK_GAIN=${XTRACK_GAIN:-0.0} POLICY_GUIDE=${POLICY_GUIDE:-1.0} NAVVLA_REASONING_EVERY=${NAVVLA_REASONING_EVERY:-0}; shift ;;
+    --goto-sector) AVOID=off; OBSTACLES=""; START_FRAC=${START_FRAC:-0.1}
+            export REMOTE_CKPT=${REMOTE_CKPT:-runs/course/navvla_reasoning_s3/checkpoints/015000/pretrained_model}; shift ;;
     --ckpt) DEMO_ARGS+=(--ckpt "$2"); shift 2 ;;
     --no-gui|--legacy-gui) DEMO_ARGS+=("$1"); shift ;;
-    -h|--help) sed -n 2,20p "$0"; exit 0 ;;
+    -h|--help) sed -n 2,25p "$0"; exit 0 ;;
     *) echo "[lecture] 알 수 없는 인자: $1"; exit 2 ;;
   esac
 done
@@ -88,7 +105,7 @@ for i, spec in enumerate(specs):
                      "kind": "vehicle", "lane_hint": lane, "frac": float(frac)})
 start_lane = os.environ["START_LANE"]
 sf = os.environ["START_FRAC"]
-start_frac = float(sf) if sf else max(0.0, min(float(s.split(":")[1]) for s in specs) - 0.08)
+start_frac = float(sf) if sf else (max(0.0, min(float(s.split(":")[1]) for s in specs) - 0.08) if specs else 0.1)
 ex, ey, etr = lane_pose(start_lane, start_frac)
 scenarios["lecture"] = {
     "label": "강좌 · 장애물 테스트",

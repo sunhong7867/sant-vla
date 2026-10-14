@@ -9,6 +9,11 @@
 #   ./smolvla_demo.sh check          # 실행 전 환경만 점검
 #   ./smolvla_demo.sh down           # 전체 종료 + gz 로그 정리
 #   NAVVLA_GUI_ARGS="-p avoid_enable:=false" ./smolvla_demo.sh   # chat_gui 파라미터 추가 (lecture_test.sh 가 사용)
+#   REFILL_AT=0.65 ./smolvla_demo.sh   # 청크 재계획 시점(기본 0.8 = 0.6 s 커밋). 낮추면 계획을 더 오래 붙든다
+#   2026-10-10: refill_at 0.3 -> 0.8, max_speed 2.25 -> 1.2. s3/s3n 폐루프에서 underrun 최대 100 %,
+#   워치독 38 회였고 코퍼스 속도는 최대 1.90 / 중앙 1.00 이라 2.25 는 분포 밖이었다.
+#   예전 설정 재현: MAX_SPEED=2.25 REFILL_AT=0.3 ./smolvla_demo.sh
+#                                     # 값은 소수로 (XTRACK_GAIN=0 처럼 정수면 브리지가 타입 오류로 죽음)
 #
 # 로그: eval_out/demo/*.log
 [ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
@@ -28,6 +33,9 @@ GUI=1
 GUI_UI=dashboard
 RACE=${NAVVLA_RACE:-qualifying}
 REASONING_EVERY=${NAVVLA_REASONING_EVERY:-4}
+# 1 = 해설로 동작 조건화(r40+ 체크포인트, --situation-from-reasoning). 해설을 매 요청 갱신
+SITUATION=${NAVVLA_SITUATION:-0}
+[ "$SITUATION" = 1 ] && REASONING_EVERY=${NAVVLA_REASONING_EVERY:-1}
 
 ROS_SETUP=/opt/ros/${ROS_DISTRO:-jazzy}/setup.bash
 
@@ -95,6 +103,8 @@ kill_stack() {
   pat='lidar_obstacle_detecto'; pkill -f "${pat}r"       2>/dev/null
   pat='clock_throttl';    pkill -f "${pat}e"             2>/dev/null
   pat='ackermann_cmd_adapte'; pkill -f "${pat}r"         2>/dev/null
+  pat='goal_from_scene_nod'; pkill -f "${pat}e"         2>/dev/null
+  pat='lidar_marke';      pkill -f "${pat}r.py"         2>/dev/null
   # Qt GUI는 이벤트 루프가 파이썬 시그널을 삼켜 SIGTERM으로 안 죽는 경우가
   # 있음 — 잠시 후에도 살아있으면 강제 종료
   sleep 2
@@ -171,16 +181,21 @@ awk -v a="$AVAIL_G" 'BEGIN{exit !(a<5.0)}' && {
 rm -rf ~/.gz/sim/log
 rm -f /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* /dev/shm/fastdds_* /dev/shm/sem.fastdds_* /dev/shm/cyclonedds* 2>/dev/null
 
+# SmolVLA 전용: LLM 명령 해석기 끔(노트북 qwen3:4b 예열 방지), 표시 번역·대화 문장은 서버 EXAONE(글 전용, 이미지 안 봄)
+SV_GUI_ARGS=""
+if [ "${NAVVLA_PERCEIVER:-qwen}" = smolvla ]; then
+  SV_GUI_ARGS="-p parser_backend:=disabled -p scene_host:=http://127.0.0.1:11501 -p translate_model:=exaone3.5:7.8b"
+fi
 GAZEBO_GUI=true
 if [ "$GUI" = 0 ]; then GAZEBO_GUI=false; fi
 if [ "$GUI" = 1 ] && [ "$GUI_UI" = dashboard ]; then
   GAZEBO_GUI=false
-  if [ "${LOCAL_VLA:-0}" != 1 ]; then
-    SCENE_ARGS="-p scene_model:=qwen2.5vl:7b -p scene_host:=http://127.0.0.1:11501 -p ollama_host:=http://127.0.0.1:11501 -p parser_model:=qwen2.5vl:7b"
+  if [ "${LOCAL_VLA:-0}" != 1 ] && [ "${NAVVLA_PERCEIVER:-qwen}" != smolvla ]; then
+    SCENE_ARGS="-p scene_model:=qwen2.5vl:7b -p scene_host:=http://127.0.0.1:11501 -p ollama_host:=http://127.0.0.1:11501 -p parser_model:=qwen2.5vl:7b -p translate_model:=${NAVVLA_TRANSLATE_MODEL:-exaone3.5:7.8b}"
   fi
   echo "[demo] 통합 Driving Studio 기동 — 3D / BEV / 채팅 / reasoning"
   setsid nohup ros2 run sant_vla_pkg chat_gui_node --ros-args ${NAVVLA_GUI_ARGS:-} \
-    -p control_backend:=smolvla -p ui:=dashboard ${SCENE_ARGS:-} \
+    -p control_backend:=smolvla -p ui:=dashboard ${SCENE_ARGS:-} ${SV_GUI_ARGS:-} \
     > "$LOGD/chat_gui.log" 2>&1 < /dev/null &
 fi
 
@@ -204,6 +219,7 @@ if [ "${LOCAL_VLA:-0}" = 1 ]; then
   setsid nohup "$POLICY_PYTHON" -u \
     "$WS/src/sant_vla_pkg/scripts/vla_policy_server.py" \
     --checkpoint "$CKPT" --endpoint "$VLA_ENDPOINT" --warmup 4 --reasoning-every "$REASONING_EVERY" \
+    $( [ "$SITUATION" = 1 ] && echo --situation-from-reasoning ) \
     > "$LOGD/serve.log" 2>&1 < /dev/null &
   for _ in $(seq 1 40); do
     grep -q 'serving on' "$LOGD/serve.log" 2>/dev/null && break
@@ -225,12 +241,12 @@ else
     # imitation-phase fix. Clean/centred at normal+slow (no oracle-phase
     # oscillation); high-speed inner-lane curves are closed by the bridge's
     # cross-track assist (xtrack, fast tier only) below. See
-    # docs/ver/20260916_1945_oracle-vs-yolo-imitation-diagnosis.md.
+    # docs/experiments/log/20260916_1945_oracle-vs-yolo-imitation-diagnosis.md.
     DEFAULT_REMOTE=runs/navvla_reasoning_r26/checkpoints/last/pretrained_model
   fi
   RCKPT=${REMOTE_CKPT:-$DEFAULT_REMOTE}
-  echo "[demo] 2/5 정책 서버 기동(랩서버 4070Ti): $RCKPT"
-  printf -v REMOTE_COMMAND 'bash -s -- %q %q' "$RCKPT" "$REASONING_EVERY"
+  echo "[demo] 2/5 정책 서버 기동(랩서버 GPU${POLICY_GPU:-0}): $RCKPT"
+  printf -v REMOTE_COMMAND 'bash -s -- %q %q %q %q %q' "$RCKPT" "$REASONING_EVERY" "$SITUATION" "${POLICY_GUIDE:-1.0}" "${POLICY_GPU:-0}"
   ssh -o BatchMode=yes -o ConnectTimeout=10 "$SRV" "$REMOTE_COMMAND" \
     < "$WS/server/start_demo_policy.sh" > "$LOGD/remote_start.log" 2>&1 || {
       cat "$LOGD/remote_start.log"
@@ -253,15 +269,18 @@ else
   ssh -o ConnectTimeout=10 "$SRV" 'bash ~/sunhong/nav-vla/code/remote_ollama_up.sh' \
     | tail -1 || echo "[demo] 경고: 원격 ollama 미가동 — 해설은 템플릿 폴백"
   # 파서와 해설 모두 서버의 단일 비전 모델로 통일 (노트북 ollama 불사용)
-  SCENE_ARGS="-p scene_model:=qwen2.5vl:7b -p scene_host:=http://127.0.0.1:11501 -p ollama_host:=http://127.0.0.1:11501 -p parser_model:=qwen2.5vl:7b"
+  SCENE_ARGS="-p scene_model:=qwen2.5vl:7b -p scene_host:=http://127.0.0.1:11501 -p ollama_host:=http://127.0.0.1:11501 -p parser_model:=qwen2.5vl:7b -p translate_model:=${NAVVLA_TRANSLATE_MODEL:-exaone3.5:7.8b}"
 fi
 SCENE_ARGS="${SCENE_ARGS:-}"
+# SmolVLA 전용 목표 모드(lecture_test.sh --goto-smolvla): 해설·대화·명령 해석의 Qwen 도 끈다(해설은 템플릿 폴백)
+if [ "${NAVVLA_PERCEIVER:-qwen}" = smolvla ]; then SCENE_ARGS=""; fi
 STANDSTILL=false
 GOAL_CONDITIONING=false
 case "$STATE_DIM" in
   3) ;;
   4) STANDSTILL=true ;;
   5) GOAL_CONDITIONING=true ;;
+  6) STANDSTILL=true; GOAL_CONDITIONING=true ;;   # 2026-10-12 g5d: [v,w,steer,goal_b,goal_d,standstill]
   *) echo "[demo] 지원하지 않는 모델 상태 차원: $STATE_DIM"; exit 3 ;;
 esac
 write_stage bridge "모델 준비 완료. 차량 제어 브리지를 연결합니다."
@@ -270,10 +289,11 @@ echo "[demo] 3/5 브리지 기동..."
 setsid nohup ros2 run sant_vla_pkg vla_bridge_node --ros-args -p use_sim_time:=true \
   -p endpoint:="$VLA_ENDPOINT" -p standstill_state:="$STANDSTILL" -p standstill_cap:=3.5 -p goal_conditioning:="$GOAL_CONDITIONING" \
   -p model_name:=ego_vehicle -p display_preview_period:=0.4 \
-  -p image_topic:=/camera/image_raw -p max_speed:=2.25 -p speed_slew:=0.08 \
+  -p image_topic:=/camera/image_raw -p max_speed:="${MAX_SPEED:-1.2}" -p speed_slew:=0.08 \
   -p track_mode:=preview -p curv_slow_alat:=0.6 -p curv_boost:=0.95 \
-  -p curv_boost_slow:=0.85 -p curv_boost_fast:=0.85 \
+  -p curv_boost_slow:="${CURV_BOOST_SLOW:-0.85}" -p curv_boost_fast:=0.85 \
   -p xtrack_gain:="${XTRACK_GAIN:-0.15}" -p xtrack_tiers:="${XTRACK_TIERS:-fast}" \
+  -p refill_at:="${REFILL_AT:-0.8}" \
   > "$LOGD/bridge.log" 2>&1 < /dev/null &
 
 echo "[demo] 4/5 내비게이터 + 내레이터 기동..."
@@ -295,18 +315,44 @@ setsid nohup ros2 run camera_perception_pkg lane_info_extractor_node --ros-args 
 # best_cap/COCO YOLO 모두 정면·근거리에서 놓치는 것을 16:37 세션에서 실측).
 # range_max 8m: 2 m/s 기준 차선 변경(~4 s)에 필요한 여유. 라이브 튜닝:
 #   ros2 param set /lidar_obstacle_detector_node range_max 10.0
+#
+# 2026-10-12: 이 트리거는 그동안 한 번도 발화하지 않았다. eval_out/demo 의
+# 10-10 로그 835 줄 전부 `front 0-15deg nearest=inf detected=False` 다. 두 가지
+# 고장이 겹쳐 있었다.
+#   (1) 센서가 뒷범퍼 뒤 0.645 m(차체 밖)에 떠 있어 전방 레이가 자기 차체에
+#       막혔다 — argmin 이 늘 idx 265~273 에서 0.70 m, 즉 자기 뒷범퍼였다.
+#       prius_hybrid/model.sdf 의 lidar_link 를 앞범퍼(y -1.80, z 0.70)로 옮겼다.
+#   (2) 섹터 0~15° 는 전방이 아니다. 센서 프레임 0° = +x(우측)이고 차량 전방은
+#       로컬 -y = **270°** 다(위 argmin 중심 269° 와 일치, 노드 docstring 의
+#       "~90 deg yaw offset" 경고가 이것). 262~278° = 전방 ±8° 로 지정한다.
+# 두 수정 뒤 range_max 8.0 은 코끝 기준 약 7.9 m 를 뜻한다 — 주석의 설계 의도와
+# 처음으로 일치한다(이전 마운트에서는 실질 3.5 m 였고, 그마저 자기 차체에 막혔다).
+# 회피 발화 시점이 바뀌므로 avoidance 결과는 이 날짜 전후로 비교하지 않는다.
 setsid nohup ros2 run ros_gz_bridge parameter_bridge \
   "/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan" \
   > "$LOGD/scan_bridge.log" 2>&1 < /dev/null &
 setsid nohup ros2 run lidar_perception_pkg lidar_obstacle_detector_node --ros-args \
-  -p range_max:=8.0 -p debug_argmin:=true \
+  -p range_max:=8.0 -p start_angle:=262 -p end_angle:=278 -p debug_argmin:=true \
   > "$LOGD/lidar_obstacle.log" 2>&1 < /dev/null &
 
 # direct_twist_topic: 직행(최단거리) 구간은 VLA를 침묵시키고 navigator가
-# /cmd_vel을 직접 구동한다 (docs/ver/20260824_1138 좌표 위임 결정).
+# /cmd_vel을 직접 구동한다 (docs/experiments/log/20260824_1138 좌표 위임 결정).
 setsid nohup ros2 run sant_vla_pkg navigator_node --ros-args \
   -p direct_twist_topic:=/cmd_vel > "$LOGD/navigator.log" 2>&1 < /dev/null &
 setsid nohup python3 "$WS/src/sant_vla_pkg/scripts/vla_narrator.py" > "$LOGD/narrator.log" 2>&1 < /dev/null &
+# 라이다 빔 시각화 (2026-10-13): 3D 뷰에 파란 빔. GUI 의 MarkerManager 로 그린다
+# (VisualizeLidar 는 토픽 선택 칸이 화면에 보여야만 그려서 숨긴 패널로는 안 됨). 끄기: NAVVLA_LIDAR_VIS=0
+if [ "$GUI" = 1 ] && [ "${NAVVLA_LIDAR_VIS:-1}" = 1 ]; then
+  setsid nohup python3 "$WS/src/sant_vla_pkg/scripts/lidar_marker.py" > "$LOGD/lidar_marker.log" 2>&1 < /dev/null &
+fi
+# 점 목표 모드 (2026-10-13, g5d): GUI 문장 -> /goal_request -> Qwen2.5-VL 박스 + /scan 거리 -> /vla_goal.
+# 정책은 "Target." 만 듣는다. lecture_test.sh --goto 가 NAVVLA_POINT_GOAL=1 로 켠다.
+# NAVVLA_STOP_GAP: 정지 간격(기본 0.8 → 실측 물체 표면까지 약 0.9 m·전방 카메라에 물체가 보임; 0.4 → 0.47 m, 너무 가까움)
+if [ "${NAVVLA_POINT_GOAL:-0}" = 1 ]; then
+  setsid nohup python3 "$WS/src/sant_vla_pkg/sant_vla_pkg/goal_from_scene_node.py" --ros-args -p use_sim_time:=true \
+    -p ollama_host:=http://127.0.0.1:11501 -p scan_topic:=/scan -p hfov_deg:=62.2 -p stop_gap_m:="${NAVVLA_STOP_GAP:-0.8}" -p perceiver:="${NAVVLA_PERCEIVER:-qwen}" \
+    > "$LOGD/goal_from_scene.log" 2>&1 < /dev/null &
+fi
 sleep 6
 
 # 정당한 /cmd_vel 퍼블리셔 3: gz 브리지 어댑터, vla_bridge, navigator(직행 Twist).
@@ -314,7 +360,7 @@ NPUB=$(timeout 10 ros2 topic info /cmd_vel --verbose --no-daemon --spin-time 3 2
 echo "[demo] /cmd_vel 퍼블리셔 수: $NPUB (3 초과면 유령 노드 — down 후 재기동)"
 [ "$NPUB" -le 3 ] || { echo "[demo] 유령 퍼블리셔 감지, 중단"; exit 4; }
 timeout 15 ros2 topic echo /vla/status std_msgs/msg/String --once > "$LOGD/bridge_ready.log" 2>&1
-grep -q latency_ms "$LOGD/bridge_ready.log" || {
+grep -qE "latency_ms|override" "$LOGD/bridge_ready.log" || {
   echo "[demo] 차량 제어 브리지 응답 없음 — $LOGD/bridge.log 확인"
   exit 3
 }

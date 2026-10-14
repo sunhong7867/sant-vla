@@ -1,0 +1,3353 @@
+{
+ "qwen": [
+  {
+   "frame": "multi_A",
+   "set": "main",
+   "gt": [
+    "horse",
+    "cone",
+    "dog"
+   ],
+   "answer": "horse, cone, teddybear",
+   "hit": [
+    "horse",
+    "cone",
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "multi_B",
+   "set": "main",
+   "gt": [
+    "dog",
+    "dinosaur",
+    "cone",
+    "trash"
+   ],
+   "answer": "dog, dinosaur, cone, trash can",
+   "hit": [
+    "dog",
+    "dinosaur",
+    "cone",
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "multi_C",
+   "set": "main",
+   "gt": [
+    "dinosaur",
+    "box",
+    "horse"
+   ],
+   "answer": "dinosaur, horse, box",
+   "hit": [
+    "dinosaur",
+    "box",
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "live_now",
+   "set": "main",
+   "gt": [
+    "dog",
+    "horse",
+    "trash"
+   ],
+   "answer": "teddy, horse, trashcan",
+   "hit": [
+    "dog",
+    "horse",
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_18",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_25",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2_12",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "cow",
+   "hit": [],
+   "halluc": [
+    "cow"
+   ]
+  },
+  {
+   "frame": "far_go_horse_-2_18",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2_25",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2s_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2s_18",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2s_25",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2_18",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "rock",
+   "hit": [],
+   "halluc": [
+    "rock"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2_25",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2s_12",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dinosaur",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2s_18",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dinosaur",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2s_25",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dinosaur",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2_12",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "tiger",
+   "hit": [],
+   "halluc": [
+    "tiger"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2_18",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2_25",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "horseman",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_12",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_18",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_25",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_12",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trashcan",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_18",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trashcan",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_25",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trashcan",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_chair_-2_12",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "chair",
+   "hit": [
+    "chair"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_chair_-2_18",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "chair",
+   "hit": [
+    "chair"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_chair_-2_25",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "chair",
+   "hit": [
+    "chair"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_ob_box_-2_12",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "box",
+   "hit": [
+    "box"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_ob_box_-2_18",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "box",
+   "hit": [
+    "box"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_ob_box_-2_25",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "signpost",
+   "hit": [],
+   "halluc": [
+    "signpost"
+   ]
+  },
+  {
+   "frame": "far_go_cone_red_+0_8",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_12",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_16",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_20",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_25",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_30",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_35",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "teddybear",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "teddybear",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "teddybear",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "bear",
+   "hit": [],
+   "halluc": [
+    "bear"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dirt, rock",
+   "hit": [],
+   "halluc": [
+    "dirt",
+    "rock"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dirt, rock",
+   "hit": [],
+   "halluc": [
+    "dirt",
+    "rock"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "bear",
+   "hit": [],
+   "halluc": [
+    "bear"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "teddybear",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y0_5",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "zebra",
+   "hit": [],
+   "halluc": [
+    "zebra"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_6",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "zebra",
+   "hit": [],
+   "halluc": [
+    "zebra"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_8",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y0_10",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y0_12",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_5",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "zebra",
+   "hit": [],
+   "halluc": [
+    "zebra"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y180_6",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_8",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_10",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "man",
+   "hit": [],
+   "halluc": [
+    "man"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y180_12",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "animal",
+   "hit": [],
+   "halluc": [
+    "animal"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "giraffe",
+   "hit": [],
+   "halluc": [
+    "giraffe"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "cat",
+   "hit": [],
+   "halluc": [
+    "cat"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "cat",
+   "hit": [],
+   "halluc": [
+    "cat"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "Unicorn",
+   "hit": [],
+   "halluc": [
+    "unicorn"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "cow",
+   "hit": [],
+   "halluc": [
+    "cow"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "triceratops",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "cow",
+   "hit": [],
+   "halluc": [
+    "cow"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "bird",
+   "hit": [],
+   "halluc": [
+    "bird"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "leopard",
+   "hit": [],
+   "halluc": [
+    "leopard"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "monster",
+   "hit": [],
+   "halluc": [
+    "monster"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "tiger",
+   "hit": [],
+   "halluc": [
+    "tiger"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "monster",
+   "hit": [],
+   "halluc": [
+    "monster"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "bear",
+   "hit": [],
+   "halluc": [
+    "bear"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog",
+   "hit": [],
+   "halluc": []
+  }
+ ],
+ "smol500": [
+  {
+   "frame": "multi_A",
+   "set": "main",
+   "gt": [
+    "horse",
+    "cone",
+    "dog"
+   ],
+   "answer": "horse, teddy bear, red cone",
+   "hit": [
+    "horse",
+    "cone",
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "multi_B",
+   "set": "main",
+   "gt": [
+    "dog",
+    "dinosaur",
+    "cone",
+    "trash"
+   ],
+   "answer": "T-Rex, trash can, dog, flower, road, grass, sky.",
+   "hit": [
+    "dog",
+    "dinosaur",
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "multi_C",
+   "set": "main",
+   "gt": [
+    "dinosaur",
+    "box",
+    "horse"
+   ],
+   "answer": "horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse,",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "live_now",
+   "set": "main",
+   "gt": [
+    "dog",
+    "horse",
+    "trash"
+   ],
+   "answer": "teddy, horse",
+   "hit": [
+    "dog",
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog, road, grass, flowers, sky",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_18",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse,",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_25",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse, road, grass, flowers, sky",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2_12",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse, road, grass, flowers, sky",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2_18",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car, person, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_horse_-2_25",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "Sheep, road, flowers, grass, sky.",
+   "hit": [],
+   "halluc": [
+    "sheep"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2s_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "Dog, road, grass, flowers, sky.",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2s_18",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog, car, flower, road, grass",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2s_25",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "Dog, car, flower, road, grass, flowers",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog, car, grass, flowers, road",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2_18",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car, person, grass, flowers, road, road, road",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2_25",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car, person, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2s_12",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "T-Rex, car, grass, flowers, road, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2s_18",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2s_25",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "T-Rex, car, grass, flowers, road, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2_12",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "beetle, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": [
+    "beetle"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2_18",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "horse, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2_25",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse,",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_12",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone, road, grass, flowers, sky",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_18",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone, road, grass, flowers, sky",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_25",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone, road, grass, flowers, sky",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_12",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trash can, flower, road, grass, flowers, road, trash can, flower, road, grass, flower, road, trash can, flower, road, trash can, flower, road, trash can, flower, road, trash can, flower, road, trash can, flower, road",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_18",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup, cup,",
+   "hit": [],
+   "halluc": [
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup",
+    "cup"
+   ]
+  },
+  {
+   "frame": "far_go_trashbin_-2_25",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "car, lamp, flower, road, grass",
+   "hit": [],
+   "halluc": [
+    "car",
+    "lamp"
+   ]
+  },
+  {
+   "frame": "far_go_chair_-2_12",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "chair, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [
+    "chair"
+   ],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_chair_-2_18",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "chair, flower, road, grass, sky",
+   "hit": [
+    "chair"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_chair_-2_25",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "chair, car, flower, road, grass",
+   "hit": [
+    "chair"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_ob_box_-2_12",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "block, flower, road, grass",
+   "hit": [],
+   "halluc": [
+    "block"
+   ]
+  },
+  {
+   "frame": "far_ob_box_-2_18",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "Brick, flower, road, grass, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road, flower, road,",
+   "hit": [],
+   "halluc": [
+    "brick"
+   ]
+  },
+  {
+   "frame": "far_ob_box_-2_25",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "car, tree, flower, road, grass",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_cone_red_+0_8",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_12",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone, road, grass, flowers, sky",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_16",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone, road, grass, flowers, sky",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_20",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone, road, grass, flowers, sky",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_25",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "Road, white line, red triangle, grass, flowers, sky.",
+   "hit": [],
+   "halluc": [
+    "red triangle"
+   ]
+  },
+  {
+   "frame": "far_go_cone_red_+0_30",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "Road, white line, red triangle, grass, flowers, sky.",
+   "hit": [],
+   "halluc": [
+    "red triangle"
+   ]
+  },
+  {
+   "frame": "far_go_cone_red_+0_35",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "Road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "Dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog, dog,",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "Dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car, person",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car, person, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL, BALL,",
+   "hit": [],
+   "halluc": [
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball",
+    "ball"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "frog, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": [
+    "frog"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "Bear, car, grass, flowers, road, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [],
+   "halluc": [
+    "bear",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog, car, flower, road, grass",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog, car, grass, flowers, road",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_5",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse, car, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [
+    "horse"
+   ],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_6",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car, person",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_8",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse, road, grass, flowers, sky",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y0_10",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car, person, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_12",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car, person, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y180_5",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_6",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_8",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_10",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse, road, grass, flowers, sky",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_12",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "bike, person, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": [
+    "bike",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "fox, road, grass, flowers, sky",
+   "hit": [],
+   "halluc": [
+    "fox"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "beetle, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [],
+   "halluc": [
+    "beetle",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "Toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad, toad",
+   "hit": [],
+   "halluc": [
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad",
+    "toad"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "TROPHY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY",
+   "hit": [],
+   "halluc": [
+    "trophy_body_body_body_body_body_body_body_body_body_body_body_body_body_body"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "Troll.",
+   "hit": [],
+   "halluc": [
+    "troll."
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "Troll.",
+   "hit": [],
+   "halluc": [
+    "troll."
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog, road, flowers, grass, sky",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, person, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "TROPHY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY_BODY",
+   "hit": [],
+   "halluc": [
+    "trophy_body_body_body_body_body_body_body_body_body_body_body_body_body_body"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person, car, person,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person",
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car, car,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car",
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, horse, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, person",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "dog, road, flowers, grass, sky",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "Dog, car, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "Horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse, horse,",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, person, grass, flowers, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road, road,",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car, person",
+   "hit": [],
+   "halluc": [
+    "car",
+    "person"
+   ]
+  }
+ ],
+ "smol22": [
+  {
+   "frame": "multi_A",
+   "set": "main",
+   "gt": [
+    "horse",
+    "cone",
+    "dog"
+   ],
+   "answer": "horse, sheep",
+   "hit": [
+    "horse"
+   ],
+   "halluc": [
+    "sheep"
+   ]
+  },
+  {
+   "frame": "multi_B",
+   "set": "main",
+   "gt": [
+    "dog",
+    "dinosaur",
+    "cone",
+    "trash"
+   ],
+   "answer": "trash can",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "multi_C",
+   "set": "main",
+   "gt": [
+    "dinosaur",
+    "box",
+    "horse"
+   ],
+   "answer": "truck",
+   "hit": [],
+   "halluc": [
+    "truck"
+   ]
+  },
+  {
+   "frame": "live_now",
+   "set": "main",
+   "gt": [
+    "dog",
+    "horse",
+    "trash"
+   ],
+   "answer": "dog, ant",
+   "hit": [
+    "dog"
+   ],
+   "halluc": [
+    "ant"
+   ]
+  },
+  {
+   "frame": "far_go_horse_-2s_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_18",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2s_25",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2_12",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_-2_18",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_-2_25",
+   "set": "main",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2s_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2s_18",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "teddy bear",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2s_25",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "dog",
+   "hit": [
+    "dog"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_-2_12",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2_18",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_-2_25",
+   "set": "main",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2s_12",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "triceratops",
+   "hit": [
+    "dinosaur"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_-2s_18",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "truck",
+   "hit": [],
+   "halluc": [
+    "truck"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2s_25",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2_12",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2_18",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_-2_25",
+   "set": "main",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_12",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cones",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_18",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_yellow_-2_25",
+   "set": "main",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_12",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trash can",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_18",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trash can",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_trashbin_-2_25",
+   "set": "main",
+   "gt": [
+    "trash"
+   ],
+   "answer": "trash can",
+   "hit": [
+    "trash"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_chair_-2_12",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "bench",
+   "hit": [],
+   "halluc": [
+    "bench"
+   ]
+  },
+  {
+   "frame": "far_go_chair_-2_18",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "bench",
+   "hit": [],
+   "halluc": [
+    "bench"
+   ]
+  },
+  {
+   "frame": "far_go_chair_-2_25",
+   "set": "main",
+   "gt": [
+    "chair"
+   ],
+   "answer": "bench",
+   "hit": [],
+   "halluc": [
+    "bench"
+   ]
+  },
+  {
+   "frame": "far_ob_box_-2_12",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "box",
+   "hit": [
+    "box"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_ob_box_-2_18",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "box",
+   "hit": [
+    "box"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_ob_box_-2_25",
+   "set": "main",
+   "gt": [
+    "box"
+   ],
+   "answer": "box",
+   "hit": [
+    "box"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_8",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_12",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_16",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_20",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_25",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_30",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_cone_red_+0_35",
+   "set": "near",
+   "gt": [
+    "cone"
+   ],
+   "answer": "cone",
+   "hit": [
+    "cone"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dog_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "bear",
+   "hit": [],
+   "halluc": [
+    "bear"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "bear",
+   "hit": [],
+   "halluc": [
+    "bear"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "bear",
+   "hit": [],
+   "halluc": [
+    "bear"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "rock",
+   "hit": [],
+   "halluc": [
+    "rock"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "rock",
+   "hit": [],
+   "halluc": [
+    "rock"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "tire",
+   "hit": [],
+   "halluc": [
+    "tire"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "bird",
+   "hit": [],
+   "halluc": [
+    "bird"
+   ]
+  },
+  {
+   "frame": "far_go_dog_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dog"
+   ],
+   "answer": "gun",
+   "hit": [],
+   "halluc": [
+    "gun"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_5",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_6",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_8",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_10",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "person",
+   "hit": [],
+   "halluc": [
+    "person"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y0_12",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_5",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y180_6",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_horse_+0y180_8",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_10",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "horse",
+   "hit": [
+    "horse"
+   ],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_horse_+0y180_12",
+   "set": "near",
+   "gt": [
+    "horse"
+   ],
+   "answer": "bicycle",
+   "hit": [],
+   "halluc": [
+    "bicycle"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "motorcycle",
+   "hit": [],
+   "halluc": [
+    "motorcycle"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "horse",
+   "hit": [],
+   "halluc": []
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "bicycle",
+   "hit": [],
+   "halluc": [
+    "bicycle"
+   ]
+  },
+  {
+   "frame": "far_go_dino_5_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "bicycle",
+   "hit": [],
+   "halluc": [
+    "bicycle"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y0_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_5",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_6",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_8",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_10",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "bicycle",
+   "hit": [],
+   "halluc": [
+    "bicycle"
+   ]
+  },
+  {
+   "frame": "far_go_dino_3_+0y180_12",
+   "set": "near",
+   "gt": [
+    "dinosaur"
+   ],
+   "answer": "car",
+   "hit": [],
+   "halluc": [
+    "car"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,335 @@
+[
+ {
+  "name": "Car.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_car_red.png",
+  "label": "car",
+  "cond": "sim_render",
+  "distractor": "robot",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Car.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_car_blue.png",
+  "label": "car",
+  "cond": "sim_render",
+  "distractor": "teddy bear",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Car.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_car_yellow.png",
+  "label": "car",
+  "cond": "sim_render",
+  "distractor": "banana",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Car.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_car_prius.png",
+  "label": "car",
+  "cond": "sim_render",
+  "distractor": "fire hydrant",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Rubber block.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_box.png",
+  "label": "box",
+  "cond": "sim_render",
+  "distractor": "trash can",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Cone",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_cone.png",
+  "label": "traffic cone",
+  "cond": "sim_render",
+  "distractor": "person",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Cube.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_box_white.png",
+  "label": "box",
+  "cond": "sim_render",
+  "distractor": "horse",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Cylinder.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_person.png",
+  "label": "person",
+  "cond": "sim_render",
+  "distractor": "trash can",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Cylinder.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_cylinder.png",
+  "label": "cylinder",
+  "cond": "sim_render",
+  "distractor": "person",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Car.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/sim_car_green.png",
+  "label": "car",
+  "cond": "sim_render",
+  "distractor": "dinosaur",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Teddy bear.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_lovable_huggable_cuddly__v1.png",
+  "label": "teddy bear",
+  "cond": "thumbnail",
+  "distractor": "car",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Teddy bear.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_lovable_huggable_cuddly__v3.png",
+  "label": "teddy bear",
+  "cond": "thumbnail",
+  "distractor": "fire hydrant",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "T-Rex skeleton.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dino_3_v1.png",
+  "label": "dinosaur",
+  "cond": "thumbnail",
+  "distractor": "car",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Humanoid figure.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dino_3_v3.png",
+  "label": "dinosaur",
+  "cond": "thumbnail",
+  "distractor": "box",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Dinosaur toy.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dino_4_v1.png",
+  "label": "dinosaur",
+  "cond": "thumbnail",
+  "distractor": "fire hydrant",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Dinosaur skeleton.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dino_4_v3.png",
+  "label": "dinosaur",
+  "cond": "thumbnail",
+  "distractor": "car",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "T-Rex.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dino_5_v1.png",
+  "label": "dinosaur",
+  "cond": "thumbnail",
+  "distractor": "horse",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Triceratops.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dino_5_v3.png",
+  "label": "dinosaur",
+  "cond": "thumbnail",
+  "distractor": "box",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Cute stuffed animal.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dog_v1.png",
+  "label": "dog",
+  "cond": "thumbnail",
+  "distractor": "bowl",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Teddy bear.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_dog_v3.png",
+  "label": "dog",
+  "cond": "thumbnail",
+  "distractor": "orange",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Horse.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_breyer_horse_of_the_year_v1.png",
+  "label": "horse",
+  "cond": "thumbnail",
+  "distractor": "trash can",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Horse.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_breyer_horse_of_the_year_v3.png",
+  "label": "horse",
+  "cond": "thumbnail",
+  "distractor": "box",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Android robot.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_great_dinos_triceratops__v1.png",
+  "label": "robot",
+  "cond": "thumbnail",
+  "distractor": "orange",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Android robot.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_great_dinos_triceratops__v3.png",
+  "label": "robot",
+  "cond": "thumbnail",
+  "distractor": "teddy bear",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Bowl.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_threshold_bead_cereal_bo_v1.png",
+  "label": "bowl",
+  "cond": "thumbnail",
+  "distractor": "orange",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Bowl.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_threshold_bead_cereal_bo_v3.png",
+  "label": "bowl",
+  "cond": "thumbnail",
+  "distractor": "dinosaur",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Fire hydrant.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_fire_hydrant_v1.png",
+  "label": "fire hydrant",
+  "cond": "thumbnail",
+  "distractor": "trash can",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Fire hydrant.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_fire_hydrant_v3.png",
+  "label": "fire hydrant",
+  "cond": "thumbnail",
+  "distractor": "traffic cone",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Trash can.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_trashbin_v1.png",
+  "label": "trash can",
+  "cond": "thumbnail",
+  "distractor": "dog",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Tumbler with lid.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_trashbin_v3.png",
+  "label": "trash can",
+  "cond": "thumbnail",
+  "distractor": "banana",
+  "yes_true": "No.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Chair.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_visitorchair_v1.png",
+  "label": "chair",
+  "cond": "thumbnail",
+  "distractor": "ball",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Chair.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_visitorchair_v3.png",
+  "label": "chair",
+  "cond": "thumbnail",
+  "distractor": "bowl",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Red circle.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_red_ball_10in_v1.png",
+  "label": "ball",
+  "cond": "thumbnail",
+  "distractor": "robot",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Banana.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_banana_for_scale_v1.png",
+  "label": "banana",
+  "cond": "thumbnail",
+  "distractor": "ball",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Banana.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_banana_for_scale_v3.png",
+  "label": "banana",
+  "cond": "thumbnail",
+  "distractor": "trash can",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Brown egg.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_orange_v1.png",
+  "label": "orange",
+  "cond": "thumbnail",
+  "distractor": "horse",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ },
+ {
+  "name": "Brown sphere.",
+  "path": "/tmp/claude-1000/-home-sh-ROS2-project-sant-vla/72e1212f-9e53-4419-a061-ec532e9aa4b4/scratchpad/l1/img/thumb_orange_v3.png",
+  "label": "orange",
+  "cond": "thumbnail",
+  "distractor": "dinosaur",
+  "yes_true": "Yes.",
+  "yes_distr": "No."
+ }
+]

@@ -7,7 +7,10 @@ import math
 import os
 from pathlib import Path
 import queue
+import random
+import re
 import signal
+import urllib.request
 import threading
 import time
 import xml.etree.ElementTree as ET
@@ -27,7 +30,10 @@ from sant_vla_pkg.race_scenarios import (atomic_json, load_scenarios, model_dire
                                          obstacle_body_yaw, reset_scenario, set_signal,
                                          static_model)
 from sant_vla_pkg.gazebo_panel import GazeboPanel
-from sant_vla_pkg.gz_pose import WorldPoseStream, resolve_gz_bin
+from sant_vla_pkg.gz_pose import WorldPoseStream, list_models, resolve_gz_bin
+from sant_vla_pkg.gz_reset import set_model_pose
+from sant_vla_pkg import goto_command
+from sant_vla_pkg import goto_layout as G
 
 
 STYLE = """
@@ -81,6 +87,11 @@ def card(title, subtitle=None):
     return frame, layout
 
 
+
+SMOLVLA_ONLY = os.environ.get("NAVVLA_PERCEIVER", "qwen") == "smolvla"
+LOOK_RE = re.compile(r"보여|보이|보입|뭐가\s*있|뭐\s*있|what.*see", re.I)
+REVERSE_RE = re.compile(r"뒤로|후진|빠꾸|back\s*up|reverse|backward", re.I)
+
 class CameraView(QWidget):
     def __init__(self):
         super().__init__()
@@ -114,6 +125,86 @@ class CameraView(QWidget):
             painter.fillRect(0, 0, self.width(), 28, QColor("#142133"))
             painter.setPen(QColor("#a8b9d0"))
             painter.drawText(self.rect().adjusted(10, 0, -10, 0), Qt.AlignTop, self.note)
+
+
+DRIVE_KEYS = {Qt.Key_W, Qt.Key_A, Qt.Key_S, Qt.Key_D, Qt.Key_Space}
+
+
+class DriveCameraView(CameraView):
+    """Front camera that doubles as the manual-drive pad (lecture mode, 2026-10-08):
+    click it and W/A/S/D drive the car; Esc, a click anywhere else or leaving the
+    window ends it (the window's event filter clears the focus). Only key state
+    lives here; the window turns it into /cmd_vel."""
+    drive_focus = Signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        self.drive_enabled = False
+        # Keys currently down. Only a real (non-auto-repeat) release or losing
+        # focus clears one: X11 auto-repeats just the LAST key pressed, so with
+        # W + A held, W stops repeating — a "no repeat for 1 s = released" rule
+        # dropped the other key and the steering let go (user report 10-08).
+        self.held = {}
+        self.drive_text = ""
+
+    def enable_drive(self):
+        self.drive_enabled = True
+        self.setFocusPolicy(Qt.ClickFocus)
+        self.setToolTip("클릭하면 수동주행: W/S 가속·감속(후진), A/D 조향, Space 정지\n"
+                        "다른 곳을 클릭하거나 Esc 를 누르면 수동주행이 꺼집니다.")
+
+    def mousePressEvent(self, event):
+        if self.drive_enabled:
+            event.accept()           # do not propagate: the parent card would end it again
+        else:
+            super().mousePressEvent(event)
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        if not self.drive_enabled:
+            return
+        if event.reason() != Qt.MouseFocusReason:
+            # Qt hands focus back to the last focus widget when the window is
+            # re-activated; only a click on the camera may start driving.
+            QTimer.singleShot(0, self.clearFocus)
+            return
+        self.drive_focus.emit(True)
+        self.update()
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.held.clear()
+        if self.drive_enabled:
+            self.drive_focus.emit(False)
+            self.update()
+
+    def keyPressEvent(self, event):
+        if self.drive_enabled and event.key() == Qt.Key_Escape:
+            self.clearFocus()
+        elif self.drive_enabled and event.key() in DRIVE_KEYS:
+            self.held[event.key()] = time.monotonic()
+        else:
+            super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if self.drive_enabled and event.key() in DRIVE_KEYS:
+            if not event.isAutoRepeat():
+                self.held.pop(event.key(), None)
+        else:
+            super().keyReleaseEvent(event)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if not (self.drive_enabled and self.hasFocus()):
+            return
+        painter = QPainter(self)
+        painter.setPen(QPen(QColor("#6de3ce"), 3))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRect(self.rect().adjusted(1, 1, -2, -2))
+        painter.fillRect(0, self.height() - 26, self.width(), 26, QColor("#0f3a37"))
+        painter.setPen(QColor("#d8fff8"))
+        painter.drawText(self.rect().adjusted(10, 0, -10, -6), Qt.AlignBottom | Qt.AlignLeft,
+                         self.drive_text or "수동주행 · W/S 가감속 · A/D 조향 · Space 정지 · Esc/다른 곳 클릭 = 해제")
 
 
 # BEV footprint (half-extents along/across the body, metres) per obstacle model
@@ -339,7 +430,12 @@ class BevView(QWidget):
         for obstacle in self.obstacles:
             x, y, yaw = obstacle["x"], obstacle["y"], obstacle.get("yaw", 0)
             model = obstacle.get("model", "") or ""
-            hx, hy = OBSTACLE_FOOTPRINT.get(model, (.9, 2.2))
+            if model in OBSTACLE_FOOTPRINT:
+                hx, hy = OBSTACLE_FOOTPRINT[model]
+            elif model in G.FLEET:                  # go-to-object props: round, radius r
+                hx = hy = G.FLEET[model][1]
+            else:
+                hx, hy = .9, 2.2
             c, s = math.cos(yaw), math.sin(yaw)
             corners = [pt(x+c*dx-s*dy, y+s*dx+c*dy)
                        for dx,dy in [(-hx,-hy),(hx,-hy),(hx,hy),(-hx,hy)]]
@@ -381,6 +477,8 @@ class ResultBus(QObject):
     replied = Signal(str)
     service = Signal(str)
     scenario_done = Signal(str, str)
+    goto_ready = Signal(int, str, str, str)     # generation, text, sector ("" = failed), note
+    goal_status = Signal(str)                   # /goal_from_scene/status line (point-goal mode)
 
 
 # Follow-camera offsets in the vehicle frame: (left, back, height).
@@ -431,6 +529,21 @@ class DashboardWindow(QMainWindow):
         self.bus.replied.connect(self.on_replied)
         self.bus.service.connect(self.show_service_result)
         self.bus.scenario_done.connect(self.on_scenario_done)
+        self.bus.goto_ready.connect(self.on_goto_ready)
+        self.bus.goal_status.connect(self.on_goal_status)
+        # point-goal mode (2026-10-13, g5d line): the sentence goes to goal_from_scene_node
+        # (Qwen2.5-VL picks the object, LiDAR the distance) which feeds /vla_goal; the policy
+        # only hears "Target.". Turned on by smolvla_demo.sh NAVVLA_POINT_GOAL=1.
+        self.point_goal = os.environ.get("NAVVLA_POINT_GOAL", "0") == "1"
+        self.goal_request_pub = None
+        # go-to-object practice + manual driving (lecture mode, 2026-10-08)
+        self.goto_objects = []       # placed layout objects (with "sector"), GUI thread only
+        self.goto_origin = None      # car (x, y, yaw) when they were placed
+        self.goto_run = None         # arrival watch for the last go-to command
+        self.manual_v = 0.0
+        self.manual_pub = None
+        self.manual_timer = QTimer(self)
+        self.manual_timer.timeout.connect(self.manual_tick)
         self.setWindowTitle("NAV / VLA · Driving Studio")
         self.resize(1540, 960)
         self.setMinimumSize(1080, 800)
@@ -500,7 +613,11 @@ class DashboardWindow(QMainWindow):
         lower.addWidget(bev_panel)
         camera_panel, camera_layout = card("03  Vehicle Cameras", "전방 영상 · 차량 중심 근접 탑뷰")
         camera_row = QHBoxLayout()
-        self.camera = CameraView()
+        self.camera = DriveCameraView()
+        if self.lecture_mode:
+            self.camera.enable_drive()
+            self.camera.drive_focus.connect(self.set_manual_drive)
+            QApplication.instance().installEventFilter(self)
         camera_row.addWidget(self.camera, 1)
         self.top_camera = CameraView()
         self.top_camera.note = "차량 탑뷰 · 신호 대기 중"
@@ -613,6 +730,25 @@ class DashboardWindow(QMainWindow):
             self.remove_button.clicked.connect(self.remove_selected_obstacle)
             ob_row.addWidget(self.remove_button)
             controls_layout.addLayout(ob_row)
+            # 말로 지정한 물체로 가기: 차량 앞 왼쪽·정면·오른쪽에 물체 하나씩 (s1 학습 배치와 같은 규칙)
+            goto_row = QHBoxLayout()
+            self.goto_spawn_button = QPushButton("앞에 물체 3개")
+            self.goto_spawn_button.setToolTip("지금 차량 앞 왼쪽·정면·오른쪽(±20°)에 무작위 물체를 하나씩 놓습니다.\n"
+                                              "거리는 7~8 m 와 11.5~12.5 m 를 섞습니다(학습 데이터와 같은 규칙).")
+            self.goto_spawn_button.clicked.connect(self.goto_spawn)
+            goto_row.addWidget(self.goto_spawn_button)
+            clear = QPushButton("물체 치우기")
+            clear.clicked.connect(lambda: self.goto_clear())
+            goto_row.addWidget(clear)
+            self.goto_heldout = QCheckBox("미학습 물체 1개")
+            self.goto_heldout.setToolTip("셋 중 하나를 학습에 없던 물체(공룡·로봇·사람·초록 꼬깔)로 바꿉니다.")
+            goto_row.addWidget(self.goto_heldout)
+            goto_row.addStretch()
+            controls_layout.addLayout(goto_row)
+            hint = label("물체로 가기: '왼쪽 물체로 가줘' (바로 전송) · '공룡으로 가줘' (VLM 이 화면에서 방향 판단)"
+                         " · 수동주행: 전방 카메라 클릭 후 WASD", "muted")
+            hint.setWordWrap(True)
+            controls_layout.addWidget(hint)
             self.race_status.setText(self.race_status.text()
                                      + " · 장애물: 추가 후 지도 클릭, 클릭=선택, 드래그=이동, Delete=제거")
         sidebar_layout.addWidget(controls)
@@ -778,6 +914,40 @@ class DashboardWindow(QMainWindow):
         if self.sim_paused:
             self.add_chat("error", "시뮬레이션을 재개한 뒤 출발 명령을 보내 주세요.")
             return
+        if self.point_goal and getattr(self, "goal_asking", False) and self.is_goal_answer(text):
+            # reply to the goal node's "이걸로 갈까요? (응 / 아니)" question
+            self.add_chat("user", text)
+            self.goal_asking = False
+            from std_msgs.msg import String
+            self.goal_request_pub.publish(String(data=f"answer:{text}"))
+            return
+        if REVERSE_RE.search(text):
+            # 2026-10-13: "뒤로 조금만 가봐" was parsed into the nearest supported action (start driving
+            # in the outer lane) and answered "뒤로 조금만 가보겠습니다". No policy here learned to reverse.
+            self.add_chat("user", text)
+            self.add_chat("assistant", "후진은 지금 모델이 배우지 않은 동작이라 할 수 없습니다. "
+                                       "차를 뒤로 옮기려면 3D 화면을 클릭해 수동주행(S 키)을 써 주세요.")
+            self.command_status.setText("후진은 지원하지 않음")
+            return
+        if self.point_goal and goto_command.is_goto(text, self.goto_nouns()):
+            self.add_chat("user", text)
+            self.send_point_goal(text)
+            return
+        if self.point_goal and SMOLVLA_ONLY:
+            # 2026-10-13: SmolVLA-only mode makes no Qwen call at all — "what do you see" is answered
+            # by the goal node's SmolVLA head, everything else is out of scope
+            self.add_chat("user", text)
+            # every other sentence is conversation: ask the goal node what SmolVLA sees now, then a
+            # text-only LLM (EXAONE, no image, no Qwen) words a natural reply from those facts
+            self.sv_pending = text
+            self.send_point_goal("look:", quiet=True)
+            QTimer.singleShot(4000, lambda t=text: self._sv_look_timeout(t))
+            return
+        if self.goto_objects and goto_command.is_goto(text, self.goto_nouns()):
+            self.add_chat("user", text)
+            self.send_goto(text)
+            return
+        self.goto_run = None
         self.generation += 1
         generation = self.generation
         self.add_chat("user", text)
@@ -810,8 +980,14 @@ class DashboardWindow(QMainWindow):
             # small talk) without touching the vehicle; template error if the
             # LLM is unavailable.
             self.command_status.setText("답변을 작성하고 있습니다…")
-            self.phrase_reply(text, "차량 동작 변화 없음(명령 아님)",
-                              fallback=None, generation=generation)
+            self.chat_reply(text, generation)
+            return
+        if self.point_goal and any(s.get("action") not in ("none", "stop") for s in plan.get("steps", [])):
+            # the point-goal policy (g5d) hears only "Target."; lane / zone / speed sentences mean
+            # nothing to it (it crept off on "Start driving in the outer lane" in the 10-13 GUI test)
+            self.add_chat("assistant", "지금은 목표 지점 모드라 정책이 차선 주행·차선 변경·구역 이동·속도 명령을 배우지 않았습니다. "
+                                       "물체로 가기만 됩니다(예: '빨간 꼬깔로 가줘'). 멈추려면 '정지'라고 해 주세요.")
+            self.command_status.setText("목표 지점 모드에서 지원하지 않는 명령")
             return
         try:
             if self.node.control_backend == "smolvla":
@@ -824,6 +1000,26 @@ class DashboardWindow(QMainWindow):
             self.phrase_reply(text, facts, fallback=summary, generation=generation)
         except Exception as exc:
             self.on_failed(generation, str(exc))
+
+    def chat_reply(self, text, generation):
+        """Not a driving command: open conversation with the live camera frame
+        (node.assistant_chat), falling back to the short action-report reply."""
+        chat = getattr(self.node, "assistant_chat", None)
+        if chat is None:
+            self.phrase_reply(text, "차량 동작 변화 없음(명령 아님)", fallback=None, generation=generation)
+            return
+        def worker():
+            try:
+                reply = chat(text)
+            except Exception:                                   # noqa: BLE001
+                reply = None
+            if self.closing:
+                return
+            if reply:
+                self.bus.replied.emit(reply)
+            else:
+                self.bus.failed.emit(generation, "답변을 만들지 못했습니다(모델 연결 실패 또는 형식에 맞지 않는 출력). 다시 물어봐 주세요.")
+        threading.Thread(target=worker, daemon=True).start()
 
     def phrase_reply(self, text, event, fallback, generation):
         """Let the assistant LLM word the reply off the Qt thread. The event
@@ -919,6 +1115,7 @@ class DashboardWindow(QMainWindow):
 
     def stop_driving(self):
         self.generation += 1
+        self.goto_run = None
         self.telemetry.clear_plan()
         if self.paused_snapshot:
             self.paused_snapshot.pop("plan", None)
@@ -929,6 +1126,10 @@ class DashboardWindow(QMainWindow):
             self.node.dispatch_smolvla_instruction("")
         else:
             self.node.dispatch_plan({"steps": [{"action": "stop", "lane": "default", "zone": None}]})
+        if self.goal_request_pub is not None:
+            from std_msgs.msg import String
+            self.goal_asking = False
+            self.goal_request_pub.publish(String(data="stop"))
         self.command_status.setText("정지 명령 전송 · 대기 중 명령 취소")
         if not self.closing:
             self.add_chat("assistant", "정지 명령을 전송했습니다.")
@@ -989,6 +1190,8 @@ class DashboardWindow(QMainWindow):
             self.add_chat("error", error)
         else:
             self.apply_scenario(key)
+            if self.lecture_mode:
+                self.goto_clear(quiet=True)
             self.add_chat("assistant", self.scenarios[key]["label"] + " 배치를 마쳤습니다. 출발 명령을 기다립니다.")
             self.camera_action("top")
         if self.close_after_reset:
@@ -1106,6 +1309,417 @@ class DashboardWindow(QMainWindow):
             return f"장애물 제거: {entity}"
         self._obstacle_job(job)
 
+    # ------------------------------------------------ go-to-object practice
+    SECTOR_KO = {"left": "왼쪽", "ahead": "정면", "right": "오른쪽"}
+
+    def goto_nouns(self):
+        out = []
+        for o in self.goto_objects:
+            out += [o["noun"], G.NOUN_KO.get(o["noun"], o["noun"])]
+        return out
+
+    def goto_spawn(self):
+        """Three props ahead of the car, one per sector, as in the s1 corpus."""
+        pose = self.bev.pose
+        if pose is None or self.resetting:
+            self.add_chat("error", "차량 위치를 받은 뒤에 물체를 놓을 수 있습니다.")
+            return
+        self.stop_driving()
+        x, y, yaw = pose
+        heading = yaw + G.YAW_OFFSET              # gz model yaw -> travel heading
+        rng = random.Random()
+        chosen, nouns = [], set()
+        if self.goto_heldout.isChecked():
+            # held-out props may be larger (dinosaurs 2.4 m, r 1.2); cars (r 2.2) never fit
+            # go_dino_trex (really a styracosaurus toy) read as "goat"/"bird" to Qwen2.5-VL from
+            # every side (probe 2026-10-13), so a "dinosaur" request could never find it
+            m = rng.choice([m for m, v in G.FLEET.items() if v[2] == "heldout" and v[1] <= 1.2
+                            and m != "go_dino_trex"])
+            chosen.append(m)
+            nouns.add(G.noun(m))
+        # trained props keep the s1 corpus rule (r <= 0.9, no cars)
+        train = [m for m, v in G.FLEET.items() if v[2] == "train" and v[1] <= G.SECTOR_MAX_R]
+        for m in rng.sample(train, len(train)):
+            if len(chosen) == 3:
+                break
+            if G.noun(m) not in nouns:
+                chosen.append(m)
+                nouns.add(G.noun(m))
+        layout = G.sector_layout_at(rng, x, y, heading, chosen)
+        if layout is None:
+            self.add_chat("error", "차량 앞에 세 물체를 놓을 자리가 없습니다(트랙 바닥 끝에 가깝거나 바깥을 보고 있음). "
+                                   "수동주행으로 트랙 안쪽을 보게 옮긴 뒤 다시 눌러 주세요.")
+            return
+        objs = layout["objects"]
+        for o in objs:
+            if o["model"].startswith("go_dino"):
+                # side-on to the car: seen from the front/back Qwen called the T-rex a wolf and the
+                # triceratops a dog/donkey; side views read "dinosaur" (yaw probe 2026-10-13)
+                o["yaw"] = math.atan2(o["y"] - y, o["x"] - x) + rng.choice((math.pi / 2, -math.pi / 2))
+        self.goto_objects = objs
+        self.goto_origin = (x, y, yaw)
+        previous = {f"goto_{m}" for m in G.FLEET}
+        def job():
+            gz = resolve_gz_bin()
+            present = set(list_models(gz))
+            cache = self.registry_path.parent / "scene_models"
+            cache.mkdir(parents=True, exist_ok=True)
+            used = set()
+            for o in objs:
+                name = f"goto_{o['model']}"
+                used.add(name)
+                if name in present:        # teleport: repeated gz create wedges the world
+                    set_model_pose(gz, name, o["x"], o["y"], o["yaw"], z=OBSTACLE_Z)
+                    continue
+                filename = cache / f"{name}.sdf"
+                ET.ElementTree(static_model(o["model"], name)).write(filename, encoding="unicode")
+                request("/world/default/create", "gz.msgs.EntityFactory",
+                        f"sdf_filename: {json.dumps(str(filename))} name: {json.dumps(name)} "
+                        f"allow_renaming: false pose: {{{pose_message((o['x'], o['y'], OBSTACLE_Z, 0.0, 0.0, o['yaw']))}}}")
+            for i, name in enumerate(sorted((previous & present) - used)):
+                set_model_pose(gz, name, 60.0 + 6 * i, 70.0, 0.0, z=-30.0)
+            entries = [e for e in self._registry() if e.get("kind") != "goto"]
+            entries += [{"entity": f"goto_{o['model']}", "model": o["model"], "kind": "goto",
+                         "x": o["x"], "y": o["y"], "yaw": o["yaw"], "lane": None,
+                         "sector": o["sector"], "noun": o["noun"]} for o in objs]
+            atomic_json(self.registry_path, entries)
+            return "물체 배치 완료: " + ", ".join(f"{self.SECTOR_KO[o['sector']]} {o['model']}" for o in objs)
+        self._obstacle_job(job)
+        by = {o["sector"]: o for o in objs}
+        lines = [f"{self.SECTOR_KO[k]}: {G.NOUN_KO.get(by[k]['noun'], by[k]['noun'])} ({by[k]['dist']:.1f} m)"
+                 + (" · 미학습" if G.FLEET[by[k]["model"]][2] == "heldout" else "")
+                 for k in ("left", "ahead", "right")]
+        example = G.NOUN_KO.get(by["right"]["noun"], by["right"]["noun"])
+        self.add_chat("assistant", "차량 앞에 물체 3개를 놓았습니다.\n" + "\n".join(lines)
+                      + f"\n예: '왼쪽 물체로 가줘', '{example}{G._ro(example)} 가줘'")
+
+    def goto_clear(self, quiet=False):
+        """Park every go-to prop under the plane and drop them from the registry."""
+        self.goto_objects = []
+        self.goto_origin = None
+        self.goto_run = None
+        def job():
+            gz = resolve_gz_bin()
+            names = sorted(n for n in list_models(gz) if n.startswith("goto_"))
+            for i, name in enumerate(names):
+                set_model_pose(gz, name, 60.0 + 6 * i, 70.0, 0.0, z=-30.0)
+            entries = self._registry()
+            if any(e.get("kind") == "goto" for e in entries):
+                atomic_json(self.registry_path, [e for e in entries if e.get("kind") != "goto"])
+            return "" if quiet else f"물체 치움: {len(names)}개"
+        self._obstacle_job(job)
+
+    @staticmethod
+    def is_goal_answer(text):
+        t = text.strip()      # yes words: same list as goal_from_scene_node.YES
+        yes = re.match(r"^(응+|어+|네|넹|예|맞아|맞아요|맞음|맞습니다|그래|그래요|그거|그거야|ㅇㅇ+|좋아|가자|가줘|고고|ok|okay|yes|y)"
+                       r"(?=$|[\s.!~,요])", t, re.I)
+        return bool(yes or re.match(r"^(\d+|아니|아냐|ㄴㄴ|노|no\b|n$|싫|다른|틀려|그거 아니)", t, re.I) or len(t) <= 3)
+
+    def send_point_goal(self, text, quiet=False):
+        from std_msgs.msg import String
+        self._goal_sub_ready()
+        if quiet:
+            self.goal_request_pub.publish(String(data=text))
+            return
+        self.sv_last_request = text
+        self.goto_run = None
+        self.node.avoid_enable = False             # the supervisor would hold in front of the target
+        self.node.dispatch_smolvla_instruction("")  # clear queue; the goal node then sends "Target."
+        self.goal_nomatch_shown = False
+        self.goal_asking = False
+        self.goal_request_pub.publish(String(data=text))
+        if os.environ.get("NAVVLA_PERCEIVER", "qwen") == "smolvla":
+            self.command_status.setText("SmolVLA 가 전방 화면에서 목표를 찾는 중…")
+            pass       # the goal node answers at once (found / not a trained name / not visible)
+        else:
+            self.command_status.setText("VLM 이 전방 화면에서 목표를 찾는 중…")
+            self.add_chat("assistant", "Qwen-VL 이 화면에서 목표를 찾고, 정책은 그 방향·거리로 갑니다.")
+
+    def _sv_look_timeout(self, text):
+        if getattr(self, "sv_pending", None) == text:
+            self.sv_pending = None
+            res, self.sv_result = getattr(self, "sv_result", None), None
+            self._sv_chat(text, (f"방금 요청 처리 결과(이미 끝남): {res}\n" if res else "")
+                          + "SmolVLA 목표 노드가 응답하지 않아 지금 화면을 확인하지 못함")
+
+    def _sv_chat(self, user, facts):
+        """SmolVLA-only mode conversation: natural Korean from the facts SmolVLA produced. The text
+        model never sees the image, so it can only talk about what SmolVLA recognised."""
+        hist = getattr(self, "sv_history", None)
+        if hist is None:
+            hist = self.sv_history = deque(maxlen=8)
+        try:
+            spd = float(self.metrics["speed"].text().split()[0])
+            state = f"속도 {spd:.1f} m/s, " + ("정지해 있음" if spd < 0.1 else "움직이는 중")
+        except (ValueError, IndexError, KeyError):
+            state = "알 수 없음"
+        sv_goal = getattr(self, "sv_last_request", None)
+        if sv_goal:
+            state += f", 마지막 이동 요청: '{sv_goal}'"
+        known = "빨간·노란·흰·파란 꼬깔, 소화전, 의자, 쓰레기통, 강아지, 드럼통, 상자, 바리케이드, 말"
+        system = ("당신은 시뮬레이션 자율주행차에 타고 있는 대화 도우미입니다. 사람과 이야기하듯 자연스러운 존댓말로 "
+                  "1~3문장만 답하세요. 목록, 번호, 괄호, 마크다운, 이모지는 쓰지 마세요.\n"
+                  "규칙:\n"
+                  "1. 차가 무엇을 보는지는 [관찰]에 적힌 것만 말합니다. 물체의 움직임, 색, 날씨, 감정처럼 적히지 않은 내용은 덧붙이지 않습니다. "
+                  "왼쪽·오른쪽·정면과 거리는 그대로 옮기고, '12 m 넘게'는 '꽤 멀리'라고 말해도 됩니다. 확신 값과 영어 이름은 말하지 않습니다.\n"
+                  f"2. 이 차의 눈(SmolVLA)이 알아볼 수 있는 물체는 {known}뿐입니다. 사용자가 그 밖의 물체(모양, 동물, 사람 등)를 물으면 "
+                  "'없다'고 단정하지 말고 '그건 제가 알아보지 못하는 물체라 있는지 확인할 수 없어요'처럼 말합니다.\n"
+                  "3. 대화만으로 차가 움직이지 않습니다. 직접 무엇을 하겠다고 약속하지 않습니다. 차를 움직이는 방법은 알아볼 수 있는 물체 이름으로 "
+                  "'쓰레기통으로 가줘'처럼 말하는 것과 '정지'뿐이니, 다른 방법을 제안하지 않습니다.\n"
+                  "4. [관찰]에 요청 처리 결과가 있으면 그 일은 이미 끝났습니다. 왜 출발하지 않았는지 쉬운 말로 설명하고, 기다려 달라거나 다시 찾겠다고 하지 않습니다.\n"
+                  "5. 알아볼 수 있는 물체 종류를 말할 때 그것들이 지금 주변에 있다고 말하지 않습니다. 주변에 있는 것은 [관찰]의 물체뿐입니다.\n"
+                  "6. 차가 움직이는지 서 있는지는 [차 상태]만 따릅니다.")
+        msgs = [{"role": "system", "content": system}, *list(hist),
+                {"role": "user", "content": f"[관찰]\n{facts}\n[차 상태]\n{state}\n[사용자]\n{user or '(요청 없음)'}"}]
+        host = os.environ.get("NAVVLA_CHAT_HOST", "http://127.0.0.1:11501")
+        model = os.environ.get("NAVVLA_CHAT_MODEL", "exaone3.5:7.8b")
+        def worker():
+            reply = None
+            try:
+                body = json.dumps({"model": model, "stream": False, "messages": msgs, "keep_alive": "30m",
+                                   "options": {"temperature": 0.3, "num_predict": 200}}).encode("utf-8")
+                req = urllib.request.Request(f"{host}/api/chat", data=body, headers={"Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=25) as r:
+                    reply = json.loads(r.read().decode("utf-8"))["message"]["content"].strip()
+            except Exception:                                   # noqa: BLE001
+                reply = None
+            if not reply:
+                reply = facts                                   # no LLM: the facts themselves, unvarnished
+            hist.append({"role": "user", "content": user or "(요청 없음)"})
+            hist.append({"role": "assistant", "content": reply})
+            if not self.closing:
+                self.bus.replied.emit(reply)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _goal_sub_ready(self):
+        from std_msgs.msg import String
+        if self.goal_request_pub is None:
+            self.goal_request_pub = self.node.create_publisher(String, "/goal_request", 5)
+            self.goal_status_sub = self.node.create_subscription(
+                String, "/goal_from_scene/status", lambda m: self.bus.goal_status.emit(m.data), 5)
+            time.sleep(0.3)        # let the new publisher match the goal node once
+
+    def on_goal_status(self, line):
+        if self.closing:
+            return
+        if line.startswith("gate:"):
+            self.command_status.setText("목표 도착 · 정지")
+            self.add_chat("assistant", "목표 앞에 도착해 멈췄습니다.")
+        elif line.startswith("ASK:"):
+            self.goal_asking = True
+            self.goal_nomatch_shown = True
+            self.command_status.setText("확인 필요 · 응 / 아니 / 번호로 답해 주세요")
+            self.add_chat("assistant", line[4:].strip())
+        elif line.startswith("LOOK:"):
+            user = getattr(self, "sv_pending", None)
+            if user is not None:
+                self.sv_pending = None
+                res, self.sv_result = getattr(self, "sv_result", None), None
+                facts = f"차 카메라로 SmolVLA 가 지금 알아본 물체: {line[5:].strip()}"
+                if res:
+                    facts = f"방금 요청 처리 결과(이미 끝남): {res}\n" + facts
+                self._sv_chat(user, facts)
+        elif line.startswith("SEEN:"):
+            self.goal_asking = False
+            self.goal_nomatch_shown = True
+            self.command_status.setText("목표 미확정 · 정지")
+            if SMOLVLA_ONLY:
+                # word the refusal together with what SmolVLA sees now (without it the text model
+                # invented nearby objects)
+                user = getattr(self, "sv_last_request", "") or ""
+                self.sv_result = line[5:].strip()
+                self.sv_pending = user
+                self.send_point_goal("look:", quiet=True)
+                QTimer.singleShot(4000, lambda t=user: self._sv_look_timeout(t))
+            else:
+                self.add_chat("assistant", line[5:].strip())
+        elif line.startswith("confirmed:"):
+            self.goal_asking = False
+            self.command_status.setText("확인한 물체로 이동 중")
+            self.add_chat("assistant", "확인했습니다. 그 물체로 이동합니다.")
+        elif line.startswith("VLM: no matching"):
+            # the node keeps the last goal and re-asks every second; say it once per request
+            self.command_status.setText("목표를 화면에서 찾지 못함")
+            if not getattr(self, "goal_nomatch_shown", False):
+                self.goal_nomatch_shown = True
+                self.add_chat("error", "화면에서 말한 물체를 찾지 못했습니다. (이미 찾은 목표가 있으면 그 방향으로 계속 갑니다)")
+        elif line.startswith("refresh failed"):
+            self.add_chat("error", f"목표 계산 실패: {line[16:120]}")
+        elif not line.startswith(("request:", "cleared")):
+            self.command_status.setText(line[:90])
+
+    def send_goto(self, text):
+        sector = goto_command.sector_of(text)
+        if sector:
+            self.dispatch_goto(sector, "문장에 방향 단어가 있어 그대로 사용")
+            return
+        image = self.camera.frame
+        if image.isNull():
+            self.add_chat("error", "전방 카메라 영상이 없어 VLM 에게 보낼 수 없습니다.")
+            return
+        path = self.registry_path.with_name("goto_frame.jpg")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        image.save(str(path), "JPG", 90)
+        self.generation += 1
+        generation = self.generation
+        self.goto_run = None
+        self.send_button.setEnabled(False)
+        self.command_status.setText("VLM 이 전방 화면에서 대상을 찾는 중…")
+        host = getattr(self.node, "scene_host", None) or getattr(self.node, "host", "http://127.0.0.1:11501")
+        model = getattr(self.node, "scene_model", None) or "qwen2.5vl:7b"
+        jpeg = path.read_bytes()
+        def worker():
+            sector, note, sec = goto_command.vlm_sector(host, model, jpeg, text)
+            if not self.closing:
+                self.bus.goto_ready.emit(generation, text, sector or "", f"{note} · {sec:.1f}초")
+        threading.Thread(target=worker, daemon=True).start()
+
+    def on_goto_ready(self, generation, text, sector, note):
+        if self.closing or generation != self.generation:
+            return
+        self.send_button.setEnabled(not self.resetting)
+        if not sector:
+            self.command_status.setText("대상 판단 실패")
+            self.add_chat("error", note)
+            return
+        self.dispatch_goto(sector, note)
+
+    def dispatch_goto(self, sector, why):
+        target = next((o for o in self.goto_objects if o["sector"] == sector), None)
+        moved_note = ""
+        pose, origin = self.bev.pose, self.goto_origin
+        if target is not None and pose is not None and origin is not None:
+            shift = math.dist(pose[:2], origin[:2])
+            turn = abs(math.degrees(math.remainder(pose[2] - origin[2], math.tau)))
+            if shift > 1.0 or turn > 15.0:
+                # The layout's sectors were fixed at placement; pick the prop that is
+                # in that screen direction from where the car is now.
+                heading = pose[2] + G.YAW_OFFSET
+                def bearing(o):
+                    return math.degrees(math.remainder(
+                        math.atan2(o["y"] - pose[1], o["x"] - pose[0]) - heading, math.tau))
+                target = min(self.goto_objects,
+                             key=lambda o: abs(bearing(o) - G.SECTOR_CENTRES[sector]))
+                # Real-track sessions never start from a fixed pose, so this is not a
+                # warning in the chat — only an event-log line for whoever reviews the run.
+                moved_note = f"물체 배치 후 차 이동 {shift:.1f} m · {turn:.0f}° — 현재 위치 기준으로 대상 선택"
+        if self.node.control_backend != "smolvla" or target is None:
+            self.add_chat("error", "물체로 가기는 SmolVLA 제어에서 물체를 놓은 뒤에만 쓸 수 있습니다.")
+            return
+        sentence = goto_command.sector_sentence(sector)
+        from std_msgs.msg import String
+        self.node.avoid_enable = False             # the supervisor would hold in front of the props
+        self.node.dispatch_smolvla_instruction("")  # clear queue and counters first
+        self.node.vla_instruction_pub.publish(String(data=sentence))
+        self.node._vla_mode = "goto"
+        self.goto_run = {"target": target, "start": None, "moved": False, "anchor": None,
+                         "still": None, "t0": time.monotonic()}
+        name = G.NOUN_KO.get(target["noun"], target["noun"])
+        self.add_chat("assistant", f"{self.SECTOR_KO[sector]} 물체({name})로 갑니다.\n"
+                                   f"정책에 보낸 문장: \"{sentence}\"\n({why})")
+        if moved_note:
+            self.record_event(moved_note)
+        self.command_status.setText(f"물체로 이동 중 · {sentence}")
+
+    def goto_watch(self, pose, now):
+        """Same end rule as tools/eval/goto_trial.py: moved, then 3 s still; or a
+        touch of another prop; or 60 s. Success = nearest prop is the target and
+        the bumper gap is 0.6-1.8 m."""
+        run = self.goto_run
+        x, y = pose[:2]
+        if run["start"] is None:
+            run["start"] = (x, y)
+        if math.dist((x, y), run["start"]) > 0.8:
+            run["moved"] = True
+        if run["anchor"] is None or math.dist((x, y), run["anchor"]) > 0.05:
+            run["anchor"], run["still"] = (x, y), None
+        else:
+            run["still"] = run["still"] or now
+        target = run["target"]
+        touched = next((o for o in self.goto_objects if o is not target
+                        and math.dist((x, y), (o["x"], o["y"])) < o["r"] + 1.3), None)
+        timeout = now - run["t0"] > 60
+        if not (touched or timeout or (run["moved"] and run["still"] and now - run["still"] > 3)):
+            return
+        self.goto_run = None
+        self.node.dispatch_smolvla_instruction("")
+        dist = {id(o): math.dist((x, y), (o["x"], o["y"])) for o in self.goto_objects}
+        nearest = min(self.goto_objects, key=lambda o: dist[id(o)])
+        # 실제 여유 = 충돌 앞면(1.904 m) 기준. EGO_HALF_LEN(2.3, 교사 상수)으로
+        # 재면 0.396 m 과소로 나와 정상 정차가 과주로 보인다 (2026-10-12 실측).
+        gap = dist[id(target)] - G.EGO_COLLIDE_LEN - target["r"]
+        ko = lambda o: f"{self.SECTOR_KO[o['sector']]} {G.NOUN_KO.get(o['noun'], o['noun'])}"
+        if touched:
+            verdict = f"실패 · 다른 물체({ko(touched)})에 닿음"
+        elif timeout:
+            verdict = "실패 · 60초 안에 멈추지 않음"
+        elif nearest is target and 0.6 <= gap <= 1.8:
+            verdict = "성공"
+        else:
+            verdict = "실패"
+        self.add_chat("assistant", f"도착 판정: {verdict}\n가장 가까운 물체 {ko(nearest)} · 목표 {ko(target)}"
+                                   f" · 목표까지 범퍼 간격 {gap:.1f} m (성공 기준 0.6~1.8 m)")
+        self.command_status.setText(f"물체로 가기 끝 · {verdict}")
+
+    # ------------------------------------------------ manual driving (front camera + WASD)
+    MANUAL_VMAX, MANUAL_VREV, MANUAL_K = 3.0, 1.0, 0.25    # m/s, m/s, 1/m (car-like: w = k v)
+
+    def eventFilter(self, obj, event):
+        # Any click outside the front camera ends manual driving.
+        if (event.type() == QEvent.MouseButtonPress and self.camera.hasFocus()
+                and isinstance(obj, QWidget) and obj is not self.camera):
+            self.camera.clearFocus()
+        return False
+
+    def set_manual_drive(self, on):
+        from geometry_msgs.msg import Twist
+        if on:
+            if self.resetting or self.node.control_backend != "smolvla":
+                self.camera.clearFocus()
+                return
+            self.generation += 1
+            self.goto_run = None
+            self.node.dispatch_smolvla_instruction("")     # the bridge goes silent on an empty task
+            if self.manual_pub is None:
+                self.manual_pub = self.node.create_publisher(Twist, "/cmd_vel", 5)
+            self.manual_v = 0.0
+            self.node._vla_mode = "manual"
+            self.manual_timer.start(50)
+            self.command_status.setText("수동주행 중 · 다른 곳을 클릭하면 해제")
+        elif self.manual_timer.isActive():
+            self.manual_timer.stop()
+            self.manual_v = 0.0
+            if self.manual_pub is not None:
+                self.manual_pub.publish(Twist())
+            if getattr(self.node, "_vla_mode", "") == "manual":
+                self.node._vla_mode = "idle"
+            self.command_status.setText("수동주행 해제 · 정지")
+
+    def manual_tick(self):
+        from geometry_msgs.msg import Twist
+        dt = 0.05
+        held = set(self.camera.held)
+        v = self.manual_v
+        toward_zero = lambda rate: max(0.0, v - rate * dt) if v > 0 else min(0.0, v + rate * dt)
+        if Qt.Key_Space in held:
+            v = toward_zero(6.0)
+        elif Qt.Key_W in held and Qt.Key_S not in held:
+            v = min(self.MANUAL_VMAX, v + (2.0 if v >= 0 else 5.0) * dt)
+        elif Qt.Key_S in held and Qt.Key_W not in held:
+            v = v - 4.0 * dt if v > 0 else max(-self.MANUAL_VREV, v - 1.0 * dt)
+        else:
+            v = toward_zero(1.5)
+        self.manual_v = v
+        steer = (Qt.Key_A in held) - (Qt.Key_D in held)
+        t = Twist()
+        t.linear.x = v
+        t.angular.z = max(-1.0, min(1.0, steer * self.MANUAL_K * v))
+        self.manual_pub.publish(t)
+        side = {1: "왼쪽", -1: "오른쪽", 0: "직진"}[steer]
+        self.camera.drive_text = (f"수동주행 {v:+.1f} m/s · {side} · W/S 가감속 · A/D 조향 · Space 정지"
+                                  " · Esc/다른 곳 클릭 = 해제")
+
     def refresh_scene(self):
         for path, attr in ((self.registry_path, "registry_mtime"),
                            (self.registry_path.with_name("scene.json"), "scene_mtime")):
@@ -1191,6 +1805,8 @@ class DashboardWindow(QMainWindow):
         threading.Thread(target=worker, daemon=True).start()
 
     def show_service_result(self, text):
+        if not text:
+            return
         if text.startswith("신호등 변경"):
             for button in self.signal_buttons.values():
                 button.setEnabled(True)
@@ -1226,6 +1842,8 @@ class DashboardWindow(QMainWindow):
             if not self.bev.trail or math.dist(xy, self.bev.trail[-1]) > 0.05:
                 self.bev.trail.append(xy)
         self.bev.lane = self.node.current_lane
+        if self.goto_run and pose is not None and not self.sim_paused:
+            self.goto_watch(pose, now)
         plan = fresh(snapshot, "plan", age=2.0, now=data_time)
         self.bev.prediction = plan if plan is not None and pose is not None else []
         plan_info = fresh(snapshot, "plan_info", age=2.0, now=data_time) or {}
@@ -1245,7 +1863,8 @@ class DashboardWindow(QMainWindow):
         self.metrics["speed"].setText(f"{abs(odom['speed']):.2f} m/s" if odom and odom_time and now-odom_time < 2 else "— m/s")
         self.metrics["lane"].setText("1차선 · 안쪽" if self.node.current_lane == "lane1" else "2차선 · 바깥쪽")
         mode = getattr(self.node, "_vla_mode", "idle")
-        mode_text = {"idle": "대기 / 정지", "cruise": "순항", "zone": "목적지 주행", "direct": "직행"}.get(mode, mode)
+        mode_text = {"idle": "대기 / 정지", "cruise": "순항", "zone": "목적지 주행", "direct": "직행",
+                     "goto": "물체로 이동", "manual": "수동주행"}.get(mode, mode)
         if getattr(self.node, "_avoid_stopped", False):
             mode_text = "회피 중 · 전방 확인 대기"
         self.metrics["mode"].setText(mode_text)

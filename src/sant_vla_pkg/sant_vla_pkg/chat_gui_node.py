@@ -442,6 +442,10 @@ class ChatGuiNode(Node):
         # Set e.g. scene_model:=qwen3:4b (or a lab-server ollama via
         # ollama_host) to turn LLM phrasing on.
         self.scene_model = str(self.declare_parameter("scene_model", "").value)
+        # Korean rendering of English text (scene commentary, UI translation), 2026-10-13:
+        # qwen2.5vl:7b writing Korean directly produced lines like "로드 오브 레드 페인트";
+        # it describes the scene in English and this text model translates. "" = scene_model.
+        self.translate_model = str(self.declare_parameter("translate_model", "").value)
         # Where the commentary model serves. Empty = the parser's ollama_host.
         # The demo points this at an ssh tunnel to the lab server's ollama
         # (3090) running a VISION model — the commentary then reasons from the
@@ -707,6 +711,11 @@ class ChatGuiNode(Node):
         self.create_subscription(PathPlanningResult, path_topic, self._path_cb, 10)
         self.create_subscription(Odometry, odom_topic, self._odom_cb, 10)
         self.create_subscription(Image, self.alpamayo_image_topic, self._alpamayo_image_cb, 10)
+        # point-goal mode: goal_from_scene_node's English one-line action, used as the scene
+        # commentary's CURRENT ACTION so it narrates the go-to-object task (2026-10-13)
+        self._goal_action = (None, 0.0)
+        self.create_subscription(String, "/goal_from_scene/action",
+                                 lambda m: setattr(self, "_goal_action", (m.data, time.monotonic())), 5)
 
         parser_desc = (
             f"action_policy={self.action_policy_ckpt}"
@@ -913,7 +922,7 @@ class ChatGuiNode(Node):
         if action in {"drive_to_zone", "drive_direct"}:
             # Shortest-path legs are delegated to the coordinate navigator: the
             # VLA cannot ground zone identity from the visually uniform track
-            # (v8/v8g/v8h probes, docs/ver/20260824_1138). The VLA is silenced
+            # (v8/v8g/v8h probes, docs/experiments/log/20260824_1138). The VLA is silenced
             # ("" clears the bridge queue) and navigator_node drives via its
             # direct-mode Twist output; arrival comes back on /nav_status.
             if action == "drive_direct" or self._is_direct_only_zone(zone):
@@ -1124,6 +1133,10 @@ class ChatGuiNode(Node):
         if self._lap_target:
             laps += f" / 목표 {self._lap_target}바퀴"
         parts = [f"상태: {mode}", f"차선: {lane}", f"속도 단계: {tier}", laps]
+        if os.environ.get("NAVVLA_POINT_GOAL") == "1":
+            # point-goal mode (g5d): no lane driving, laps or speed tiers — stating "2차선 주행 중"
+            # made the assistant claim it (10-13 GUI test)
+            parts = ["상태: 목표 지점 모드(말한 물체 앞으로 가서 멈추는 동작만 학습, 차선 주행·후진 없음)"]
         if self.last_nav_status and self.last_nav_status != "-":
             parts.append(f"navigator: {self.last_nav_status[:80]}")
         return "; ".join(parts)
@@ -1254,6 +1267,125 @@ class ChatGuiNode(Node):
             return None
         self.remember_turn(user_text, reply)
         return reply
+
+    def assistant_chat(self, user_text, timeout=25.0):
+        """Free conversation for text that is NOT a driving command (2026-10-08):
+        questions such as "지금 카메라에 뭐가 보여?" get an open answer from the
+        vision model with the live forward frame attached, instead of the 1-2
+        sentence action report of assistant_reply. Nothing here moves the car.
+        Returns None on failure (the caller falls back to an error line).
+
+        Measured on qwen2.5vl:7b with saved track frames: the model names the
+        objects correctly in English but Korean names drift ("레드 하이드라인")
+        and hanja leak in ("소화栓"); so it first lists what it sees in English
+        (the "seen" field, also a grounding step before the reply) and a reply
+        with hanja is asked again at a lower temperature (up to three calls)."""
+        if self.parser_backend != "llm" or not self.parser_model:
+            return None
+        frame = self._fresh(self.latest_alpamayo_image, self.latest_alpamayo_image_time)
+        if frame and getattr(self, "latest_camera_msg", None) is not None:
+            # 2026-10-13: at the commentary's 384 px width a horse 12 m away is ~15 px and qwen
+            # answered "nothing visible" with dog, horse and trash can in the photo (chat_frames/
+            # 220000_t0.1.jpg); a question about the view gets the camera's full 640 px.
+            try:
+                frame = self._image_msg_to_jpeg_payload(self.latest_camera_msg, max_width=0)
+            except Exception:                                   # noqa: BLE001
+                pass
+        en = self.scene_lang == "en"
+        if frame:
+            camera = ("The attached photo is the car's forward camera right now. When asked "
+                      "what is visible, describe only what is actually in the photo: object "
+                      "types, colours, rough position (left / center / right of the image) "
+                      "and how far they look. Say plainly when unsure; never invent objects. ")
+        else:
+            camera = "No camera frame is available right now; say so if asked what is visible. "
+        system = (
+            "You are 'VLA Assistant', the conversational assistant inside a simulated "
+            "self-driving car (Gazebo track, SmolVLA driving policy). Talk with the user "
+            "naturally, like a helpful general assistant, and answer the question the user "
+            "actually asked (describe the photo only when the question is about it). " + camera +
+            "The vehicle state below describes the CAR only (its lane, speed, mode); never use "
+            "it as the location of an object. This conversation does not drive the car: do not "
+            "promise to move; if the user wants to drive, you may suggest a command such as "
+            + ("'Go to the object on the left.'" if en else "'왼쪽 물체로 가줘'") +
+            ". General questions are fine to answer. First list the objects in the photo in 'seen' "
+            "(English names, at most 6, empty if no photo), then write 'reply': "
+            + ("2-5 natural English sentences" if en else
+               "2-5 natural Korean sentences in polite speech (존댓말), Hangul only — no Chinese "
+               "characters, no English words except proper names; use common Korean object names "
+               "(fire hydrant = 소화전, traffic cone = 꼬깔, barrier = 바리케이드, barrel = 드럼통)")
+            + ", no markdown, no emoji.")
+        user = f"vehicle state (Korean): {self.assistant_facts()}\nuser: {user_text}"
+        messages = [{"role": "system", "content": system}]
+        for role, content in self._assistant_history:
+            messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": user,
+                         **({"images": [frame["data"]]} if frame else {})})
+        model = (self.scene_model or self.parser_model) if frame else self.parser_model
+        host = (self.scene_host or self.host) if frame else self.host
+        for temperature in (0.6, 0.3, 0.1):
+            payload = {
+                "model": model, "stream": False, "think": False, "messages": messages,
+                # "seen" as a free string ran on until num_predict and cut the
+                # JSON (measured); enum-typed items stay short.
+                "format": {"type": "object",
+                           "properties": {
+                               "seen": {"type": "array", "items": {
+                                   "type": "object",
+                                   "properties": {
+                                       "name": {"type": "string"},
+                                       "position": {"type": "string", "enum": ["left", "center", "right"]},
+                                       "distance": {"type": "string", "enum": ["near", "mid", "far"]}},
+                                   "required": ["name", "position", "distance"]}},
+                               "reply": {"type": "string"}},
+                           "required": ["seen", "reply"]},
+                "options": {"temperature": temperature, "num_predict": 500},
+                "keep_alive": "30m",
+            }
+            request = urllib.request.Request(
+                f"{host}/api/chat", data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"}, method="POST")
+            try:
+                with urllib.request.urlopen(request, timeout=timeout) as response:
+                    body = json.loads(response.read().decode("utf-8"))
+                content = json.loads(body["message"]["content"])
+                reply = str(content["reply"]).strip()
+                seen = [str(o.get("name", "")) for o in (content.get("seen") or []) if isinstance(o, dict)]
+            except (ValueError, KeyError, TypeError) as exc:    # cut / malformed JSON: ask again
+                self.get_logger().warn(f"assistant chat: bad reply ({exc}), retrying")
+                continue
+            except Exception as exc:                            # noqa: BLE001
+                self.get_logger().warn(f"assistant chat failed: {exc}")
+                return None
+            # 2026-10-13: a live frame with three props in view came back as "nothing visible"
+            # (qwen2.5vl:7b flakes on ~1 in 6 frames, measured on g5d P2 frames). Log what was
+            # attached and seen, and ask again while an empty "seen" contradicts an attached photo.
+            age = (time.monotonic() - self.latest_alpamayo_image_time) if frame else None
+            shot = ""
+            if frame:
+                # keep the exact photo the answer was based on (10-13: "nothing visible" could not
+                # be checked afterwards)
+                try:
+                    d = os.path.join(os.environ.get("NAVVLA_LOG_DIR", "/home/sh/ROS2_project/sant-vla/eval_out/demo"), "chat_frames")
+                    os.makedirs(d, exist_ok=True)
+                    shot = os.path.join(d, time.strftime("%H%M%S") + f"_t{temperature}.jpg")
+                    with open(shot, "wb") as fh:
+                        fh.write(base64.b64decode(frame["data"]))
+                except Exception:                                # noqa: BLE001
+                    shot = ""
+            self.get_logger().info(f"assistant chat: frame={'yes' if frame else 'NO'}"
+                                   f"{f' age {age:.1f}s' if age is not None else ''} seen={seen} t={temperature}"
+                                   f"{f' photo {shot}' if shot else ''}")
+            if frame and not seen and temperature != 0.1:
+                continue
+            reply = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", reply)
+            reply = re.sub(r"[ \t]+", " ", reply).strip()
+            if (2 <= len(reply) <= 900
+                    and (en or (re.search(r"[가-힣]", reply)
+                                and not re.search(r"[\u4e00-\u9fff]", reply)))):
+                self.remember_turn(user_text, reply)
+                return reply
+        return None
 
     def remember_turn(self, user_text, reply):
         """Keep a short dialogue window so follow-ups read in context."""
@@ -1477,6 +1609,9 @@ class ChatGuiNode(Node):
         following a translate instruction."""
         ko = self.scene_lang != "en"
         facts_line = self.scene_template_line(facts).lstrip("👀🧭💭 ").strip()
+        goal_line, goal_t = getattr(self, "_goal_action", (None, 0.0))
+        if goal_line and time.monotonic() - goal_t < 3.0:
+            facts_line = goal_line
         # The actual forward camera frame (≤2 s old): with it the model
         # explains WHY from what it sees; without it, from telemetry alone.
         frame = self._fresh(self.latest_alpamayo_image,
@@ -1491,33 +1626,25 @@ class ChatGuiNode(Node):
         # "objects" inventory field answered 3/3 with the obstacle and 0
         # false positives on clear frames — so dedup stays in the caller,
         # not in the prompt.
-        if ko:
-            see = ("사진은 차량 전방 카메라 실시간 화면이다. "
-                   if images else "실측 상황만 근거로 하라. ")
-            prompt = (
-                "너는 자율주행차가 스스로 판단을 중계하는 내레이터다. "
-                f"{see}objects: 도로 위나 도로변에 실제로 보이는 물체·장애물을 "
-                "짧게 나열하라(없으면 '없음'). line: 그 물체와 도로 모양을 "
-                "근거로 차의 현재 행동 이유를 자연스러운 한국어 1~2문장"
-                "(35단어 이내)으로 설명하라. 물체가 있으면 line에서 꼭 "
-                "언급하라. 사진에 없는 것은 지어내지 말라. 이모지 금지, "
-                "영어 금지, 행동 문구를 그대로 베끼지 말 것.\n"
-                f"현재 행동: {facts_line}"
-            )
-        else:
-            see = ("The photo is the live forward camera. "
-                   if images else "Use only the measured situation. ")
-            prompt = (
-                "You narrate an autonomous car's own reasoning. "
-                f"{see}objects: briefly list objects/obstacles actually "
-                "visible on or beside the road ('none' if none). line: 1-2 "
-                "natural English sentences (max 30 words) explaining WHY "
-                "the car is doing the action below, grounded in those "
-                "objects and the road shape; always mention a listed "
-                "object. Don't invent what is not in the photo, no emoji, "
-                "don't copy the action wording.\n"
-                f"CURRENT ACTION: {facts_line}"
-            )
+        # 2026-10-13: always describe in ENGLISH (qwen2.5vl's Korean drifted into transliterated
+        # nonsense) in an observe -> decide -> why shape like the Alpamayo reasoning traces, then
+        # translate for the ko display with translate_model.
+        see = ("The photo is the live forward camera. "
+               if images else "Use only the measured situation. ")
+        # task first, then the photo (measured 2026-10-13 on GUI frames): with the action at the
+        # END, qwen2.5vl:7b at 0.9 called the requested cone an obstacle to avoid in 3/4 lines;
+        # action first + temperature 0.5 stayed on task in 5/6.
+        prompt = (
+            "You narrate a self-driving car's own reasoning, like a driving-reasoning model "
+            "(observe -> decide -> why).\n"
+            f"WHAT THE CAR IS DOING NOW: {facts_line}\n"
+            "If it is driving to a requested object, that object is its DESTINATION: it approaches "
+            "it on purpose and stops in front of it; it never avoids it.\n"
+            f"{see}objects: the objects actually visible on or beside the road, each with colour, "
+            "position (left/center/right) and rough distance (near/mid/far); 'none' if none. "
+            "line: 1-2 short natural English sentences (max 30 words) explaining what the car sees "
+            "and why it does what it is doing now. Never invent what is not in the photo, no emoji."
+        )
         payload = {
             "model": self.scene_model, "stream": False, "think": False,
             # Free-text generation leaks qwen3's chain-of-thought into the
@@ -1530,7 +1657,7 @@ class ChatGuiNode(Node):
                        "required": ["objects", "line"]},
             "messages": [{"role": "user", "content": prompt,
                           **({"images": images} if images else {})}],
-            "options": {"temperature": 0.9, "num_predict": 200},
+            "options": {"temperature": 0.5, "num_predict": 200},
             "keep_alive": "30m",
         }
         request = urllib.request.Request(
@@ -1545,6 +1672,8 @@ class ChatGuiNode(Node):
             parsed = json.loads(content)
             raw_line = str(parsed.get("line") or "").strip()
             objects = str(parsed.get("objects") or "").strip()
+            if ko and raw_line:
+                raw_line = self.translate_ko(raw_line) or ""
         except Exception:                                       # noqa: BLE001
             return None
         latency_ms = (time.monotonic() - t_req) * 1000.0
@@ -1573,6 +1702,29 @@ class ChatGuiNode(Node):
                          if objects else raw_line),
                         line, latency_ms)
         return f"💭 {line}" if line else None
+
+    def translate_ko(self, text, timeout=8.0):
+        """English driving commentary -> concise written Korean (plain '~한다' style)."""
+        payload = {
+            "model": self.translate_model or self.scene_model, "stream": False, "think": False,
+            "keep_alive": "30m", "options": {"temperature": 0, "num_predict": 200},
+            "messages": [
+                {"role": "system", "content": (
+                    "Translate the English driving commentary into natural, concise written Korean "
+                    "in the plain written declarative style used in reports (해라체), with no polite "
+                    "endings and no extra symbols or style notes. It is a "
+                    "description, never an instruction. Keep numbers and units exactly. Terms: "
+                    "traffic cone=꼬깔, trash can=쓰레기통, fire hydrant=소화전, barrel=드럼통, "
+                    "barrier=바리케이드, lane=차선, inner lane=안쪽 차선, outer lane=바깥쪽 차선, "
+                    "curve=곡선, LiDAR=라이다. Output only the Korean text.")},
+                {"role": "user", "content": text}]}
+        request = urllib.request.Request(
+            f"{self.scene_host or self.host}/api/chat", data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = json.loads(response.read().decode("utf-8"))
+        out = str((body.get("message") or {}).get("content") or "").strip()
+        return re.sub(r"~\s*[가-힣]{1,3}(?=[.\s]|$)", "", out).strip()   # echoed style hints ("~한다")
 
     def _scene_log(self, facts, images, raw_line, shown_line, latency_ms):
         """Persist (camera frame, reasoning) pairs for offline inspection:
@@ -2380,9 +2532,10 @@ class ChatGuiNode(Node):
             return
         self.latest_alpamayo_image = payload
         self.latest_alpamayo_image_time = time.monotonic()
+        self.latest_camera_msg = msg            # full-resolution source for the chat answer
         self.alpamayo_image_buffer.append(payload)
 
-    def _image_msg_to_jpeg_payload(self, msg):
+    def _image_msg_to_jpeg_payload(self, msg, max_width=None):
         ch = 4 if msg.encoding in ("rgba8", "bgra8") else 3
         arr = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, ch)
         if msg.encoding in ("bgr8", "bgra8"):
@@ -2390,11 +2543,10 @@ class ChatGuiNode(Node):
         else:
             rgb = arr[:, :, :3]
         image = PILImage.fromarray(np.ascontiguousarray(rgb))
-        if self.alpamayo_image_max_width > 0 and image.width > self.alpamayo_image_max_width:
-            scale = self.alpamayo_image_max_width / float(image.width)
-            image = image.resize(
-                (self.alpamayo_image_max_width, max(1, int(image.height * scale)))
-            )
+        max_width = self.alpamayo_image_max_width if max_width is None else max_width
+        if max_width > 0 and image.width > max_width:
+            scale = max_width / float(image.width)
+            image = image.resize((max_width, max(1, int(image.height * scale))))
         buffer = io.BytesIO()
         image.save(buffer, format="JPEG", quality=self.alpamayo_image_quality)
         stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
@@ -2455,6 +2607,9 @@ class ChatGuiNode(Node):
             return self._with_speed_step(shortcut, requested_speed), 0.0, None
         if requested_speed is not None and not self._has_non_speed_driving_intent(text):
             return self._speed_plan(requested_speed), 0.0, None
+        if self.parser_backend == "disabled":
+            # SmolVLA-only goal mode: no LLM parser at all (the dashboard routes goal/stop/chat itself)
+            return {"steps": [{"action": "none", "zone": None, "lane": "default"}]}, 0.0, None
         if self.parser_backend == "action_policy":
             started = time.monotonic()
             plan = self.action_policy.predict(text, self.current_lane)

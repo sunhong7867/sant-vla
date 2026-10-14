@@ -87,7 +87,7 @@ EN_KO = {en: ko.replace('reasoning', '추론') for ko, en in PAIRS}
 NUMBER = re.compile(r'(?<![\w{])\d+(?:\.\d+)?')
 HANGUL = re.compile(r'[가-힣]')
 LATIN_WORDS = re.compile(r'[A-Za-z]{2,}')
-TECHNICAL = {'VLA', 'BEV', 'ROS', 'Gazebo', 'SMOLVLA', 'NAV', 'Driving', 'Studio', 'N', 'ms', 'm', 's', 'T', 'M', 'Start', 'IN', 'OUT', 'track', 'paths', 'json'}
+TECHNICAL = {'VLA', 'BEV', 'ROS', 'Gazebo', 'SMOLVLA', 'NAV', 'Driving', 'Studio', 'N', 'ms', 'm', 's', 'T', 'M', 'Start', 'IN', 'OUT', 'track', 'paths', 'json', 'Qwen', 'VL', 'VLM', 'SmolVLA', 'LiDAR', 'GUI', 'EXAONE'}
 TEMPLATES = {
     'ROS {n0} · Gazebo · SMOLVLA     |     실시간 데이터 연결 대기': 'ROS {n0} · Gazebo · SMOLVLA     |     Waiting for live data',
     '미래 {n0}초': 'Next {n0} s',
@@ -182,7 +182,8 @@ class DisplayLanguage(QObject):
         self.language = 'ko'
         self.speed_trend = None      # 'up'/'down'/'hold' from measured cmd_vel
         self.host = getattr(node, 'scene_host', None) or getattr(node, 'host', 'http://localhost:11434')
-        self.model = getattr(node, 'scene_model', '') or getattr(node, 'parser_model', 'qwen3:4b')
+        self.model = (getattr(node, 'translate_model', '') or getattr(node, 'scene_model', '')
+                      or getattr(node, 'parser_model', 'qwen3:4b'))
         self.cache = OrderedDict()
         self.pending = set()
         self.failed = {}
@@ -210,6 +211,8 @@ class DisplayLanguage(QObject):
         if self.language == 'ko' and HANGUL.search(text):
             source = source.replace('reasoning', '추론')
             text = source.strip()
+        if text.startswith('정책에 보낸 문장:'):
+            return source            # the exact policy input; a translation once read "Go to the object straight ahead." as a lane command
         table = KO_EN if self.language == 'en' else EN_KO
         if text in table:
             return source.replace(text, table[text], 1)
