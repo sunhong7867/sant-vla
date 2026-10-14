@@ -96,3 +96,6 @@ src/sant_vla_pkg/data_v9/
 *.fls
 *.log
 *.synctex.gz
+
+# Obsidian vault settings
+.obsidian/

@@ -81,7 +81,7 @@ acknowledgment를 확인하기 위한 참조 자료다. GuardedLC 본문, 표, �
 ## 폴더 구조
 
 ```text
-docs/ICCE2026/
+docs/papers/ICCE2026/
 ├── README.md
 ├── SUBMISSION_SHA256.txt
 ├── ckpt_v6_60k.sha256

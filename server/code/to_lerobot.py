@@ -64,14 +64,30 @@ def import_lerobot():
     raise SystemExit(2)
 
 
-def load_episodes(packed, limit=0):
-    eps = []
+def _slot_match(meta, conds):
+    """True when meta satisfies EVERY KEY=VAL in conds (intent_slots first, then meta)."""
+    sl = meta.get("intent_slots") or {}
+    return all(str(sl.get(k, meta.get(k))) == v for k, v in conds)
+
+
+def load_episodes(packed, limit=0, exclude=()):
+    """2026-10-09 (조합 일반화 홀드아웃): exclude 는 KEY=VAL 조건 목록이고, 조건을
+    ALL 만족하는 에피소드를 학습에서 뺀다. 예) intent_id=ring_goal lane=lane2
+    speed_level=fast -> 그 세 칸 교차(74 ep)만 제외. 세 짝(ring_goal x lane2 x
+    {slow,normal}, ring_goal x lane1 x fast, cruise x lane2 x fast)은 남으므로
+    "세 요소는 다 봤고 그 조합만 안 본" 상태가 된다.
+    """
+    conds = [kv.split("=", 1) for kv in exclude]
+    eps, n_excl = [], 0
     for d in sorted(os.listdir(packed)):
         base = os.path.join(packed, d)
         mp, rp = os.path.join(base, "meta.json"), os.path.join(base, RESAMPLED)
         if not (os.path.isdir(base) and os.path.exists(mp) and os.path.exists(rp)):
             continue
         meta = json.load(open(mp, encoding="utf-8"))
+        if conds and _slot_match(meta, conds):
+            n_excl += 1
+            continue
         rows = [json.loads(l) for l in open(rp, encoding="utf-8") if l.strip()]
         # The last grid point of every episode has action == null: the SE(2)
         # delta needs pose[k+1] and there is no k+1. An episode of N points
@@ -86,6 +102,8 @@ def load_episodes(packed, limit=0):
             eps.append((d, base, meta, keep, dropped))
         if limit and len(eps) >= limit:
             break
+    if conds:
+        print(f"holdout: excluded {n_excl} episodes matching {' '.join(exclude)}")
     return eps
 
 
@@ -98,6 +116,9 @@ def main():
     p.add_argument("--fps", type=int, default=10)
     p.add_argument("--robot-type", default="prius_sim_ackermann")
     p.add_argument("--limit", type=int, default=0, help="first N episodes only")
+    p.add_argument("--exclude-slot", action="append", default=[], metavar="KEY=VAL",
+                   help="drop episodes matching ALL of these intent_slots/meta "
+                        "conditions (조합 일반화 홀드아웃); repeatable")
     p.add_argument("--terminal-copies", type=int, default=0,
                    help="extra short episodes replaying each parking episode's "
                         "final N seconds (--terminal-tail-s), plus hold padding. "
@@ -131,6 +152,16 @@ def main():
                         "real values; cruise/cw episodes get (0, 0) so the "
                         "channel reads 'no goal'. Serving must feed the same "
                         "two numbers or the checkpoint is unusable.")
+    p.add_argument("--goal-from-goto", action="store_true",
+                   help="2026-10-12 point-goal primitive: go-to-object episodes "
+                        "(intent_id=goto_object) get the SAME 2-dim goal channel "
+                        "[goal_bearing_rad, goal_dist_m] as --goal-zones, taken "
+                        "from intent_slots.goto.objects[target] (world x, y) and "
+                        "recomputed per frame against the row's motion heading. "
+                        "The policy never sees the object's name or sector word; "
+                        "it learns one continuous 'steer toward the vector and "
+                        "stop' mapping. Combine with train_reasoning --blank-task "
+                        "to drop the instruction text as well.")
     p.add_argument("--standstill-cap", type=float, default=5.0,
                    help="cap for standstill_s; keep <= the demonstrations' "
                         "longest watch so serving never extrapolates "
@@ -159,53 +190,75 @@ def main():
     print(f"using {modpath}")
 
     packed = os.path.abspath(args.packed_dir)
-    eps = load_episodes(packed, args.limit)
+    eps = load_episodes(packed, args.limit, tuple(args.exclude_slot))
     if not eps:
         print(f"no packaged episodes in {packed}", file=sys.stderr)
         return 1
 
     goal_dims = 0
-    if args.goal_zones:
+    if args.goal_zones or args.goal_from_goto:
         goal_dims = 2
-        zones = {name: tuple(z["pose"][:2]) for name, z in
-                 json.load(open(args.goal_zones, encoding="utf-8"))
-                 ["zones"].items()}
-        n_goal, n_free = 0, 0
+        zones = {}
+        if args.goal_zones:
+            zones = {name: tuple(z["pose"][:2]) for name, z in
+                     json.load(open(args.goal_zones, encoding="utf-8"))
+                     ["zones"].items()}
+        n_goal, n_goto, n_free = 0, 0, 0
         for _name, _base, meta, rows, _d in eps:
-            goal = None
+            gxy, kind = None, None
+            slots = meta.get("intent_slots") or {}
+            # 2026-10-12 (point-goal primitive, docs/experiments/goto_object/
+            # 20261012_1850_point-goal-primitive-prereg.md): go-to-object
+            # episodes carry the target's world position in
+            # intent_slots.goto.objects[target]. Same channel, same formula as
+            # the direct_zone episodes below, so one continuous mapping.
+            if args.goal_from_goto and meta.get("intent_id") == "goto_object":
+                g = slots.get("goto") or {}
+                objs, t = g.get("objects") or [], g.get("target")
+                if t is None or not (0 <= int(t) < len(objs)):
+                    print(f"goto_object without objects[target] in {_name}",
+                          file=sys.stderr)
+                    return 1
+                gxy, kind = (float(objs[int(t)]["x"]),
+                             float(objs[int(t)]["y"])), "goto"
             # direct_zone ONLY. ring_goal (follow the lane to a zone) had goal
             # labels in v8g and taught the opposite mapping — bearing points
             # sideways/backwards while the car lane-follows — diluting the 41
-            # direct episodes' "steer toward bearing" signal (docs/ver/
+            # direct episodes' "steer toward bearing" signal (docs/experiments/log/
             # 20260824_1138). ring_goal now reads (0, 0): zone words without a
             # vector mean "not a beeline".
-            if meta.get("intent_id") in ("direct_zone",):
-                goal = (meta.get("intent_slots") or {}).get("goal")
-            if goal is not None:
-                if goal not in zones:
-                    print(f"unknown zone '{goal}' in {_name} — not in "
-                          f"{args.goal_zones}", file=sys.stderr)
-                    return 1
-                gx, gy = zones[goal]
+            if gxy is None and zones and meta.get("intent_id") in ("direct_zone",):
+                goal = slots.get("goal")
+                if goal is not None:
+                    if goal not in zones:
+                        print(f"unknown zone '{goal}' in {_name} — not in "
+                              f"{args.goal_zones}", file=sys.stderr)
+                        return 1
+                    gxy, kind = zones[goal], "zone"
+            if gxy is not None:
+                gx, gy = gxy
                 for r in rows:
                     dx, dy = gx - r["x"], gy - r["y"]
                     b = math.atan2(dy, dx) - r["heading"]
                     b = (b + math.pi) % (2 * math.pi) - math.pi
                     r["state"] = list(r["state"]) + [b, math.hypot(dx, dy)]
-                n_goal += 1
+                if kind == "goto":
+                    n_goto += 1
+                else:
+                    n_goal += 1
             else:
                 for r in rows:
                     r["state"] = list(r["state"]) + [0.0, 0.0]
                 n_free += 1
         print(f"goal conditioning: {n_goal} episodes with a zone goal, "
-              f"{n_free} with (0, 0)")
+              f"{n_goto} with a go-to-object goal, {n_free} with (0, 0)")
     still_dims = 0
     if args.standstill_state:
         # standstill_s: seconds the ego has been at rest (capped). The v9
         # demonstrations' GO trigger (pass after a 2.5 s watch) and the
         # "watching" narration are both functions of THIS quantity, and it
         # is invisible in image+`[v, w, steer]` — the r6 live demo stopped
-        # behind the parked car forever (docs/ver/20260907_2123).
+        # behind the parked car forever (docs/experiments/log/20260907_2123).
         still_dims = 1
         for _name, _base, _meta, rows, _d in eps:
             still = 0.0

@@ -88,7 +88,7 @@ SmolVLA checkpoint demo:
 ./smolvla_demo.sh
 ```
 
-See [Thor SmolVLA demo setup](docs/thor_smolvla_demo.md) for the portable venv,
+See [Thor SmolVLA demo setup](docs/guides/thor_smolvla_demo.md) for the portable venv,
 checkpoint transfer, run, and shutdown procedure.
 
-See [docs/quickstart.md](docs/quickstart.md) for a compact command list.
+See [docs/guides/quickstart.md](docs/guides/quickstart.md) for a compact command list.

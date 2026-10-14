@@ -1,10 +1,10 @@
 # stage_a vs SmolVLA — 학습 입력·시뮬 출력 파이프라인 비교와 "VLA인가"에 대한 판정
 
-> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](../log/README.md) 참조.
 
 작성 2026-08-06. 근거 코드: `train/train_stage_a.py`, `scripts/collect_corpus.py`,
 `scripts/to_lerobot.py`, `scripts/vla_policy_server.py`, `sant_vla_pkg/vla_bridge_node.py`.
-측정치는 docs/ver/ 해당 일자 문서에서 가져옴.
+측정치는 docs/experiments/log/ 해당 일자 문서에서 가져옴.
 
 ---
 
@@ -160,8 +160,8 @@ counterfactual 시연 BC)은 π0/SmolVLA 계열의 **정석 레시피를 축소 
 
 ## 6. 관련 문서
 
-- 수집·검증 설계: docs/ver/20260731_1453, 20260804_1830 (off-ring 가드)
-- 반사실 검증 수치: docs/ver/20260803_1223, 20260805_0331
-- A3 헬드아웃: docs/ver/20260730_2131 (주차판), 20260804_1056 (주행판)
-- 서빙 파라미터 근거: docs/ver/20260730_0910 (refill 스윕), 20260805_1640 (slew)
-- DAgger 사이클: docs/ver/20260806_1045
+- 수집·검증 설계: docs/experiments/log/20260731_1453, 20260804_1830 (off-ring 가드)
+- 반사실 검증 수치: docs/experiments/log/20260803_1223, 20260805_0331
+- A3 헬드아웃: docs/experiments/log/20260730_2131 (주차판), 20260804_1056 (주행판)
+- 서빙 파라미터 근거: docs/experiments/log/20260730_0910 (refill 스윕), 20260805_1640 (slew)
+- DAgger 사이클: docs/experiments/log/20260806_1045

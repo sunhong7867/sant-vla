@@ -135,11 +135,21 @@ class JsonlWriter:
         # per-source split is the only way to see that the tf stream died while
         # the CLI fallback kept the total plausible.
         self.n_tf = 0
+        self.n_after_close = 0     # lines dropped because the episode had ended
         self._lock = threading.Lock()
 
     def write(self, obj):
         line = json.dumps(obj, ensure_ascii=False) + "\n"
         with self._lock:
+            # 2026-10-07: an episode stop closes these files while the writer
+            # threads are still draining the frame queue, so a late frame used
+            # to raise ValueError("I/O operation on closed file") out of the
+            # worker. Drop the line and count it instead — losing the tail of a
+            # finished episode is harmless, losing the thread is not (see
+            # _writer_loop).
+            if self.f.closed:
+                self.n_after_close += 1
+                return
             if obj.get("src") == "tf":
                 self.n_tf += 1
             self.f.write(line)
@@ -172,6 +182,13 @@ class EpisodeRecorder(Node):
         self.tf_topic = self.declare_parameter(
             "tf_topic", "/world/default/dynamic_pose/info").value
         self.tf_jump_tol = float(self.declare_parameter("tf_jump_tol", 1.0).value)
+        # A late tf message is not a jump (2026-09-30): the divpilot corpus
+        # lost 7/18 episodes to "re-identifying" after the stream went dark
+        # for ~1 s of SIM time while the car kept driving (1.1-1.8 m moves,
+        # index unchanged). The tolerance grows with the sim time elapsed
+        # since the last accepted message at this speed bound (m/s).
+        self.tf_jump_speed = float(self.declare_parameter("tf_jump_speed", 4.0).value)
+        self._last_tf_t = None
         self.ego_match_tol = float(self.declare_parameter("ego_match_tol", 2.0).value)
         self.session = self.declare_parameter("session", "").value
         self.repo = self.declare_parameter(
@@ -383,9 +400,21 @@ class EpisodeRecorder(Node):
         params = [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality]
         while self._run_writer:
             try:
+                self._writer_once(params)
+            except Exception as exc:                      # noqa: BLE001
+                # A worker loop must never exit on a per-item error: a dead
+                # worker is invisible until the queue fills and every frame is
+                # dropped (2026-10-07, see below).
+                self.get_logger().error(f"writer loop error: {exc}")
+
+    def _writer_once(self, params):
+        while True:
+            try:
                 t, frame, w, h = self._frame_q.get(timeout=0.2)
             except queue.Empty:
-                continue
+                return
+            if not self._run_writer:
+                return
             with self._lock:
                 ep = self._ep
                 if ep is None:
@@ -407,11 +436,19 @@ class EpisodeRecorder(Node):
                 self._enc_s += _t1 - _t0
                 self._io_s += _t2 - _t1
                 self._wrote += 1
+                # INSIDE the try (2026-10-07): this call was outside it, and
+                # it is the one that touches the episode's frames.jsonl. When a
+                # stop closed that file mid-drain the exception escaped and
+                # KILLED the worker thread. writer_threads is 3, so the third
+                # such race ended recording for the rest of the session —
+                # silently: the collector still exited rc=0 and only verify
+                # caught it. The sec run lost 283 of 596 episodes this way
+                # (frames.jsonl empty from ep_0313, q=600/600 wrote=0).
+                writer.write({"t": t, "seq": seq, "file": f"frames/{name}",
+                              "enc": "jpg", "w": int(w), "h": int(h)})
             except Exception as exc:
                 self.get_logger().error(f"frame write failed: {exc}")
                 continue
-            writer.write({"t": t, "seq": seq, "file": f"frames/{name}",
-                          "enc": "jpg", "w": int(w), "h": int(h)})
 
     def _tf_cb(self, msg):
         """Native ground-truth pose from the bridged dynamic_pose topic.
@@ -430,9 +467,21 @@ class EpisodeRecorder(Node):
             return
         tr = tfs[idx].transform
         x, y = tr.translation.x, tr.translation.y
+        # Elapsed time from the message's own sim stamp (2026-10-02): the node
+        # clock comes from the throttled /clock, which stalls together with the
+        # pose stream, so a 0.4 s hole looked like ~0 s and a 1.2 m move at
+        # 3 m/s tripped the 1.0 m bound — 116/360 boxtri episodes were thrown
+        # away as "re-identified" while the ego never left index 0.
+        hs0 = tfs[idx].header.stamp
+        t_now = hs0.sec + hs0.nanosec * 1e-9
+        if t_now <= 0.0:
+            t_now = self.get_clock().now().nanoseconds * 1e-9
+        tol = self.tf_jump_tol
+        if self._last_tf_t is not None:
+            tol += self.tf_jump_speed * max(0.0, t_now - self._last_tf_t)
         if self._last_tf_xy is not None:
             dx = math.hypot(x - self._last_tf_xy[0], y - self._last_tf_xy[1])
-            if dx > self.tf_jump_tol:
+            if dx > tol:
                 # The array order shifts whenever another dynamic entity
                 # (e.g. the v9 obstacle fleet) joins or leaves the moving
                 # set — the ego did not jump, our INDEX now points at a
@@ -440,7 +489,7 @@ class EpisodeRecorder(Node):
                 # dark stream — 66/120 episodes lost on 2026-09-07), try to
                 # find the ego by proximity: the entity nearest to its last
                 # known position, within the physical motion bound.
-                best_i, best_d = None, self.tf_jump_tol
+                best_i, best_d = None, tol
                 for i, t2 in enumerate(tfs):
                     d2 = math.hypot(
                         t2.transform.translation.x - self._last_tf_xy[0],
@@ -452,7 +501,7 @@ class EpisodeRecorder(Node):
                     tr = tfs[idx].transform
                     x, y = tr.translation.x, tr.translation.y
                     dx = best_d
-            if dx > self.tf_jump_tol:
+            if dx > tol:
                 # Either the entity order shifted or the car was teleported.
                 # Re-identify rather than silently log another entity's pose.
                 #
@@ -472,6 +521,7 @@ class EpisodeRecorder(Node):
                     f"pose index {idx} jumped {dx:.2f} m — re-identifying ego")
                 return
         self._last_tf_xy = (x, y)
+        self._last_tf_t = t_now
         q = tfs[idx].transform.rotation
         yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
                          1.0 - 2.0 * (q.y * q.y + q.z * q.z))
@@ -568,6 +618,20 @@ class EpisodeRecorder(Node):
         while self._run_writer:
             time.sleep(period)
             if not self._rec:
+                if self.stream is not None:
+                    self.stream.drain()      # discard between episodes
+                continue
+            # Stamped stream (model PosePublisher, 2026-10-02): write every
+            # sample at its own sim time instead of the latest one per poll.
+            batch = self.stream.drain() if self.stream is not None else []
+            if batch:
+                with self._lock:
+                    ep = self._ep
+                if ep is not None:
+                    for t_s, x_s, y_s, yaw_s in batch:
+                        ep["poses"].write({"t": t_s, "seq": self.stream.seq, "x": x_s,
+                                           "y": y_s, "yaw": yaw_s, "src": "cli"})
+                last_seq = self.stream.seq
                 continue
             seq = self.stream.seq if self.stream else -1
             if seq == last_seq:
@@ -580,7 +644,9 @@ class EpisodeRecorder(Node):
                 ep = self._ep
             if ep is None:
                 continue
-            ep["poses"].write({"t": self._now(), "seq": seq, "x": pose[0],
+            # message sim stamp when the stream has one (2026-10-02, see gz_pose)
+            t_msg = getattr(self.stream, "latest_t", None)
+            ep["poses"].write({"t": t_msg if t_msg else self._now(), "seq": seq, "x": pose[0],
                                "y": pose[1], "yaw": pose[2], "src": "cli"})
 
     # ------------------------------------------------------------------ control
@@ -775,9 +841,19 @@ class EpisodeRecorder(Node):
         if self._dropped:
             # A dropped frame means the timing of this episode is unrecoverable.
             reasons.append(f"{self._dropped} frames dropped (writer backlog)")
+        # Labels are built from the cli (model-origin) stream. When that stream
+        # is dense, a tf hole or a tf re-identification costs nothing, so it is
+        # recorded as a note instead of discarding the episode (2026-10-02:
+        # 116/360 boxtri episodes were lost this way with cli intact).
+        cli_ok = n_cli / dur_m >= 25.0
+        meta["cli_pose_hz"] = round(n_cli / dur_m, 1)
         if self._tf_gap:
-            reasons.append("tf pose stream had a gap (ego re-identified mid-episode)")
-        if n_tf / dur_m < 5.0:
+            msg = "tf pose stream had a gap (ego re-identified mid-episode)"
+            if cli_ok:
+                meta["tf_note"] = msg
+            else:
+                reasons.append(msg)
+        if n_tf / dur_m < 5.0 and not cli_ok:
             reasons.append(f"tf pose stream only {n_tf / dur_m:.1f} Hz "
                            f"({n_tf} rows over {dur_m:.1f}s)")
         meta["valid"] = not reasons

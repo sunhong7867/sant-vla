@@ -1,7 +1,7 @@
 # 2026-07-29 20:35 — 학습 기동 + 지연 실측 + open-loop 감도 프로브
 
 > 앞선 문서: [18:56 코퍼스 v2 완성](20260729_1856_corpus-v2-complete.md)
-> 계획: [sim_vla_plan.md](../sim_vla_plan.md) §6, §7.3
+> 계획: [sim_vla_plan.md](../../plans/sim_vla_plan.md) §6, §7.3
 
 SmolVLA 파인튜닝이 3090에서 돌기 시작했다. 기동까지 5건의 설정 문제를 뚫었고,
 첫 체크포인트(5K)를 open-loop으로 심문한 결과 **시각 조건화는 발달했지만 언어는 아직 없다.**
@@ -163,7 +163,7 @@ pose 좌표 기반 결정 구간 층(통로 x∈[−5.6,−3.2], y∈[−15.2,0.
 | `scripts/train_smolvla.sh` | 기동 문제 5건 수정 |
 | `scripts/vla_policy_server.py` | 카메라 키를 체크포인트에서 읽기 |
 | `scripts/finalize_corpus.sh` | 신규 |
-| `docs/servers.md` | GPU 인덱스 정정 (index 1 = 3090) |
+| `docs/guides/servers.md` | GPU 인덱스 정정 (index 1 = 3090) |
 
 ---
 

@@ -3,12 +3,12 @@
 작성 2026-08-06. 근거 코드: nav-vla `vla_bridge_node.py`, `collect_corpus.py`,
 `to_lerobot.py`, `train_smolvla.sh`, `tools/eval/` / VLA_AD `vla_trt_node.cpp`,
 `lasa_node.py`, `motion_planner_node.py`, `pipeline_launch.py`.
-측정치는 docs/ver/ 해당 일자 문서와 VLA_AD `TASKS.md`·`paper/tables/`에서 가져옴.
+측정치는 docs/experiments/log/ 해당 일자 문서와 VLA_AD `TASKS.md`·`paper/tables/`에서 가져옴.
 VLA_AD는 선배가 진행한 프로젝트를 인수인계받아 새로 시작하는 것이며, 원본은
 `~/hoon/VLA_AD`, 작업 사본은 `~/hong/VLA_AD`다 (부록 참조).
-이 문서는 [vla_readiness_and_roadmap.md](../vla_readiness_and_roadmap.md)(2026-07-27)의
+이 문서는 [vla_readiness_and_roadmap.md](../../plans/vla_readiness_and_roadmap.md)(2026-07-27)의
 §0~§2 판정을 현재 상태로 **정정**한다 (§1). 정정 방식은
-[vla_thor_demo_and_course_plan.md](../vla_thor_demo_and_course_plan.md):40-42의
+[vla_thor_demo_and_course_plan.md](../../plans/vla_thor_demo_and_course_plan.md):40-42의
 선례를 따라, 이전 문서를 지우지 않고 범위만 명시해 우선한다.
 
 ---
@@ -34,10 +34,10 @@ VLA_AD는 선배가 진행한 프로젝트를 인수인계받아 새로 시작�
 
 | 기준 | 07-27 판정 (nav-vla) | 2026-08-06 현재 | 근거 |
 |---|---|---|---|
-| (a) 비전+언어 통합 forward pass | ❌ 정책 이전에 언어를 `int`로 이산화 | ✅ SmolVLM2 트렁크가 이미지+문장+상태를 함께 인코딩 | [train_smolvla.sh](../../src/nav_vla_pkg/scripts/train_smolvla.sh), [to_lerobot.py](../../src/nav_vla_pkg/scripts/to_lerobot.py) |
-| (b) 학습 헤드의 연속 다자유도 액션 | ❌ 2-DoF지만 목표 무시 | ✅ 30스텝 × [dx, dy, dyaw] flow matching 청크 | [vla_training_comparison.md](../vla_training_comparison.md) §2(c) |
-| (c) 언어 반사실 민감도 | ❌ 0.0049 rad/s | ✅ **차선 분리 2.51 m**, 동일 문장 0.05 m 바닥 대비 27× | [ver/20260804_1056](../ver/20260804_1056_y5j-junction-pack-a3-driving.md), [ver/20260805_0331](../ver/20260805_0331_v5-clean-stable.md) |
-| (d) 루프 내 규칙 미개입 | ❌ regex가 LLM보다 최종 권한 | ⚠️ 존 정차만 navigator 좌표 감독, 주행 자체는 정책 단독 | [generalization_limits_and_questions.md](../generalization_limits_and_questions.md) §5 |
+| (a) 비전+언어 통합 forward pass | ❌ 정책 이전에 언어를 `int`로 이산화 | ✅ SmolVLM2 트렁크가 이미지+문장+상태를 함께 인코딩 | [train_smolvla.sh](../../../src/sant_vla_pkg/scripts/train_smolvla.sh), [to_lerobot.py](../../../src/sant_vla_pkg/scripts/to_lerobot.py) |
+| (b) 학습 헤드의 연속 다자유도 액션 | ❌ 2-DoF지만 목표 무시 | ✅ 30스텝 × [dx, dy, dyaw] flow matching 청크 | [vla_training_comparison.md](../reports/vla_training_comparison.md) §2(c) |
+| (c) 언어 반사실 민감도 | ❌ 0.0049 rad/s | ✅ **차선 분리 2.51 m**, 동일 문장 0.05 m 바닥 대비 27× | [ver/20260804_1056](../log/20260804_1056_y5j-junction-pack-a3-driving.md), [ver/20260805_0331](../log/20260805_0331_v5-clean-stable.md) |
+| (d) 루프 내 규칙 미개입 | ❌ regex가 LLM보다 최종 권한 | ⚠️ 존 정차만 navigator 좌표 감독, 주행 자체는 정책 단독 | [generalization_limits_and_questions.md](../reports/generalization_limits_and_questions.md) §5 |
 
 **VLA_AD 쪽 판정은 바뀌지 않았다.** 07-27의 "진짜 VLM이지만 속도 스칼라 1개만
 내는 거버너"는 여전히 정확하고, §4에서 그보다 더 낮다는 것이 확인된다 — 현
@@ -156,9 +156,9 @@ VLA_AD (실차):
 | 속도역 | 2.4~3.2 m/s | `v_base=100` × α ∈ [0.3, 1.0] | 정규화 기준이 달라 그대로 매핑 불가 |
 
 > **이식되는 것은 가중치가 아니라 파이프라인이다.** `collect_corpus.py` →
-> `resample` → `package` → [to_lerobot.py](../../src/nav_vla_pkg/scripts/to_lerobot.py)
-> → `lerobot-train` → [ring_map_probe.sh](../../tools/eval/ring_map_probe.sh) →
-> [compare_segments.py](../../tools/eval/compare_segments.py)는 전부 재사용된다.
+> `resample` → `package` → [to_lerobot.py](../../../src/sant_vla_pkg/scripts/to_lerobot.py)
+> → `lerobot-train` → [ring_map_probe.sh](../../../tools/eval/ring_map_probe.sh) →
+> [compare_segments.py](../../../tools/eval/compare_segments.py)는 전부 재사용된다.
 > 재사용되지 않는 것은 v6/v7 체크포인트 자신뿐이다.
 
 실차 주행을 돌려 다시 학습해야 한다는 판단은 맞다. 다만 "다시"는 처음부터가
@@ -193,7 +193,7 @@ VLA_AD (실차):
 - **오염 감사 습관** — off-ring 가드가 찾아낸 라벨 오염 16 eps(전체의 2%)가
   이탈 4/4를 일으켰던 사례. "시간종료 = success"로 통과하는 라벨을 의심하는
   절차 자체.
-- **append-only 음성결과 기록** — `docs/ver/` 33개 문서. 기각된 가설을 지우지
+- **append-only 음성결과 기록** — `docs/experiments/log/` 33개 문서. 기각된 가설을 지우지
   않는다.
 - **자동 수집 + DAgger** — 정책의 오차 상태에서 선생 복귀를 수집하는
   `--start-poses-file` 경로. 실차에서는 HG-DAgger(사람 개입 교정을 라벨로)로
@@ -260,7 +260,7 @@ Hesai를 **라벨·평가 전용**으로 못박는 것이 VLA_AD의 camera-only 
 
 ### 주 2~3 — 측위·라벨 인프라
 
-LiDAR BEV Studio([tools/lidar_alignment_gui/](../../tools/lidar_alignment_gui/),
+LiDAR BEV Studio([tools/lidar_alignment_gui/](../../../tools/lidar_alignment_gui/),
 이번 브랜치 신규 ~3,900줄) 완주 → `/track/vehicle_pose` 발행.
 
 **게이트**: 같은 스크립트 경로를 시뮬·실차에서 주행했을 때 궤적 종점 발산
@@ -302,16 +302,16 @@ Hesai-in-the-loop 오라클로 반사실 쌍 수집(사람 조종 불필요) →
 
 ## 10. 관련 문서
 
-- 파이프라인 대조: [vla_training_comparison.md](../vla_training_comparison.md)
+- 파이프라인 대조: [vla_training_comparison.md](../reports/vla_training_comparison.md)
 - 한계·열린 질문:
-  [generalization_limits_and_questions.md](../generalization_limits_and_questions.md)
+  [generalization_limits_and_questions.md](../reports/generalization_limits_and_questions.md)
 - 로드맵 (§0~§2 정정 대상, §5·§8은 유효):
-  [vla_readiness_and_roadmap.md](../vla_readiness_and_roadmap.md)
+  [vla_readiness_and_roadmap.md](../../plans/vla_readiness_and_roadmap.md)
 - 2026-07-25 통합 설계 이력:
-  [vla_ad_nl_integration.md](../vla_ad_nl_integration.md)
+  [vla_ad_nl_integration.md](../../plans/vla_ad_nl_integration.md)
 - 데모·코스 계획:
-  [vla_thor_demo_and_course_plan.md](../vla_thor_demo_and_course_plan.md)
-- 시행착오 연대기: [ver/README.md](../ver/README.md)
+  [vla_thor_demo_and_course_plan.md](../../plans/vla_thor_demo_and_course_plan.md)
+- 시행착오 연대기: [ver/README.md](../log/README.md)
 - VLA_AD 측: `TASKS.md`, `BUGFIX_LOG.md`, `paper/access/ACCESS_PLAN.md`
 
 ---

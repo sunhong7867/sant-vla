@@ -1,8 +1,8 @@
 # ICCE-ASIA 2026 연구 진행 계획 (대체된 v0.1)
 
 > **상태: 2026-09-01에 대체됨.** 공식 수집에는 이 문서나 v2 계획이 아니라
-> [ICCE-ASIA 2026 VLA 시스템 논문 연구 계획 v3](../icce_asia_2026_system_paper_plan_v3.md)와
-> [v6 50-run matrix](../icce_asia_2026_v6_eval_matrix.csv)를 사용한다.
+> [ICCE-ASIA 2026 VLA 시스템 논문 연구 계획 v3](v3_instrumented_protocol/icce_asia_2026_system_paper_plan_v3.md)와
+> [v6 50-run matrix](v3_instrumented_protocol/icce_asia_2026_v6_eval_matrix.csv)를 사용한다.
 > 아래 내용은 결정 이력을 보존하기 위한 이전 통합안이다.
 
 ## 0. 문서 상태
@@ -109,13 +109,13 @@ GuardedLC는 “승객 발화를 어떤 typed command로 허가할 것인가”�
 
 | 관찰 | 파일럿 결과 | 출처 | 공식 결과로 재사용 여부 |
 |---|---:|---|---|
-| v2b parking, `refill_at=0.93` | 모든 trial이 한 endpoint로 붕괴 | `docs/ver/20260730_0910_bay-diagonal.md` | 재수집 필요 |
+| v2b parking, `refill_at=0.93` | 모든 trial이 한 endpoint로 붕괴 | `docs/experiments/log/20260730_0910_bay-diagonal.md` | 재수집 필요 |
 | v2b parking, `refill_at=0.7` | bay2/3만 정답 | 같은 문서 | 재수집 필요 |
 | v2b parking, `refill_at=0.3` | commanded bay `8/8` | 같은 문서 | 재수집 필요 |
-| v6 ring, replay + fast | legacy 0.70 m 초과 구간 8개 | `docs/vla_lane_keeping_ablation.md` | 재수집 필요 |
+| v6 ring, replay + fast | legacy 0.70 m 초과 구간 8개 | `docs/experiments/reports/vla_lane_keeping_ablation.md` | 재수집 필요 |
 | v6 ring, preview + normal | legacy 0.70 m 초과 구간 1개 | 같은 문서 | 재수집 필요 |
 | v6 ring, preview + speed cap | legacy 0.70 m 초과 구간 0개 | 같은 문서 | 재수집 필요 |
-| counterfactual corpus | 264 episodes, 263 valid, 329 pairs | `docs/ver/20260729_1856_corpus-v2-complete.md` | method 설계에 사용 가능 |
+| counterfactual corpus | 264 episodes, 263 valid, 329 pairs | `docs/experiments/log/20260729_1856_corpus-v2-complete.md` | method 설계에 사용 가능 |
 
 파일럿의 방향성은 강하지만 반복 수, 체크포인트, 속도 문구와 executor 조건이 서로 다르다.
 따라서 서로 다른 과거 표의 수치를 한 표에 합쳐 통계 검정을 하지 않는다.

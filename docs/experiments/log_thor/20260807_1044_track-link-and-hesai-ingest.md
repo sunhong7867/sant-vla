@@ -12,17 +12,17 @@
 서버, Thor=클라이언트)로 정정한다. WiFi 멀티캐스트 회피 효과는 동일하고
 추가 설치가 없다. `fastdds` CLI 존재 확인.
 
-- [track_link_env.sh](../../src/track_localizer_pkg/scripts/track_link_env.sh)
+- [track_link_env.sh](../../../src/track_localizer_pkg/scripts/track_link_env.sh)
   — 양쪽 공용 env (`ROS_DISCOVERY_SERVER`, `ROS_SUPER_CLIENT=TRUE`,
   domain 기본 47=Thor VLA_AD 스택과 동일)
 - Thor 네트워크: WiFi 단일 `wlP1p1s0` = 10.221.71.245/24
 
 ## 2) 수신 검증 도구 + 루프백 실측
 
-- [mock_track_publisher.py](../../src/track_localizer_pkg/scripts/mock_track_publisher.py)
+- [mock_track_publisher.py](../../../src/track_localizer_pkg/scripts/mock_track_publisher.py)
   — track_pose_node와 동일 토픽·QoS 계약(BEST_EFFORT depth 1)의 합성 발행.
   라이다 없이 링크만 따로 시험하는 용도
-- [check_track_link.py](../../src/track_localizer_pkg/scripts/check_track_link.py)
+- [check_track_link.py](../../../src/track_localizer_pkg/scripts/check_track_link.py)
   — 수신율·최악 갭·stamp age 측정, D2 게이트(≥10 Hz, 갭<0.5 s) PASS/FAIL
 
 Thor 단독 루프백 (디스커버리 서버 127.0.0.1 경유, 10 s):
@@ -53,7 +53,7 @@ WiFi로 Thor 전송 가능 — Thor측 장애물 게이트 후보.
 
 ## 4) 시간 동기 준비 (미적용 — sudo 필요)
 
-chrony **미설치** 확인. [setup_time_sync.sh](../../src/track_localizer_pkg/scripts/setup_time_sync.sh)
+chrony **미설치** 확인. [setup_time_sync.sh](../../../src/track_localizer_pkg/scripts/setup_time_sync.sh)
 작성 — 노트북 `server <서브넷>` / Thor `client <노트북IP>`로 각자 sudo 실행.
 게이트: `chronyc tracking` 오프셋 < 30 ms.
 

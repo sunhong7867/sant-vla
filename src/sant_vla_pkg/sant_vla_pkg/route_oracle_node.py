@@ -30,6 +30,14 @@ sub  ``/oracle_goal``    ``std_msgs/String`` JSON::
         {"goal": "T2", "lane": "lane1"|"lane2", "target_speed": 1.2}
         {"goal": "cruise", "lane": "lane1", "lane_ramp_m": 9.0}
         {"goal": "stop"}
+        {"goal": "point", "x": 3.0, "y": -4.0, "standoff_m": 3.2}      (2026-10-03)
+        {"goal": "lane_point", "lane": "lane2", "x": .., "y": .., "standoff_m": 3.2}
+
+    ``point``: drive straight at a world point (across the infield/parking
+    lot, lanes ignored) and stop ``standoff_m`` short of it (centre distance).
+    ``lane_point``: follow ``lane`` and stop where the arc gap to the lane
+    point nearest (x, y) drops to ``standoff_m``. Together they are the
+    go-to-object teacher: same object, "go straight" vs "follow the lane".
 
     ``lane_ramp_m`` (cruise -> cruise lane switch only, default 0 = the old
     instant swap): the reference slides from the old lane to the new one over
@@ -69,7 +77,7 @@ DEFAULT_PATHS = os.path.expanduser(
 
 # Rotation from the model's reported yaw to its direction of travel. Measured,
 # not assumed: straight-line runs from four headings give -90.00 deg with sd 0.00.
-# See docs/ver/20260728_1713_recorder-v2-debug.md section 7.
+# See docs/experiments/log/20260728_1713_recorder-v2-debug.md section 7.
 YAW_OFFSET = -math.pi / 2
 SIM_WHEEL_BASE = 2.86      # ackermann_cmd_adapter_node.py:23
 SIM_MAX_STEER = 0.6        # policy_node.py:59
@@ -289,12 +297,38 @@ class RouteOracle(Node):
             self._halt()
             self._status("idle: cancelled")
             return
+        if zone.lower() == "point":
+            self.ramp = None
+            self.goal = {
+                "zone": "point", "lane": "point", "kind": "point",
+                "x": float(req["x"]), "y": float(req["y"]),
+                "standoff": float(req.get("standoff_m", 3.0)),
+                "target_speed": float(req.get("target_speed", self.default_speed)),
+            }
+            self.path_i = None
+            self._status(f"point: ({self.goal['x']:.2f}, {self.goal['y']:.2f}) "
+                         f"standoff {self.goal['standoff']:.2f} m")
+            return
         lane = str(req.get("lane", "lane2"))
         if lane not in self.lanes:
             self._status(f"error: unknown lane '{lane}'")
             return
         prev = self.goal
         self.ramp = None
+        if zone.lower() == "lane_point":
+            path = self.lanes[lane]
+            gi, _ = path.nearest_index(float(req["x"]), float(req["y"]))
+            self.goal = {
+                "zone": "lane_point", "lane": lane, "kind": "ring",
+                "target_speed": float(req.get("target_speed", self.default_speed)),
+                "goal_index": int(gi),
+                "stop_gap": float(req.get("standoff_m", 3.0)),
+                "target_xy": [float(req["x"]), float(req["y"])],
+            }
+            self.path_i = None
+            self._status(f"lane_point: {lane} index {gi} "
+                         f"standoff {self.goal['stop_gap']:.2f} m")
+            return
         if zone.lower() == "cruise":
             ramp_m = float(req.get("lane_ramp_m", 0.0))
             if (ramp_m > 0.0 and prev is not None and prev["kind"] == "cruise"
@@ -380,6 +414,9 @@ class RouteOracle(Node):
 
         x, y, raw_yaw = self.pose
         heading = wrap_pi(raw_yaw + YAW_OFFSET)
+        if self.goal["kind"] == "point":
+            self._control_point(x, y, heading)
+            return
         parking = self.goal["kind"] == "parking"
         if parking:
             ent = self.parking[self.goal["zone"]]
@@ -409,12 +446,18 @@ class RouteOracle(Node):
             arrived = remaining <= self.park_arrive_tol
         else:
             remaining = path.forward_gap(i, self.goal["goal_index"])
-            arrived = (remaining <= self.arrive_tol or
-                       remaining >= path.length - self.arrive_tol)
+            if "stop_gap" in self.goal:
+                # lane_point: brake into a stop stop_gap short of the object
+                remaining -= self.goal["stop_gap"]
+                arrived = remaining <= 0.05 or remaining >= path.length - 2 * self.goal["stop_gap"]
+            else:
+                arrived = (remaining <= self.arrive_tol or
+                           remaining >= path.length - self.arrive_tol)
         if arrived:
             zone = self.goal["zone"]
             target = (self.parking[zone]["stop"] if parking
-                      else list(path.point_at(self.goal["goal_index"])))
+                      else self.goal.get("target_xy")
+                      or list(path.point_at(self.goal["goal_index"])))
             ex, ey = x - target[0], y - target[1]
             self.goal = None
             self._halt()
@@ -523,6 +566,51 @@ class RouteOracle(Node):
             self.get_logger().info(
                 f"{self.goal['zone']}/{self.goal['lane']}: {left} m left, "
                 f"v={self.speed:4.2f} off={off:4.2f} m curv={curvature:+.4f}")
+
+    def _control_point(self, x, y, heading):
+        """Straight-at-a-point pursuit (go-to-object teacher, 2026-10-03)."""
+        g = self.goal
+        dx, dy = g["x"] - x, g["y"] - y
+        dist = math.hypot(dx, dy)
+        remaining = dist - g["standoff"]
+        if remaining <= 0.05:
+            self.goal = None
+            self._halt()
+            self._status(f"arrived: point (dist {dist:.2f} m, standoff "
+                         f"{g['standoff']:.2f} m)")
+            return
+        target = g["target_speed"]
+        if remaining < self.brake_dist:
+            target *= max(0.0, remaining / self.brake_dist)
+            target = max(target, 0.12) if remaining > 0.3 else target
+        dt = 1.0 / self.rate_hz
+        self.speed += max(-self.accel_limit * dt,
+                          min(self.accel_limit * dt, target - self.speed))
+        c, s = math.cos(heading), math.sin(heading)
+        local_x = dx * c + dy * s
+        local_y = -dx * s + dy * c
+        curvature_raw = 2.0 * local_y / max(local_x ** 2 + local_y ** 2, 1e-6)
+        curvature = max(-MAX_CURVATURE, min(MAX_CURVATURE, curvature_raw))
+        self.clamped = abs(curvature_raw) > MAX_CURVATURE
+        yaw_rate = curvature * self.speed
+        cmd = Twist()
+        cmd.linear.x = self.speed
+        cmd.angular.z = yaw_rate
+        self.cmd_pub.publish(cmd)
+        steer = math.atan(SIM_WHEEL_BASE * curvature)
+        self.act_pub.publish(String(data=json.dumps({
+            "source": "route_oracle",
+            "override": "clamp_curvature" if self.clamped else "none",
+            "curvature_raw": curvature_raw, "curvature": curvature,
+            "steer_angle_rad": steer,
+            "steer_float": 7.0 * (steer / 0.6) ** 3 if abs(steer) < 0.6 else
+                           math.copysign(7.0, steer),
+            "steering_cmd_int": max(-7, min(7, int(round(7.0 * (steer / 0.6) ** 3)))),
+            "target_speed_mps": self.speed, "yaw_rate": yaw_rate,
+            "lateral_err": local_y, "heading_err": math.atan2(local_y, local_x),
+            "s_remaining": remaining, "lane": "point", "lane_ramp_s": 1.0,
+            "kind": "point", "goal": "point", "lookahead_m": dist,
+        })))
 
     def _halt(self):
         self.speed = 0.0

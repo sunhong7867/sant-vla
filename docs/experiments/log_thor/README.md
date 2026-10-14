@@ -1,9 +1,9 @@
-# docs/ver2 — 서브 세션(Thor) 변경 이력
+# docs/experiments/log_thor — 서브 세션(Thor) 변경 이력
 
-메인 노트북에서 작성하는 [ver/](../ver/README.md)와 **작업 장소를 구분**하기
+메인 노트북에서 작성하는 [log/](../log/README.md)와 **작업 장소를 구분**하기
 위한 폴더다. Jetson AGX Thor(`~/hong/`) 세션에서 만든 문서·변경 기록은
 여기에 쌓는다. 파일명 규칙·필수 항목·append-only 원칙은
-[ver/README.md](../ver/README.md)를 그대로 따른다.
+[log/README.md](../log/README.md)를 그대로 따른다.
 
 > **현황 (2026-08-24 부기):** 2026-08-07 이후 실차(Thor) 작업은 **중단 상태**다.
 > 08-08~08-20은 교내·전국 경진대회 및 H-모빌리티 대회 준비·평가(메인 심판 역할)로

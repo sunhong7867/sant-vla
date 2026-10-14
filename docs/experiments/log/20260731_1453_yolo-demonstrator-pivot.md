@@ -4,7 +4,7 @@
 
 ## 1. 발단 — "오라클이 차선을 밟고 달린다" (사용자 관찰)
 
-route_oracle의 차선 경로는 [extract_track_paths.py](../../src/nav_vla_pkg/scripts/extract_track_paths.py)가
+route_oracle의 차선 경로는 [extract_track_paths.py](../../../src/sant_vla_pkg/scripts/extract_track_paths.py)가
 도로 경계의 기하 중심선을 **±도로폭/4로 offset**해 만든 것이지, 실제 차선 표시
 기준이 아니다. 욜로 스택을 실주행시켜 측정한 결과 (양 차선 2,340 이동 포즈):
 

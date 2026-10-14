@@ -23,6 +23,8 @@
 #   TAG=ramp SWERVE=1 FIXED_INDEX=142 EGO_LANE=lane2 OB_VARIANTS=v0,v1 \
 #       SWERVE_TRIGGER=10 SWERVE_RAMP=9 CONTROLLER=stanley TRAIN_GROUPS=36 HELDOUT_GROUPS=0 \
 #       bash tools/collect_multiobj_avoid.sh              # 램프 차선변경(2026-09-29): 2차선→1차선만, Stanley
+#   TAG=ramp70 SWERVE=1 FIXED_INDEX=70 START_WIN=20,23 EGO_LANE=lane2 OB_VARIANTS=v0,v1 \
+#       SWERVE_TRIGGER=10 SWERVE_RAMP=9 CONTROLLER=stanley ... # 왼쪽 직선 위치(곡선 없는 접근)
 #   TRAIN_MODELS=hatchback_red,hatchback_blue HELDOUT_MODELS=ob_person \
 #       bash tools/collect_multiobj_avoid.sh              # 대조군: 차량만 학습
 #
@@ -57,10 +59,14 @@ OB_ACCEL=${OB_ACCEL:-0.55}
 OB_STOP_MARGIN=${OB_STOP_MARGIN:-12.0}
 SWERVE=${SWERVE:-0}                  # 1: 정지 없이 15 m 전방에서 바로 차선 변경
 FIXED_INDEX=${FIXED_INDEX:-}         # 장애물 차선 인덱스 고정 (lane2 frac 0.35 = 142)
+START_WIN=${START_WIN:-}             # 고정 위치 출발 창 "근,원"(m), 비우면 20,30. lane2 70 은 20,23 (왼쪽 직선만)
 SWERVE_TRIGGER=${SWERVE_TRIGGER:-}   # 회피 시작 중심거리(m), 비우면 collect_corpus 기본 8
 SWERVE_RAMP=${SWERVE_RAMP:-}         # 차선 전환 램프 길이(m), 비우면 0 = 즉시 교체(packed_swerve)
 EGO_LANE=${EGO_LANE:-}               # lane2 = 2차선에서만 출발 (→ 1차선으로 회피)
 OB_VARIANTS=${OB_VARIANTS:-}         # 예: v0,v1 (v2 옆 차선 대조 제외)
+GZ_GUI=${GZ_GUI:-true}               # false = gz 창 없이(수집엔 ego 카메라만 필요, RAM 절약)
+FLOOR_GROUPS=${FLOOR_GROUPS:-0}      # 같은 요청을 두 번 — 이 세션의 노이즈 하한 실측.
+                                     # 0 이면 verify 가 G1 상수 9.5cm 로 대체하고 경고한다
 CONTROLLER=${CONTROLLER:-pure_pursuit}  # stanley = r26 순항 선생과 같은 제어기 (램프 필요)
 EXTRA_FLAGS=""
 [ "$SWERVE" = 1 ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-swerve-only"
@@ -68,10 +74,23 @@ EXTRA_FLAGS=""
 [ -n "$SWERVE_RAMP" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-swerve-ramp-m $SWERVE_RAMP"
 [ -n "$EGO_LANE" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-ego-lane $EGO_LANE"
 [ -n "$OB_VARIANTS" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-variants $OB_VARIANTS"
+# 다장애물 주행(2026-10-02, tools/multi_run.sh): 1·2차선 출발, 한 바퀴 장애물 여러 개, 장애물별 꺾기 무작위
+MULTI_GROUPS=${MULTI_GROUPS:-0}
+[ "$MULTI_GROUPS" -gt 0 ] && EXTRA_FLAGS="$EXTRA_FLAGS --multi-groups $MULTI_GROUPS"
+# 꺾는 거리·차선 전환 길이 (2026-10-12: 더 가까이서 회피, 예 MULTI_TRIGGER=7.5,10 MULTI_RAMP=5,8)
+[ -n "${MULTI_TRIGGER:-}" ] && EXTRA_FLAGS="$EXTRA_FLAGS --multi-trigger $MULTI_TRIGGER"
+[ -n "${MULTI_RAMP:-}" ] && EXTRA_FLAGS="$EXTRA_FLAGS --multi-ramp $MULTI_RAMP"
+# 말로 지정한 물체로 가기(2026-10-03, tools/goto_run.sh): 시야 안 물체 3~4 개, 같은 출발에서 목표만 다른 짝
+GOTO_GROUPS=${GOTO_GROUPS:-0}
+[ "$GOTO_GROUPS" -gt 0 ] && EXTRA_FLAGS="$EXTRA_FLAGS --goto-groups $GOTO_GROUPS --goto-split ${GOTO_SPLIT:-train} --goto-lane-frac ${GOTO_LANE_FRAC:-0.3}"
+[ "$GOTO_GROUPS" -gt 0 ] && [ "${GOTO_V2:-0}" = 1 ] && EXTRA_FLAGS="$EXTRA_FLAGS --goto-v2"   # 2026-10-05 v2 complete sets
+# 2026-10-07: 3분류 방향 실습 — 섹터당 물체 1개, 문장은 섹터만 지칭
+[ "$GOTO_GROUPS" -gt 0 ] && [ "${GOTO_SECTORS:-0}" = 1 ] && EXTRA_FLAGS="$EXTRA_FLAGS --goto-sectors"
 if [ "$CONTROLLER" = stanley ] && [ "$SWERVE" = 1 ] && [ -z "$SWERVE_RAMP" ]; then
   echo "[multiobj] Stanley 는 램프 없이 차선변경 못 함 — SWERVE_RAMP 를 지정"; exit 2
 fi
 [ -n "$FIXED_INDEX" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-fixed-index $FIXED_INDEX"
+[ -n "$START_WIN" ] && EXTRA_FLAGS="$EXTRA_FLAGS --ob-start-window $START_WIN"
 
 source /opt/ros/jazzy/setup.bash
 source $WS/install/setup.bash
@@ -86,11 +105,11 @@ done
 
 if [ "$DRY" = "1" ]; then
   echo "[multiobj] DRY: train fleet=$TRAIN_MODELS groups=$TRAIN_GROUPS"
-  python3 $COLLECT --driver oracle --groups 0 --speed-groups 0 --floor-groups 0 \
+  python3 $COLLECT --driver oracle --groups 0 --speed-groups 0 --floor-groups ${FLOOR_GROUPS:-0} \
     --ring-groups 0 --obstacle-groups "$TRAIN_GROUPS" --obstacle-models "$TRAIN_MODELS" $V1_FLAG $EXTRA_FLAGS \
     --group-prefix "${TAG}t_" --split train --seed "$SEED_TRAIN" --dry-run | tail -15
   echo "[multiobj] DRY: heldout fleet=$HELDOUT_MODELS groups=$HELDOUT_GROUPS"
-  python3 $COLLECT --driver oracle --groups 0 --speed-groups 0 --floor-groups 0 \
+  python3 $COLLECT --driver oracle --groups 0 --speed-groups 0 --floor-groups ${FLOOR_GROUPS:-0} \
     --ring-groups 0 --obstacle-groups "$HELDOUT_GROUPS" --obstacle-models "$HELDOUT_MODELS" $V1_FLAG $EXTRA_FLAGS \
     --group-prefix "${TAG}h_" --split heldout --seed "$SEED_HELD" --dry-run | tail -15
   exit 0
@@ -101,25 +120,25 @@ MIN_RAM_G=${MIN_RAM_G:-3}   # 사용자 앱을 못 닫는 날은 2.5 까지 낮�
 AVAIL=$(awk '/MemAvailable/ {print $2/1048576}' /proc/meminfo)
 awk -v a="$AVAIL" -v m="$MIN_RAM_G" 'BEGIN{exit !(a<m)}' && { echo "[multiobj] 가용 RAM ${AVAIL}G < ${MIN_RAM_G}G — 앱을 닫고 재시도"; exit 4; }
 
-# 실행 중 스택 정리 (패턴은 자기 자신에 매치되지 않도록 분할)
-pat='gz si';             pkill -9 -f "${pat}m"        2>/dev/null
-pat='driving_sim.launc'; pkill -f "${pat}h"           2>/dev/null
-pat='route_oracle_nod';  pkill -f "${pat}e"           2>/dev/null
-pat='episode_recorde';   pkill -f "${pat}r"           2>/dev/null
-pat='collect_corpu';     pkill -f "${pat}s.py"        2>/dev/null
-for _ in $(seq 1 10); do
-  pgrep -f "gz si[m]|route_oracle_nod[e]|episode_recorde[r]" >/dev/null || break
-  sleep 1
-done
+# 실행 중 스택 정리 — 같은 파티션/도메인만 (2026-10-03: 다른 세션의 도메인 32 gz 를 죽이지 않게)
+bash "$WS/tools/kill_partition_stack.sh" -15
+sleep 2
+bash "$WS/tools/kill_partition_stack.sh" -9
 ros2 daemon stop >/dev/null 2>&1
 sleep 3
-rm -rf ~/.gz/sim/log
-rm -f /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* /dev/shm/fastdds_* /dev/shm/sem.fastdds_* 2>/dev/null
+# 다른 gz 가 없을 때만 공유 로그·DDS 공유메모리 정리 (쓰는 중인 세그먼트를 지우면 그 스택이 끊김)
+if ! pgrep -f "gz si[m]" >/dev/null; then
+  rm -rf ~/.gz/sim/log
+  rm -f /dev/shm/fastrtps_* /dev/shm/sem.fastrtps_* /dev/shm/fastdds_* /dev/shm/sem.fastdds_* 2>/dev/null
+else
+  echo "[multiobj] 다른 gz 실행 중 — 공유 로그·shm 정리 생략"
+fi
 
 echo "[multiobj] 시뮬 기동 (clock 100 Hz)..."
 setsid nohup ros2 launch simulation_pkg driving_sim.launch.py \
   use_camera:=true use_perception_pipeline:=false use_driver:=false \
   use_policy:=false use_debug_visualizers:=false use_vla_camera:=false \
+  use_gazebo_gui:=${GZ_GUI:-true} \
   clock_hz:=100.0 \
   > "$OUT/sim.log" 2>&1 < /dev/null &
 for _ in $(seq 1 24); do
@@ -198,21 +217,22 @@ run_batch() {  # $1=groups $2=prefix $3=split $4=seed $5=pack_dir $6=fleet
     -p out_dir:="$DATA" -p use_sim_time:=true \
     > "$OUT/recorder_$2.log" 2>&1 < /dev/null &
   sleep 5
-  echo "[multiobj] 수집: $2 ${1}그룹 split=$3 fleet=$6 ($(date +%H:%M))..."
+  echo "[multiobj] 수집: $2 ${1}그룹 (다장애물 ${MULTI_GROUPS}바퀴) split=$3 fleet=$6 ($(date +%H:%M))..."
   python3 $COLLECT \
-    --driver oracle --groups 0 --speed-groups 0 --floor-groups 0 \
+    --driver oracle --groups 0 --speed-groups 0 --floor-groups ${FLOOR_GROUPS:-0} \
     --ring-groups 0 --obstacle-groups "$1" --obstacle-models "$6" $V1_FLAG \
     --ob-accel "$OB_ACCEL" --ob-stop-margin "$OB_STOP_MARGIN" $EXTRA_FLAGS \
     --group-prefix "$2" --split "$3" --seed "$4" --out-dir "$DATA" \
     > "$OUT/collect_$2.log" 2>&1
   RC=$?
   tail -6 "$OUT/collect_$2.log"
-  pat='episode_recorde'; pkill -f "${pat}r" 2>/dev/null
+  bash "$WS/tools/kill_partition_stack.sh" -15 'episode_recorde[r]' >/dev/null
   for _ in $(seq 1 8); do pgrep -f "episode_recorde[r]" >/dev/null || break; sleep 1; done
   SESS=$(ls -dt "$DATA"/session_*/ep_0000 2>/dev/null | head -1 | xargs dirname)
   if [ -n "$SESS" ] && [ "$RC" -eq 0 ]; then
     echo "[multiobj] finalize: $SESS -> $5"
-    PACK_OUT=$5 RESAMPLE_EXTRA="--max-interp-err-m 0.06" \
+    # 라벨 위치 = ego PosePublisher(cli) 스트림 (2026-10-02, finalize_corpus.sh 주석). 옛 방식은 POSE_SOURCE=tf
+    PACK_OUT=$5 RESAMPLE_EXTRA="--max-interp-err-m 0.06" POSE_SOURCE=${POSE_SOURCE:-cli} \
       bash $WS/src/sant_vla_pkg/scripts/finalize_corpus.sh "$SESS" \
       > "$OUT/finalize_$2.log" 2>&1 \
       && echo "[multiobj] finalize OK" || echo "[multiobj] finalize FAIL — $OUT/finalize_$2.log"
@@ -232,11 +252,9 @@ if [ "$HELDOUT_GROUPS" -gt 0 ]; then
   remove_fleet "$HELDOUT_MODELS"
 fi
 
-pat='gz si';             pkill -9 -f "${pat}m"        2>/dev/null
-pat='driving_sim.launc'; pkill -f "${pat}h"           2>/dev/null
-pat='route_oracle_nod';  pkill -f "${pat}e"           2>/dev/null
-pat='episode_recorde';   pkill -f "${pat}r"           2>/dev/null
+bash "$WS/tools/kill_partition_stack.sh" -15 >/dev/null; sleep 2
+bash "$WS/tools/kill_partition_stack.sh" -9 >/dev/null
 sleep 3
-rm -rf ~/.gz/sim/log
+pgrep -f "gz si[m]" >/dev/null || rm -rf ~/.gz/sim/log
 bash $WS/tools/cleanup_artifacts.sh | tail -3
 echo "[multiobj] DONE ($(date +%H:%M)) — train=$DATA/packed_${TAG} heldout=$DATA/packed_${TAG}_heldout"

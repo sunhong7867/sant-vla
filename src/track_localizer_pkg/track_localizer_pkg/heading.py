@@ -23,7 +23,7 @@ sigma-point spread is small and the update is cheap.
 Measured accuracy, and the limit callers must respect
 -----------------------------------------------------
 Against synthetic tracks at 10 Hz with 6 cm centroid noise (see the version note
-in docs/ver for the sweep):
+in docs/experiments/log for the sweep):
 
 ===========================  ==================
 condition                    heading RMS

@@ -1,6 +1,6 @@
 # server/ — 학습 서버(~/sunhong/nav-vla) 스냅샷
 
-랩 서버의 학습용 코드·스크립트 사본. 서버 목록·접속은 docs/servers.md 참조.
+랩 서버의 학습용 코드·스크립트 사본. 서버 목록·접속은 docs/guides/servers.md 참조.
 
 ## 여기 있는 것
 - `code/` — 서버에서 실행되는 것들: `train_smolvla.sh`(학습 진입점, GPU/배치/저장주기 env),

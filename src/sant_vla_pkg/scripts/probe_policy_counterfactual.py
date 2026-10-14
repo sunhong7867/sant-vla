@@ -62,7 +62,7 @@ from sant_vla_pkg.gz_reset import SimResetter, pause_sim  # noqa: E402
 # heading-along-connector (heading + 90 deg, YAW_OFFSET convention).
 DEFAULT_START = (-12.30, -22.16, 1.112)
 
-# Oracle reference numbers, for the printout only (docs/ver/20260729_2030).
+# Oracle reference numbers, for the printout only (docs/experiments/log/20260729_2030).
 ORACLE_D_SHAPE = 6.407
 OLD_STACK_D_SHAPE = 0.063
 

@@ -1732,7 +1732,15 @@
       <self_collide>0</self_collide>
       <enable_wind>0</enable_wind>
       <kinematic>0</kinematic>
-      <pose>8e-06 2.60856 0.829644 0 -0 0</pose>
+      <!-- 2026-10-12: 뒷범퍼 뒤 0.645 m(차체 밖, 코끝까지 4.51 m)에 떠 있던 것을
+           앞범퍼로 옮겼다. 전방 거리값에 4.51 m 오프셋이 붙고 차체가 전방 섹터를
+           가려서 정차 게이트·통로 여유 계측에 쓸 수 없었다.
+           y=-1.80: 충돌 실린더(r 0.0508)가 -1.851~-1.749 로 앞범퍼 앞면
+             -1.904 안쪽에 머문다 → EGO_COLLIDE_LEN=1.904 불변.
+           z=0.70: 앞범퍼 위끝 0.631 을 넘어 전방 레이가 가려지지 않고,
+             go_cone_* (높이 1.3 m)·차량 모두 맞는다.
+           yaw 는 그대로(0) 이므로 /scan 인덱스-각도 매핑은 바뀌지 않는다. -->
+      <pose>0 -1.80 0.70 0 -0 0</pose>
       <gravity>1</gravity>
 
       <visual name='lidar_visual'>
@@ -1851,6 +1859,28 @@
       <min_angular_velocity>-2</min_angular_velocity>
       <topic>/model/ego_vehicle/cmd_vel</topic>
       <odom_topic>/model/ego_vehicle/odometry</odom_topic>
+    </plugin>
+
+    <!-- Ego-only pose stream (2026-10-02). Every pose reader used to parse the
+         whole /world/default/dynamic_pose/info dump with its own `gz topic -e`
+         ruby process, and that topic skipped 0.3-1.4 s at a time during
+         collection (both the tf bridge and the CLI saw the same holes), which
+         rejected 77% of the boxtri corpus. This publishes just the model
+         origin (same frame as `gz model -p`) on /model/ego_vehicle/pose in sim
+         time. Obstacle copies of this model go through static_model(), which
+         strips plugins, so only the ego carries it. -->
+    <plugin
+      filename="gz-sim-pose-publisher-system"
+      name="gz::sim::systems::PosePublisher">
+      <publish_model_pose>true</publish_model_pose>
+      <publish_link_pose>false</publish_link_pose>
+      <publish_visual_pose>false</publish_visual_pose>
+      <publish_collision_pose>false</publish_collision_pose>
+      <publish_sensor_pose>false</publish_sensor_pose>
+      <publish_nested_model_pose>false</publish_nested_model_pose>
+      <use_pose_vector_msg>false</use_pose_vector_msg>
+      <static_publisher>false</static_publisher>
+      <update_frequency>50</update_frequency>
     </plugin>
 
     <!-- Both controllers subscribe to exactly the same desired angle.  The

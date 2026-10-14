@@ -1,13 +1,13 @@
 # 시뮬레이션 VLA 계획서
 
-> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](../experiments/log/README.md) 참조.
 
 > 목표: nav-vla 시뮬레이션을 **정규식 파서 + 목표를 못 보는 BC 정책**에서 **진짜 VLA**로 전환하고,
 > 그 결과를 실차로 이식한다.
 > 1차 범위: 시뮬레이션. 실차 이식은 §0.1 결정 5에 따라 본론에 포함(후속 단계).
 >
 > 작성일: 2026-07-28. 관련 문서: [vla_readiness_and_roadmap.md](vla_readiness_and_roadmap.md),
-> [ver/20260727_2311_track-localizer.md](ver/20260727_2311_track-localizer.md)
+> [ver/20260727_2311_track-localizer.md](../experiments/log/20260727_2311_track-localizer.md)
 
 ---
 
@@ -38,7 +38,7 @@
 실차 이식이 본론에 들어가면 §10-4의 경고가 **경고가 아니라 요구사항**이 된다.
 행동 라벨 `[dx, dy, dyaw]`는 GT pose 유한차분이고, 실차에서 그 pose는 Hesai가 만든다.
 
-[ver/20260727_2311_track-localizer.md](ver/20260727_2311_track-localizer.md) §3의 측정에 따르면
+[ver/20260727_2311_track-localizer.md](../experiments/log/20260727_2311_track-localizer.md) §3의 측정에 따르면
 온라인 CTRV 필터의 heading은 직선 2.8°, **코너 진입 17° 피크**다. 3 m 지평에서 17°는 **0.9 m
 라벨 오차**로, ADE 목표(0.25 m)의 3.6배다. 그대로 두면 실차 라벨이 코너에서 무의미해진다.
 

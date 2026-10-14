@@ -1,7 +1,7 @@
 # 2026-07-29 18:56 — 코퍼스 v2 완성 + CMI 기준 교체 + 학습 환경
 
 > 앞선 문서: [15:20 서빙 브릿지](20260729_1520_serving-bridge.md)
-> 계획: [sim_vla_plan.md](../sim_vla_plan.md) §5.6 GATE G2
+> 계획: [sim_vla_plan.md](../../plans/sim_vla_plan.md) §5.6 GATE G2
 
 ---
 
@@ -187,8 +187,8 @@ action chunk (30, 3)  ✓
 | `scripts/collect_corpus.py` | `--group-prefix` |
 | `scripts/verify_corpus.py` | 다중 세션, 그룹 ID 충돌 검사 |
 | `scripts/resample_episodes.py` | 격자 원점을 전 스트림 교집합 이후로 |
-| `docs/sim_vla_plan.md` | §5.6 CMI 기준 교체 + 근거 |
-| `docs/servers.md` | §2.1 작업 환경, GPU 인덱스 정정 |
+| `docs/plans/sim_vla_plan.md` | §5.6 CMI 기준 교체 + 근거 |
+| `docs/guides/servers.md` | §2.1 작업 환경, GPU 인덱스 정정 |
 
 ---
 

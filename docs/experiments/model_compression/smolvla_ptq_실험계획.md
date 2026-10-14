@@ -1,7 +1,7 @@
 # SmolVLA PTQ 실험 계획
 
 > 작성: 2026-10-07. 상태: **계획만 작성, 코드 수정·실행 전.**
-> 개념 정리: [../theory/양자화_프루닝_개념정리.md](../theory/양자화_프루닝_개념정리.md)
+> 개념 정리: [../theory/양자화_프루닝_개념정리.md](../../study/model_compression/양자화_프루닝_개념정리.md)
 
 ---
 
@@ -27,7 +27,7 @@
 | 모델 구조 | SmolVLM2-500M 백본 16층, action expert 폭 0.75, flow-matching `num_steps 10`, 청크 30 |
 | 저장 형식 | BF16, `model.safetensors` 907 MB (약 450M 파라미터) |
 | 입력 | 카메라 1장 + state 3차원 `[v, ω, δ]` + 지시 문장 |
-| 출력 | 30 × `[dx, dy, dyaw]` (ego-frame 이동량, `docs/io_contract_state_action_twist.md`) |
+| 출력 | 30 × `[dx, dy, dyaw]` (ego-frame 이동량, `docs/guides/io_contract_state_action_twist.md`) |
 | 노이즈 | `infer1()` 이 `torch.manual_seed(seed)` 로 고정 (`server/code/vla_policy_server.py:216`) → 조건끼리 같은 노이즈로 비교 가능 |
 | GPU | 1·2단계: 랩서버 RTX 3090 / 4070 Ti. 3단계: 노트북 RTX 4060 Laptop 8 GB |
 | 도구 | `torchao` 의 `quantize_()` |
@@ -153,7 +153,7 @@
 
 ## 10. 결과 기록 양식
 
-결과는 `docs/ver/<날짜>_<시각>_smolvla-ptq.md` 로 남긴다.
+결과는 `docs/experiments/log/<날짜>_<시각>_smolvla-ptq.md` 로 남긴다.
 
 | 조건 | compile | 지연 중앙값 (ms) | p95 | GPU 메모리 (GB) | 조향 MAE / 노이즈 바닥 | 언어 보존 % | 차선 중앙값 (m) | 0.70 m 초과 % |
 |---|---|---|---|---|---|---|---|---|

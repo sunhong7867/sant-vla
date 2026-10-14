@@ -1,12 +1,12 @@
 # 코드가 하는 일 / VLA가 하는 일 — 전체 스택 책임 지도
 
 작성 2026-08-28. 짝 문서: 회피의 판단-기동 분리는
-[obstacle_avoidance_design.md](obstacle_avoidance_design.md),
+[obstacle_avoidance_design.md](../experiments/avoidance/obstacle_avoidance_design.md),
 입출력 표현 3종(state/action/Twist)이 다른 이유는
 [io_contract_state_action_twist.md](io_contract_state_action_twist.md),
 "왜 SmolVLA가 해설까지 안 하나"는
 [package_roles_and_pure_vla_rationale.md](package_roles_and_pure_vla_rationale.md) §4,
-직행 위임 결정은 [ver/20260824_1138](ver/20260824_1138_direct-nav-architecture-decision.md).
+직행 위임 결정은 [ver/20260824_1138](../experiments/log/20260824_1138_direct-nav-architecture-decision.md).
 
 ## 0. 소유권 원칙 한 장
 

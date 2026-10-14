@@ -1,6 +1,6 @@
 # 패키지 구성과 "순수 VLA" 설계 근거
 
-> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 기준이며, 이 문서의 주제인 역할 분담이 그 뒤 한 번 더 갱신됐다. 2026-08-24 결정: **직행(최단거리)은 좌표 내비게이터에 위임하고, VLA(v8g)는 순항+반응형 전담** — 근거와 4중 검증은 [ver/20260824_1138_direct-nav-architecture-decision.md](ver/20260824_1138_direct-nav-architecture-decision.md) 참조.
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 기준이며, 이 문서의 주제인 역할 분담이 그 뒤 한 번 더 갱신됐다. 2026-08-24 결정: **직행(최단거리)은 좌표 내비게이터에 위임하고, VLA(v8g)는 순항+반응형 전담** — 근거와 4중 검증은 [ver/20260824_1138_direct-nav-architecture-decision.md](../experiments/log/20260824_1138_direct-nav-architecture-decision.md) 참조.
 
 작성: 2026-08-07. 데모 스택 아키텍처 질문("퍼셉션만 쓰고 나머지는 VLA가 주행하는가?",
 "욜로를 쓰면 더 잘 달리지 않는가?")에 대한 정리.
@@ -113,9 +113,9 @@ qwen2.5-VL 7B**(랩서버 3090, ollama)다. 분리 근거는 네 겹.
    좁게 유지해야 궤적 차이를 문장에 귀속할 수 있다.
 
 "한 모델이 추론문과 행동을 같이 내는" 통합은 실제 연구 방향이 맞다 —
-대규모 driving-VLA(Alpamayo류, [ver2/navvla_vs_vlaad_comparison.md](ver2/navvla_vs_vlaad_comparison.md))가
+대규모 driving-VLA(Alpamayo류, [ver2/navvla_vs_vlaad_comparison.md](../experiments/log_thor/navvla_vs_vlaad_comparison.md))가
 그 길이고, 행동·근거가 짝지어진 데이터와 훨씬 큰 모델이 전제다. 우리
 스케일에서는 "작고 빠른 전문가(주행) + 크고 느린 해설가(장면 이해)"가
 같은 예산에서 두 품질을 모두 얻는 구성이며, 최단거리=navigator·회피
 판단=감독 코드와 같은 서빙 계층 합성 원리다
-([obstacle_avoidance_design.md](obstacle_avoidance_design.md) §0 참조).
+([obstacle_avoidance_design.md](../experiments/avoidance/obstacle_avoidance_design.md) §0 참조).

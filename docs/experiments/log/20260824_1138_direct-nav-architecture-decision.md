@@ -62,7 +62,7 @@ bearing이 옆·뒤를 가리키는 구간이 대부분) → "bearing을 향해 
 ```bash
 # 1. 존 좌표 파일 동일성 (로컬 vs 학습 서버 사본)
 md5sum src/nav_vla_pkg/config/track_paths.json
-# 서버 쪽: ssh <학습서버> md5sum ~/nav-vla/code/track_paths.json  (서버 목록: docs/servers.md)
+# 서버 쪽: ssh <학습서버> md5sum ~/nav-vla/code/track_paths.json  (서버 목록: docs/guides/servers.md)
 
 # 2. 공식 대조 — 학습 라벨 vs 서빙 계산이 같은 구조·오프셋인지 눈으로 확인
 grep -n 'atan2' src/nav_vla_pkg/scripts/to_lerobot.py            # 라벨: b = atan2(g-p) - heading (L183 부근)

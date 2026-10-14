@@ -20,6 +20,8 @@ the action path is untouched by the subclass.
 """
 
 import argparse
+import random
+import re
 import json
 import math
 import os
@@ -57,6 +59,19 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", required=True)
     ap.add_argument("--base-checkpoint", required=True)
+    ap.add_argument("--base-config", default="",
+                    help="2026-10-08: take the policy CONFIG from here instead of "
+                         "from --base-checkpoint. Needed to start from stock "
+                         "lerobot/smolvla_base, whose schema is state[6]/action[6]/"
+                         "chunk 50 while ours is state[4]/action[3]/chunk 30 plus the "
+                         "two empty camera keys. Tensors whose shape disagrees with "
+                         "the config (state_proj, action_in_proj, action_out_proj) are "
+                         "dropped from the state dict and keep their fresh init — "
+                         "that is the point of the A/B: every goto run so far was "
+                         "fine-tuned on the lane-driving model r26, whose off-lane "
+                         "prior is to hunt for the track (64%% of closed-loop trials "
+                         "went right regardless of the command, and 10k steps of "
+                         "100%% goto data moved it only 81%% -> 78%%).")
     ap.add_argument("--out", required=True)
     ap.add_argument("--steps", type=int, default=20000)
     ap.add_argument("--batch-size", type=int, default=8)
@@ -101,7 +116,7 @@ def main():
                     "(2026-09-14+). 0.0 = bank v10's language win while "
                     "the action expert keeps the proven v3y-only diet "
                     "(the v10-action oscillation is an open problem, "
-                    "docs/ver/20260915_1006).")
+                    "docs/experiments/log/20260915_1006).")
     ap.add_argument("--action-crossing-weight", type=float, default=1.0,
                     help="r20: action-loss multiplier for v10 frames "
                     "BEFORE the episode first reaches its commanded lane "
@@ -131,6 +146,78 @@ def main():
                     "keeps those frames narrating at full CE weight while "
                     "their swerve/stop trajectories barely train the "
                     "action expert. Requires --boost-target language.")
+    ap.add_argument("--contrast-twin-boost", action="store_true",
+                    help="r36 (2026-09-29): give each v0 (empty lane) episode "
+                    "the same boost as its v1 (obstacle) sibling at the same "
+                    "frame index (cf_group_id pairs from nav_vla_index.jsonl; "
+                    "same start + speed, so frames align to ~1.4 m before the "
+                    "swerve). Without it the boosted 'ahead' frames all show "
+                    "the obstacle and the fixed spot alone predicts a swerve")
+    ap.add_argument("--contrast-twin-variants", default="v0",
+                    help="2026-10-02: which siblings of a v1 episode get its "
+                    "boost under --contrast-twin-boost (comma list). 'v0,v2' "
+                    "also weights the adjacent-lane keep-straight twin of the "
+                    "v1+v2 pair corpus (packed_boxpair) like its swerve sibling, "
+                    "so swerve and its same-start counter-example are sampled "
+                    "equally")
+    ap.add_argument("--state-dropout", type=float, default=0.0,
+                    help="r37: per-sample probability of blanking the "
+                    "--state-dropout-dims of the NORMALIZED state (0 = the "
+                    "dataset mean). Mid-swerve frames are solvable from "
+                    "steer/yaw_rate alone (2579 of 2782 swerve frames in "
+                    "packed_swerve), so the image never has to explain them")
+    ap.add_argument("--situation-prompt", action="store_true",
+                    help="r40: append the fixed situation phrase derived from "
+                    "the gold skeleton (reasoning_dataset.situation_of) to the "
+                    "task. The action expert never reads reasoning tokens, so "
+                    "this is the only path by which the narration's obstacle "
+                    "detection reaches the action. Serve with "
+                    "vla_policy_server.py --situation-from-reasoning")
+    ap.add_argument("--state-dropout-dims", default="1,2",
+                    help="state indices for --state-dropout "
+                    "(state = speed, yaw_rate, steer[, standstill_s])")
+    ap.add_argument("--goto-early-boost", type=float, default=1.0,
+                    help="2026-10-04 (r51): sampling weight for the first "
+                         "--goto-early-frames frames of goto_object episodes. "
+                         "r50 probe: swapping the target noun on the same frame "
+                         "moved the predicted path 0.02 m vs 0.55 m in the demos "
+                         "— after ~1 s the car already faces the target, so the "
+                         "image alone predicts the action and the words are only "
+                         "needed at the start. Used only when --obstacle-boost is 1.")
+    ap.add_argument("--goto-early-frames", type=int, default=20)
+    ap.add_argument("--sector-balance", action="store_true",
+                    help="2026-10-08: inverse-frequency resampling over the three "
+                         "direction sectors. Per-frame relabelling (to_lerobot "
+                         "--sector-per-frame) makes 'ahead' 63%% of frames "
+                         "(left 18%%, right 19%%) because every episode ends with "
+                         "the target centred; without this the policy's cheapest "
+                         "answer is 'go straight'. Sector is read off the task "
+                         "sentence, so it costs nothing for non-sector corpora "
+                         "(frames with no direction word keep weight 1).")
+    ap.add_argument("--blank-task", default="",
+                    help="2026-10-05: replace every task string with this "
+                         "constant — the vision-action baseline. The data "
+                         "itself carries language information (CMI debiased "
+                         "0.743 b on g1, 0.965 b on gv2b, both GATE PASS), so "
+                         "a matched pair of runs that differ ONLY in whether "
+                         "the sentence is informative is what separates a "
+                         "data problem from a learning problem.")
+    ap.add_argument("--cf-sidecar", default="",
+                    help="2026-10-05: counterfactual go-to rows (code/course/make_cf_sidecar.py); "
+                         "same frame, another object's name, the teacher's chunk toward it")
+    ap.add_argument("--cf-share", type=float, default=0.5,
+                    help="probability a frame that has counterfactual rows is swapped for one")
+    ap.add_argument("--cf-boost", type=float, default=1.0,
+                    help="sampling weight for frames that have counterfactual rows")
+    ap.add_argument("--goto-mirror", type=float, default=0.0,
+                    help="2026-10-05 (r54): probability of mirroring a goto_object "
+                         "sample left<->right — image flipped, yaw rate/steer and "
+                         "action dy/dyaw negated, 'left'/'right' (왼쪽/오른쪽) swapped "
+                         "in task and reasoning. r52 kept a +0.6..0.9 m left drift "
+                         "for EVERY sentence on the closed-loop E frames ('right' "
+                         "never crossed it; data left 278 / right 211, CCW-track "
+                         "base) — mirroring cancels the side prior by construction. "
+                         "goto only: lane words (inner/outer) do not mirror.")
     ap.add_argument("--obstacle-boost", type=float, default=1.0,
                     help="sampling weight for frames whose reasoning "
                          "mentions the parked car (r5 lesson: at natural "
@@ -149,6 +236,9 @@ def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from reasoning_vla import ReasoningDataset, ReasoningSmolVLAPolicy
     from reasoning_vla.reasoning_dataset import collate_with_text
+    from reasoning_vla.reasoning_policy import (
+        OBS_LANGUAGE_ATTENTION_MASK, OBS_LANGUAGE_TOKENS,
+        REASONING_LANG_MASK, REASONING_LANG_TOKENS)
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
     from lerobot.policies.factory import make_pre_post_processors
     from lerobot.configs.policies import PreTrainedConfig
@@ -156,14 +246,27 @@ def main():
 
     # PreTrainedConfig dispatches on the "type" field in config.json;
     # calling SmolVLAConfig.from_pretrained directly chokes on it (draccus)
-    cfg = PreTrainedConfig.from_pretrained(args.base_checkpoint)
+    cfg = PreTrainedConfig.from_pretrained(args.base_config or args.base_checkpoint)
     cfg.freeze_vision_encoder = True   # already adapted in the base run
     cfg.device = "cuda"
     policy = ReasoningSmolVLAPolicy(cfg, ce_weight=args.ce_weight)
     sd = load_file(os.path.join(args.base_checkpoint, "model.safetensors"))
+    # Drop tensors the config disagrees with, so a stock base can seed the VLM
+    # and expert while the schema-bound projections start fresh. Silent on the
+    # normal path (shapes all match), loud when it fires.
+    own = policy.state_dict()
+    dropped = [k for k, v in sd.items()
+               if k in own and tuple(own[k].shape) != tuple(v.shape)]
+    for k in dropped:
+        sd.pop(k)
+    if dropped:
+        print(f"shape mismatch -> fresh init for {len(dropped)} tensor(s): "
+              + ", ".join(dropped[:8]) + (" ..." if len(dropped) > 8 else ""))
     missing, unexpected = policy.load_state_dict(sd, strict=False)
-    # only the new head may be missing; anything else is a real mismatch
-    bad = [k for k in missing if not k.startswith("reasoning_head")]
+    # only the new head and the dropped projections may be missing
+    allow = set(dropped)
+    bad = [k for k in missing
+           if not k.startswith("reasoning_head") and k not in allow]
     assert not bad and not unexpected, (bad, unexpected)
     # head init from the checkpoint's lm_head (the ctor used base weights)
     if "reasoning_head.weight" not in sd:
@@ -186,9 +289,52 @@ def main():
                         delta_timestamps=delta_timestamps,
                         video_backend="pyav")
     sidecar = os.path.join(args.dataset, "reasoning_labels.jsonl")
-    rds = ReasoningDataset(ds, sidecar, seed=args.seed)
+    rds = ReasoningDataset(ds, sidecar, seed=args.seed,
+                           blank_task=args.blank_task or None)
+    if args.blank_task:
+        print(f"vision-action baseline: every task replaced by {args.blank_task!r}")
+    if args.cf_sidecar:
+        n_cf, n_fr = rds.load_cf(args.cf_sidecar, args.cf_share)
+        print(f"counterfactual rows {n_cf} on {n_fr} frames, swap share {args.cf_share}")
     print(f"dataset: {len(rds)} frames, sidecar {rds.n_rows} segment rows")
     sampler = None
+    if args.sector_balance:
+        import numpy as _np
+
+        def _sector_of(txt):
+            # The lane corpus says "Cruise in the left lane" / "the rightmost
+            # lane", so a bare left/right test counts 40 of g5's 130 task
+            # strings as direction commands and mis-weights them (2026-10-08).
+            # Sector templates never contain "lane"; lane/speed sentences always
+            # do — checked against all 130 tasks in g5: 40 with lane, 24 without,
+            # and those 24 are exactly goto_layout.SECTOR_TEMPLATES.
+            if "lane" in txt or "차선" in txt:
+                return None
+            if "left" in txt or "왼쪽" in txt:
+                return "left"
+            if "right" in txt or "오른쪽" in txt:
+                return "right"
+            if ("ahead" in txt or "정면" in txt or "곧장" in txt
+                    or "front of you" in txt or "앞에 있는" in txt):
+                return "ahead"
+            return None
+
+        tdf = ds.meta.tasks
+        idx2txt = {int(v): str(k) for k, v in zip(tdf.index, tdf["task_index"])}
+        ti = _np.asarray(ds.hf_dataset["task_index"]).astype(int)
+        secs = _np.array([_sector_of(idx2txt.get(int(i), "")) or "" for i in ti])
+        counts = {nm: int((secs == nm).sum()) for nm in ("left", "ahead", "right")}
+        n_lab = sum(counts.values())
+        w = _np.ones(len(secs), dtype=_np.float64)
+        if n_lab:
+            tgt = n_lab / 3.0
+            for nm, c in counts.items():
+                if c:
+                    w[secs == nm] = tgt / c
+        print(f"sector balance: {counts} of {len(secs)} frames -> weights "
+              + ", ".join(f"{nm} x{(n_lab / 3.0 / c):.2f}" for nm, c in counts.items() if c))
+        sampler = torch.utils.data.WeightedRandomSampler(
+            torch.from_numpy(w), num_samples=len(rds), replacement=True)
     if args.obstacle_boost > 1.0:
         # frame-level weights from the sidecar: any frame covered by a
         # segment whose variants mention the car gets the boost
@@ -229,6 +375,54 @@ def main():
         print(f"GO-transition frames boosted x{args.obstacle_boost * 6:.0f}:"
               f" {n_go}; braking-ramp frames "
               f"x{args.obstacle_boost * 4:.0f}: {n_ramp}")
+        if args.contrast_twin_boost:
+            groups = {}
+            try:
+                with open(os.path.join(args.dataset,
+                                       "nav_vla_index.jsonl")) as f:
+                    for line in f:
+                        row = json.loads(line)
+                        if row.get("cf_group_id") and row.get("cf_variant_id"):
+                            groups.setdefault(row["cf_group_id"], {})[
+                                row["cf_variant_id"]] = \
+                                row["lerobot_episode_index"]
+            except OSError:
+                print("WARNING: no nav_vla_index.jsonl — no twin boost")
+            by_ep = {}
+            for i in range(len(ds)):
+                by_ep.setdefault(int(epi[i]), {})[int(fri[i])] = i
+            n_twin = n_pairs = 0
+            twin_vs = [v.strip() for v in args.contrast_twin_variants.split(",") if v.strip()]
+            for vs in groups.values():
+                e1 = vs.get("v1")
+                if e1 is None:
+                    continue
+                for tv in twin_vs:
+                    e0 = vs.get(tv)
+                    if e0 is None:
+                        continue
+                    n_pairs += 1
+                    f0map = by_ep.get(e0, {})
+                    for fidx, i1 in by_ep.get(e1, {}).items():
+                        i0 = f0map.get(fidx)
+                        if i0 is not None and w[i1] > 1.0 and w[i0] == 1.0:
+                            w[i0] = w[i1]
+                            n_twin += 1
+            print(f"contrast twin boost: {n_twin} {'/'.join(twin_vs)} frames matched to "
+                  f"their v1 sibling's weight ({n_pairs} twin/v1 pairs)")
+            # sampled share per variant after all weighting (2026-10-02: the
+            # r43 corpus looked "balanced" but v1 got ~20 % of samples)
+            ep_var = {}
+            for vs in groups.values():
+                for v, e in vs.items():
+                    ep_var[e] = v
+            tot = float(w.sum())
+            share = {}
+            for i in range(len(ds)):
+                v = ep_var.get(int(epi[i]), "other")
+                share[v] = share.get(v, 0.0) + float(w[i])
+            print("sampled share by variant: " + ", ".join(
+                f"{v} {100 * x / tot:.1f}%" for v, x in sorted(share.items())))
         n_boost = int((w > 1.0).sum())
         print(f"obstacle boost x{args.obstacle_boost}: "
               f"{n_boost}/{len(ds)} frames (target={args.boost_target})")
@@ -305,7 +499,7 @@ def main():
                     # ABSOLUTE, not compounded with the 1/w resample
                     # compensation: those frames carry w = 4..24 from the
                     # obstacle boost, so "x4" on top of 1/w netted 0.17..1.0
-                    # (r29 used the multiplier form; see docs/ver/20260922_2113).
+                    # (r29 used the multiplier form; see docs/experiments/avoidance/20260922_2113).
                     aw[i] = args.action_multiobj_weight
                     n_multiobj += 1
                     continue
@@ -398,6 +592,55 @@ def main():
         else:
             sampler = torch.utils.data.WeightedRandomSampler(
                 torch.from_numpy(w), num_samples=len(ds), replacement=True)
+    if args.goto_early_boost > 1.0 and sampler is None:
+        import numpy as np
+        goto_eps = set()
+        with open(os.path.join(args.dataset, "nav_vla_index.jsonl")) as f:
+            for line in f:
+                row = json.loads(line)
+                if row.get("intent_id") == "goto_object":
+                    goto_eps.add(row["lerobot_episode_index"])
+        epi = ds.hf_dataset["episode_index"]
+        fri = ds.hf_dataset["frame_index"]
+        w = np.ones(len(ds), dtype=np.float64)
+        for i in range(len(ds)):
+            if int(epi[i]) in goto_eps and int(fri[i]) < args.goto_early_frames:
+                w[i] = args.goto_early_boost
+        n_b = int((w > 1.0).sum())
+        print(f"goto early boost x{args.goto_early_boost}: {n_b} frames "
+              f"(first {args.goto_early_frames} of {len(goto_eps)} goto episodes), "
+              f"sampled share {100 * float(w[w > 1.0].sum()) / float(w.sum()):.1f}%")
+        sampler = torch.utils.data.WeightedRandomSampler(
+            torch.from_numpy(w), num_samples=len(ds), replacement=True)
+    if args.cf_sidecar and args.cf_boost > 1.0 and sampler is None:
+        import numpy as np
+        epi = ds.hf_dataset["episode_index"]
+        fri = ds.hf_dataset["frame_index"]
+        w = np.ones(len(ds), dtype=np.float64)
+        for i in range(len(ds)):
+            if (int(epi[i]), int(fri[i])) in rds.cf:
+                w[i] = args.cf_boost
+        n_b = int((w > 1.0).sum())
+        print(f"cf boost x{args.cf_boost}: {n_b} frames, sampled share "
+              f"{100 * float(w[w > 1.0].sum()) / float(w.sum()):.1f}% "
+              f"(x cf_share {args.cf_share} swapped)")
+        sampler = torch.utils.data.WeightedRandomSampler(
+            torch.from_numpy(w), num_samples=len(ds), replacement=True)
+    mirror_eps = set()
+    if args.goto_mirror > 0.0:
+        with open(os.path.join(args.dataset, "nav_vla_index.jsonl")) as f:
+            for line in f:
+                row = json.loads(line)
+                if row.get("intent_id") == "goto_object":
+                    mirror_eps.add(row["lerobot_episode_index"])
+        print(f"goto mirror p={args.goto_mirror} over {len(mirror_eps)} goto episodes")
+    _swap = {"left": "right", "right": "left", "Left": "Right", "Right": "Left",
+             "왼쪽": "오른쪽", "오른쪽": "왼쪽"}
+    _swap_re = re.compile(r"left|right|Left|Right|왼쪽|오른쪽")
+
+    def mirror_text(t):
+        return _swap_re.sub(lambda m: _swap[m.group(0)], t)
+
     dl = torch.utils.data.DataLoader(
         rds, batch_size=args.batch_size,
         shuffle=(sampler is None), sampler=sampler,
@@ -426,9 +669,26 @@ def main():
                 "features": {**policy.config.input_features,
                              **policy.config.output_features},
                 "norm_map": policy.config.normalization_mapping,
+            }},
+        # 2026-10-05: the UNnormalizer must use the same stats. Before this only
+        # the preprocessor was overridden and the postprocessor files were
+        # copied from the base, so serving decoded actions with an older
+        # dataset's stats (goto r50-r54: constant ~0.6 m left drift in 3 s,
+        # ~3x speed). code/fix_postproc_stats.py repairs old checkpoints.
+        "postprocessor_overrides": {
+            "unnormalizer_processor": {
+                "stats": ds.meta.stats,
+                "features": dict(policy.config.output_features),
+                "norm_map": policy.config.normalization_mapping,
             }}}
-    preproc, _ = make_pre_post_processors(policy.config,
-                                          args.base_checkpoint,
+    # The processor pipeline (not just the config) has to come from
+    # --base-config: r26's preprocessor carries
+    # rename_map {observation.images.front -> observation.images.camera1},
+    # which is how a single-camera dataset feeds a three-camera policy. Stock
+    # smolvla_base has no such rename, so s3 died at the first batch with
+    # "All image features are missing from the batch" (2026-10-08).
+    preproc, postproc = make_pre_post_processors(policy.config,
+                                          args.base_config or args.base_checkpoint,
                                           **overrides)
 
     head_params = list(policy.reasoning_head.parameters())
@@ -446,6 +706,13 @@ def main():
         p = (step - args.warmup) / max(1, args.steps - args.warmup)
         return 0.1 + 0.45 * (1 + math.cos(math.pi * p))
 
+    # snapshot the base checkpoint's extra files now: rp2 (2026-10-05) died at
+    # its first save because the base (rp1) was deleted mid-run
+    base_files = {f: open(os.path.join(args.base_checkpoint, f), "rb").read()
+                  for f in os.listdir(args.base_checkpoint)
+                  if f not in ("model.safetensors", "config.json")
+                  and os.path.isfile(os.path.join(args.base_checkpoint, f))}
+
     def save(step):
         d = os.path.join(args.out, "checkpoints", f"{step:06d}",
                          "pretrained_model")
@@ -456,21 +723,26 @@ def main():
         # copying the base checkpoint's files shipped 3-dim stats with the
         # 4-dim r8 model, 2026-09-08); base files only fill anything the
         # pipeline save does not produce.
-        for f in os.listdir(args.base_checkpoint):
-            if f not in ("model.safetensors", "config.json") and \
-                    os.path.isfile(os.path.join(args.base_checkpoint, f)):
-                shutil.copy2(os.path.join(args.base_checkpoint, f),
-                             os.path.join(d, f))
+        for f, b in base_files.items():
+            with open(os.path.join(d, f), "wb") as fh:
+                fh.write(b)
         try:
             preproc.save_pretrained(d)
+            postproc.save_pretrained(d)
         except Exception as e:                              # noqa: BLE001
-            print(f"preprocessor save failed ({e}) — base copies remain")
+            print(f"processor save failed ({e}) — base copies remain")
         link = os.path.join(args.out, "checkpoints", "last")
         if os.path.islink(link):
             os.remove(link)
         os.symlink(f"{step:06d}", link)
         print(f"saved {d}")
 
+    drop_dims = [int(d) for d in args.state_dropout_dims.split(",") if d]
+    if args.state_dropout > 0.0:
+        print(f"state dropout p={args.state_dropout} on normalized dims "
+              f"{drop_dims}")
+    if args.situation_prompt:
+        print("situation prompt: task += situation_of(skeleton)")
     step, t0, t_log = 0, time.time(), time.time()
     it = iter(dl)
     sample_batch = None
@@ -481,12 +753,55 @@ def main():
             it = iter(dl)
             batch = next(it)
         reasoning = batch.pop("reasoning")
+        situation = batch.pop("situation", None)
         ce_weight = batch.pop("reasoning_weight", None)
         act_weight = batch.pop("action_weight", None)
+        if mirror_eps:
+            flip = [int(e) in mirror_eps and random.random() < args.goto_mirror
+                    for e in batch["episode_index"]]
+            if any(flip):
+                fi = torch.tensor(flip)
+                for k in list(batch):
+                    if k.startswith("observation.images."):
+                        batch[k] = batch[k].clone()
+                        batch[k][fi] = batch[k][fi].flip(-1)
+                st = batch["observation.state"].clone()
+                st[fi, 1:3] = -st[fi, 1:3]          # yaw rate, steer
+                batch["observation.state"] = st
+                ac = batch["action"].clone()
+                ac[fi, ..., 1:3] = -ac[fi, ..., 1:3]   # dy, dyaw
+                batch["action"] = ac
+                batch["task"] = [mirror_text(t) if f else t for t, f in zip(batch["task"], flip)]
+                reasoning = [mirror_text(t) if f else t for t, f in zip(reasoning, flip)]
+                if situation is not None:
+                    situation = [mirror_text(t) if f else t for t, f in zip(situation, flip)]
+        raw_lang = None
+        if args.situation_prompt and situation is not None:
+            # the reasoning pass must see the RAW task (see
+            # reasoning_policy.REASONING_LANG_TOKENS); tokenize it separately
+            # clone: never let a second preproc pass touch the tensors the
+            # real (action) pass normalizes below
+            raw = preproc({k: (v.clone() if torch.is_tensor(v) else
+                               list(v) if isinstance(v, list) else v)
+                           for k, v in batch.items()})
+            raw_lang = (raw[OBS_LANGUAGE_TOKENS],
+                        raw[OBS_LANGUAGE_ATTENTION_MASK])
+            batch["task"] = [f"{t} {sit}" for t, sit in
+                             zip(batch["task"], situation)]
         batch = preproc(batch)
+        if raw_lang is not None:
+            batch[REASONING_LANG_TOKENS], batch[REASONING_LANG_MASK] = raw_lang
         batch = {k: (v.to(device, non_blocking=True)
                      if torch.is_tensor(v) else v)
                  for k, v in batch.items()}
+        if args.state_dropout > 0.0:
+            st = batch["observation.state"]
+            drop = torch.rand(st.shape[0], device=st.device) \
+                < args.state_dropout
+            st = st.clone()
+            for d in drop_dims:
+                st[drop, d] = 0.0
+            batch["observation.state"] = st
         batch["reasoning"] = reasoning
         if ce_weight is not None:
             batch["reasoning_weight"] = ce_weight.to(device).float()

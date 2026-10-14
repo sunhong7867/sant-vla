@@ -40,6 +40,7 @@ Usage::
 """
 
 import argparse
+import re
 import io
 import sys
 import time
@@ -124,6 +125,24 @@ def main():
     p.add_argument("--chunk-len", type=int, default=30)
     p.add_argument("--compile", action="store_true")
     p.add_argument("--warmup", type=int, default=8)
+    # 2026-10-04 (goto r52): offline the positional words shift the chunk the
+    # right way (34/42) but only 0.31x the demo spread, and closed loop the
+    # scene alone decided the object. Guidance: chunk = null + w*(cond - null),
+    # both passes with the same noise seed, null = a side-free sentence.
+    # Applied only to tasks matching --guide-match (driving tasks untouched).
+    p.add_argument("--guide", type=float, default=1.0)
+    p.add_argument("--guide-null", default="Go to the object.")
+    # 2026-10-08: the old pattern matched only 9 of the 24 SEC templates
+    # (goto_layout.SECTOR_TEMPLATES), so a POLICY_GUIDE=3 run silently served
+    # 62% of its trials at w=1 and looked identical to w=1 — the experiment did
+    # not happen. This pattern matches 24/24 with 0 false positives on the lane
+    # and speed driving sentences and on the 16 name-based goto templates
+    # (checked against both template tables).
+    p.add_argument("--guide-match", default=(
+        r"(left|right|ahead|straight|directly)[^.]*\b(object|one)\b"
+        r"|\b(object|one)\b[^.]*(left|right|ahead|straight)"
+        r"|(왼쪽|오른쪽|정면|앞|곧장)[^.]*(물체|것)"
+        r"|(왼쪽|오른쪽)으로 가서|곧장 가서 그 앞에|\bone in front of you\b"))
     p.add_argument("--camera-key", default="observation.images.front")
     p.add_argument("--reasoning-every", type=int, default=0, metavar="N",
                    help="decode reasoning text on a side thread every Nth "
@@ -131,7 +150,21 @@ def main():
     p.add_argument("--reasoning-log", default="",
                    help="jsonl file to append {req, task, reasoning} rows "
                         "(for probes)")
+    p.add_argument("--situation-from-reasoning", action="store_true",
+                   help="r40+: map the decoded reasoning to a fixed situation "
+                        "phrase (reasoning_dataset.situation_of) and append it "
+                        "to the ACTION task. Needs a checkpoint trained with "
+                        "train_reasoning.py --situation-prompt. Implies "
+                        "--reasoning-every 1 unless set")
+    p.add_argument("--situation-tokens", type=int, default=12,
+                   help="decode length for the situation decode (the phase is "
+                        "readable from the first few tokens; 60 took 1-2 s)")
+    p.add_argument("--situation-hold-s", type=float, default=3.0,
+                   help="keep a non-clear phase this long after its last "
+                        "detection (per-frame recall ~45%% at 10-14 m, r38)")
     args = p.parse_args()
+    if args.situation_from_reasoning and args.reasoning_every <= 0:
+        args.reasoning_every = 1
 
     if not args.checkpoint and not args.random_init:
         print("give --checkpoint, or --random-init to test the path without one",
@@ -177,7 +210,19 @@ def main():
     if args.compile:
         policy = torch.compile(policy, mode="reduce-overhead")
 
+    guide_re = re.compile(args.guide_match)
+
     def infer(jpeg, state, task, seed):
+        cond = infer1(jpeg, state, task, seed)
+        if args.guide == 1.0 or task == args.guide_null or not guide_re.search(task):
+            return cond
+        # lane sentences get the lane null (add_null_goto.py trains both)
+        null_task = ("Follow the lane to the object." if re.search(r"lane|차선", task)
+                     else args.guide_null)
+        null = infer1(jpeg, state, null_task, seed)
+        return null + args.guide * (cond - null)
+
+    def infer1(jpeg, state, task, seed):
         torch.manual_seed(int(seed))
         img = np.asarray(Image.open(io.BytesIO(jpeg)).convert("RGB"))
         # CHW float in [0,1] with a batch dimension, matching what
@@ -255,6 +300,25 @@ def main():
     # forward, so the action pass waits at most one decode step (~30 ms).
     reasoning = {"text": "", "req": -1}
     r_slot = []
+    # situation state: last non-clear phrase and when it was last detected
+    situation = {"phrase": "", "t_last": -1e9}
+    if args.situation_from_reasoning:
+        if args.reasoning_every <= 0:   # checkpoint had no reasoning head
+            print("--situation-from-reasoning needs a reasoning head — off",
+                  file=sys.stderr)
+            args.situation_from_reasoning = False
+        else:
+            from reasoning_vla.reasoning_dataset import (
+                SITUATION_CLEAR, situation_of)
+            situation["phrase"] = SITUATION_CLEAR
+            print(f"situation prompt ON: decode {args.situation_tokens} "
+                  f"tokens, hold {args.situation_hold_s:.1f} s")
+
+    def current_situation():
+        if time.monotonic() - situation["t_last"] <= args.situation_hold_s:
+            return situation["phrase"]
+        return SITUATION_CLEAR
+
     if args.reasoning_every > 0:
         import json as _json
         import threading
@@ -278,14 +342,23 @@ def main():
                          "task": [task]}
                     b = preproc(b)
                     with torch.inference_mode():
-                        text = policy.generate_reasoning(b)[0]
+                        text = policy.generate_reasoning(
+                            b, max_new_tokens=(args.situation_tokens
+                                               if args.situation_from_reasoning
+                                               else 60))[0]
                     reasoning["text"], reasoning["req"] = text, rid
+                    row = {"req": rid, "t": round(time.time(), 2),
+                           "task": task, "reasoning": text}
+                    if args.situation_from_reasoning:
+                        ph = situation_of(text)
+                        if ph != SITUATION_CLEAR:
+                            situation["phrase"] = ph
+                            situation["t_last"] = time.monotonic()
+                        row["situation"] = current_situation()
                     if args.reasoning_log:
                         with open(args.reasoning_log, "a") as f:
                             f.write(_json.dumps(
-                                {"req": rid, "task": task,
-                                 "reasoning": text},
-                                ensure_ascii=False) + "\n")
+                                row, ensure_ascii=False) + "\n")
                 except Exception as e:   # never take the server down
                     print(f"reasoning decode failed: {e}", file=sys.stderr)
 
@@ -294,6 +367,7 @@ def main():
     ctx = zmq.Context.instance()
     sock = ctx.socket(zmq.REP)
     sock.bind(args.endpoint)
+    print(f"guide w={args.guide} null={args.guide_null!r}", flush=True)
     print(f"serving on {args.endpoint}\nCtrl-C to stop\n")
 
     served, t_start, rlat = 0, time.monotonic(), []
@@ -301,8 +375,13 @@ def main():
         while True:
             req = msgpack.unpackb(sock.recv(), raw=False)
             t0 = time.monotonic()
+            act_task = req.get("task", "")
+            if args.situation_from_reasoning and act_task:
+                # the reasoning worker keeps reading the RAW task (it was
+                # trained on it); only the action pass gets the phrase
+                act_task = f"{act_task} {current_situation()}"
             a = infer(req["jpeg"], req.get("state", zero_state),
-                      req.get("task", ""), req.get("seed", 0))
+                      act_task, req.get("seed", 0))
             rlat.append((time.monotonic() - t0) * 1000.0)
             rep = {"actions": [[float(x) for x in row] for row in a]}
             if args.reasoning_every > 0:
@@ -315,12 +394,14 @@ def main():
                 if reasoning["req"] >= 0:
                     rep["reasoning"] = reasoning["text"]
                     rep["reasoning_req"] = reasoning["req"]
+                if args.situation_from_reasoning:
+                    rep["situation"] = current_situation()
             sock.send(msgpack.packb(rep, use_bin_type=True))
             served += 1
             if served % 20 == 0:
                 w = rlat[-20:]
                 print(f"served {served}  lat {sum(w) / len(w):.1f} ms  "
-                      f"task={req.get('task', '')[:48]!r}")
+                      f"task={act_task[:72]!r}")
     except KeyboardInterrupt:
         if rlat:
             rl = sorted(rlat)

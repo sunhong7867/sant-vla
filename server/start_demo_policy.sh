@@ -4,6 +4,10 @@ set -euo pipefail
 cd "$HOME/sunhong/nav-vla"
 CKPT=$1
 REASONING_EVERY=${2:-4}
+SITUATION=${3:-0}
+GPU=${5:-0}       # 0 = 4070 Ti, 1 = 3090 (shared with ollama); 1 when a training run holds GPU0 (2026-10-09)
+GUIDE=${4:-1.0}   # goto guidance weight (vla_policy_server --guide), 2026-10-04   # 1 = --situation-from-reasoning (r40+ checkpoints)
+SIT_FLAG=(); [ "$SITUATION" = 1 ] && SIT_FLAG=(--situation-from-reasoning --reasoning-log logs/situation_serve.jsonl)
 test -f "$CKPT/model.safetensors" || { echo "모델 파일 없음: $CKPT/model.safetensors"; exit 2; }
 test -f "$CKPT/config.json" || { echo "모델 설정 없음: $CKPT/config.json"; exit 2; }
 mkdir -p logs
@@ -17,9 +21,9 @@ if [ -f "$PID_FILE" ]; then
     for _ in $(seq 1 20); do kill -0 "$OLD_PID" 2>/dev/null || break; sleep 0.2; done
   fi
 fi
-setsid nohup env CUDA_VISIBLE_DEVICES=0 ./venv/bin/python -u code/vla_policy_server.py \
+setsid nohup env CUDA_VISIBLE_DEVICES="$GPU" ./venv/bin/python -u code/vla_policy_server.py \
   --checkpoint "$CKPT" --endpoint tcp://127.0.0.1:5555 --warmup 4 \
-  --reasoning-every "$REASONING_EVERY" > "$LOG" 2>&1 < /dev/null &
+  --reasoning-every "$REASONING_EVERY" --guide "$GUIDE" "${SIT_FLAG[@]}" > "$LOG" 2>&1 < /dev/null &
 POLICY_PID=$!
 echo "$POLICY_PID" > "$PID_FILE"
 for _ in $(seq 1 90); do

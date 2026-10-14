@@ -3,7 +3,7 @@
 
 This is the piece that turns the oracle into a dataset. Everything before it
 proved that a *pair* of episodes can be made to diverge on instruction alone
-(docs/ver/20260728_1906). This drives that pairing thousands of times and writes
+(docs/experiments/log/20260728_1906). This drives that pairing thousands of times and writes
 down which episodes belong to which comparison, at collection time, because that
 bookkeeping cannot be reconstructed afterwards.
 
@@ -81,6 +81,7 @@ from sant_vla_pkg.gz_pose import query_world_pose, resolve_gz_bin  # noqa: E402
 from sant_vla_pkg.gz_reset import SimResetter, set_model_pose  # noqa: E402
 from sant_vla_pkg.speed_control import raw_speed_to_mps  # noqa: E402
 from sant_vla_pkg.race_scenarios import set_signal  # noqa: E402
+from sant_vla_pkg import goto_layout  # noqa: E402
 
 # --- visual-grounded signal-stop axis -----------------------------------
 # Same start/approach, RED -> stop at the crosswalk line, GREEN -> pass. The
@@ -158,7 +159,7 @@ OB_RETURN_BEHIND_M = 6.0    # obstacle this far behind -> return to lane
 # Direct-swerve variant (2026-09-28, user decision): no brake/watch, the oracle
 # simply switches to the other lane this far ahead of the obstacle and comes
 # back OB_RETURN_BEHIND_M past it. Continuous steering only — the stop/go
-# demos of r29~r32 never reached the action expert (docs/ver/20260922_2113).
+# demos of r29~r32 never reached the action expert (docs/experiments/avoidance/20260922_2113).
 OB_SWERVE_TRIGGER_M = 8.0   # user 2026-09-28: swerve close in (8 m = 2.8 s at the fast tier vs ~3 s lane change — fast-tier v1 may trip the 2 m guard and drop). Stop branch bypassed in swerve mode
 # Lane-change reference ramp for the swerve AND the return (route_oracle
 # `lane_ramp_m`). 0 = the instant lane swap packed_swerve was collected with:
@@ -581,9 +582,13 @@ def build_plan(args, paths, bank, rng):
     fixed = getattr(args, "ob_fixed_index", None)
     if fixed is not None:
         # one obstacle spot for the whole corpus: starts 20-30 m upstream of it
+        # (--ob-start-window overrides; lane2 70 uses 20,23 so the whole
+        # approach stays on the left straight, 2026-09-29)
         n_ring = len(paths["lane1"])
-        win = [((fixed - int(30.0 / spacing)) % n_ring,
-                (fixed - int(20.0 / spacing)) % n_ring)]
+        w_near, w_far = (float(v) for v in
+                         (getattr(args, "ob_start_window", None) or "20,30").split(","))
+        win = [((fixed - int(w_far / spacing)) % n_ring,
+                (fixed - int(w_near / spacing)) % n_ring)]
         ob_sps = lane_starts(paths, getattr(args, "obstacle_groups", 0), rng,
                              args.lat_jitter, args.yaw_jitter, windows=win,
                              lanes=ob_lanes)
@@ -656,6 +661,241 @@ def build_plan(args, paths, bank, rng):
         groups.append({"cf_group_id": f"{args.group_prefix}o{gi:04d}",
                        "kind": "obstacle", "cf_axis": "obstacle", "start": sp,
                        "variants": variants})
+
+    # --- multi-obstacle run (2026-10-02, senior's recipe) -----------------
+    #
+    # One start in EITHER lane, one cruise sentence, K obstacles scattered
+    # ahead in random lanes (ours -> swerve to the other lane and back,
+    # other -> hold). Every avoidance is direction-balanced (lane1 starts
+    # swerve right) and sits in the same episode as hold-lane passes and
+    # clear stretches, so neither the track spot nor "start, then swerve
+    # left" predicts the swerve — only the obstacle in our lane does.
+    # v1 = obstacles placed, v0 = the same start/sentence on a clear track.
+    m_sps = lane_starts(paths, getattr(args, "multi_groups", 0), rng,
+                        args.lat_jitter, args.yaw_jitter, lanes=ob_lanes)
+    gap_lo, gap_hi = (float(v) for v in args.multi_gap.split(","))
+    for gi, sp in enumerate(m_sps):
+        lane = sp["lane"]
+        other = "lane2" if lane == "lane1" else "lane1"
+        level = speeds[gi % len(speeds)]
+        n_pts = len(paths[lane])
+        k = min(args.multi_count, len(OB_MODELS))
+        models = rng.sample(OB_MODELS, k)    # one entity per model in the fleet
+        ahead = rng.uniform(18.0, 26.0)
+        specs = []
+        loop_m = n_pts * spacing
+        for j, model in enumerate(models):
+            # human-like spread (2026-10-02): a teleop driver never swerves
+            # at exactly 10 m with a 9 m ramp. Ramp is capped so the shift
+            # is >= 60 % done at body contact range (centre gap 4.6 m) —
+            # the fixed 10 m / 9 m demos sit at 60 %.
+            trig = rng.uniform(*args.multi_trigger)
+            ramp = rng.uniform(args.multi_ramp[0], max(args.multi_ramp[0],
+                               min(args.multi_ramp[1], (trig - 4.6) / 0.6)))
+            back = rng.uniform(*args.multi_back)
+            prev = specs[-1] if specs else None
+            # chained pair (2026-10-12): the next obstacle sits in the OTHER
+            # lane right behind the previous one, so the lane change is timed
+            # by an obstacle too — ours->adj: the swerve-back is forced by the
+            # obstacle in the lane we swerved into; adj->ours: the swerve
+            # waits until the adjacent obstacle is passed. Index metres run
+            # ~10 % short on lane1, hence the /0.9.
+            chained = (prev is not None and
+                       rng.random() < getattr(args, "multi_chain_p", 0.0))
+            if j:
+                if chained:
+                    if prev["in_our_lane"]:
+                        need = 4.6 + 0.6 * prev["ramp_m"] + 0.5
+                    else:
+                        need = trig
+                    arc = need + rng.uniform(4.0, 7.0)
+                    ahead += arc / 0.9
+                    if prev["in_our_lane"]:
+                        prev["back_m"] = round(arc - need, 2)
+                else:
+                    ahead += rng.uniform(gap_lo, gap_hi)
+            if ahead > loop_m - 25.0:
+                break          # would sit just behind the start: one lap only
+            ob_idx = (sp["lane_index"] + int(ahead / spacing)) % n_pts
+            if chained:
+                ob_lane = other if prev["in_our_lane"] else lane
+            else:
+                ob_lane = lane if rng.random() < args.multi_ours_p else other
+            ox, oy = paths[ob_lane][ob_idx]
+            nx2, ny2 = paths[ob_lane][(ob_idx + 1) % n_pts]
+            specs.append({"present": True, "entity": f"v9_{model}",
+                          "model": model, "noun": ob_noun(model),
+                          "swerve": True, "lane": ob_lane, "index": ob_idx,
+                          "x": ox, "y": oy,
+                          "yaw": math.atan2(ny2 - oy, nx2 - ox),
+                          "in_our_lane": ob_lane == lane,
+                          "ahead_m": round(ahead, 1),
+                          "trigger_m": round(trig, 2),
+                          "ramp_m": round(ramp, 2),
+                          "back_m": round(back, 2),
+                          "chained": bool(chained)})
+        dur = round((ahead + 25.0) / bank.speed_map[level] + 8.0, 1)
+        slots = {"lane": lane, "speed": level}
+        text, tpl, fill = bank.render("cruise", slots)
+        variants = []
+        for vi, obs in ((0, []), (1, specs)):
+            summary = ({"present": True, "multi": True, "count": len(obs),
+                        "lane": "mixed", "swerve": True,
+                        "in_our_lane": any(o["in_our_lane"] for o in obs),
+                        "n_ours": sum(o["in_our_lane"] for o in obs)}
+                       if obs else {"present": False})
+            variants.append({
+                "cf_variant_id": f"v{vi}",
+                "intent_id": "cruise",
+                "instruction": text,
+                "template": tpl,
+                "intent_slots": {"lane": lane,
+                                 "speed_level": level,
+                                 "target_speed": bank.speed_map[level],
+                                 "target_speed_raw": bank.speed_map_raw[level],
+                                 "cruise_s": dur,
+                                 "words": fill,
+                                 "obstacle": summary,
+                                 "obstacles": obs},
+                "oracle_goal": {"goal": "cruise", "lane": lane,
+                                "target_speed": bank.speed_map[level]},
+                "cruise_s": dur,
+                "timeout_s": dur + 15.0,
+                "obstacle_specs": obs,
+                "avoid_lane": other if summary.get("in_our_lane") else None,
+            })
+        keep = getattr(args, "ob_variants", None)
+        if keep:
+            variants = [v for v in variants
+                        if v["cf_variant_id"] in keep.split(",")]
+        groups.append({"cf_group_id": f"{args.group_prefix}m{gi:04d}",
+                       "kind": "multi_obstacle", "cf_axis": "obstacle",
+                       "start": sp, "variants": variants})
+
+    # --- go to the named object (2026-10-03, short-course practice) -------
+    #
+    # A layout puts 3-4 objects inside the camera view from a start anywhere
+    # on the track plane. Each layout yields two variants with DIFFERENT
+    # targets from the SAME start (the instruction is the only difference);
+    # lane layouts (target on the ego lane ahead) yield the "go straight" vs
+    # "follow the lane" pair for the same target. goto_layout.py has the
+    # shortcut guards (nearest/centre balance, clear straight path).
+    n_goto = getattr(args, "goto_groups", 0)
+    if n_goto:
+        split = getattr(args, "goto_split", "train")
+        gfleet = [m for m in OB_MODELS if goto_layout.FLEET.get(m, ("", 0, ""))[2] == split] \
+            if split != "all" else [m for m in OB_MODELS if m in goto_layout.FLEET]
+        if len(gfleet) < 3:
+            raise SystemExit(f"goto fleet too small for split {split}: {gfleet}")
+        g_speeds = ["slow", "normal"]
+        for gi in range(n_goto):
+            v2 = getattr(args, "goto_v2", False)
+            sectors_mode = getattr(args, "goto_sectors", False)
+            lane_layout = (not v2) and (not sectors_mode) \
+                and rng.random() < getattr(args, "goto_lane_frac", 0.3)
+            if sectors_mode:
+                # 2026-10-07: one object per camera sector, narrow bearing
+                # bands, near/far distance bands permuted. See
+                # goto_layout.sample_sector_layout for why (r52 kept
+                # object-exact targets inside each direction class).
+                L = goto_layout.sample_sector_layout(rng, paths, gfleet)
+            elif v2:
+                # 2026-10-05 v2: 2-4 objects close enough to resolve in the
+                # 64-token image (6-10 m, >= 10 deg apart), every object
+                # reachable, and EVERY object the target once from the same
+                # start (complete set) — position / nearness / side balanced
+                # by construction. The counterfactual chunks come later from
+                # code/course/make_cf_sidecar.py.
+                # K fixed per layout in rotation: a free K drifts to 2 (four
+                # mutually reachable objects are rarer: 168/31/1 per 200)
+                K = 2 + gi % 3
+                # min_sep_deg per K (2026-10-05): at a flat 10 deg three
+                # gv2pilot pairs gave paths only 0.40-0.47 m apart, under 5x
+                # the 9.5 cm noise floor. Bearings live in +-25.1 deg (62.2 deg
+                # FOV less a 6 deg margin), so a flat 16 deg leaves K=4 almost
+                # unsatisfiable (0.5% of draws) — raise it where it is cheap
+                # and keep K=4 feasible: draw success 100 / 92 / 65 %.
+                # pool_offset rotates the fleet so goal frequency is not itself
+                # a cue (gi*3 cycles all 14: gcd(3,14)=1).
+                sep = 18.0 if K == 2 else (14.0 if K == 3 else 11.0)
+                L = goto_layout.sample_layout(rng, paths, gfleet, n_obj=(K, K),
+                                              dist=(6.0, 11.0 if K == 4 else 10.0),
+                                              min_sep_deg=sep, all_usable=True, tries=3000,
+                                              pool_offset=gi * 3)
+            else:
+                L = (goto_layout.sample_lane_layout(rng, paths, gfleet) if lane_layout
+                     else goto_layout.sample_layout(rng, paths, gfleet))
+            if L is None:
+                continue
+            level = g_speeds[gi % len(g_speeds)]
+            v_t = bank.speed_map[level]
+            sector_of = {}
+            if sectors_mode:
+                names = ["left", "ahead", "right"]
+                rng.shuffle(names)
+                sector_of = {L["sectors"][nm]: nm for nm in names}
+                plan_v = [(L["sectors"][nm], "direct") for nm in names]
+            elif lane_layout:
+                plan_v = [(0, "direct"), (0, "lane")]
+            elif v2:
+                ts = list(range(len(L["objects"])))
+                rng.shuffle(ts)
+                plan_v = [(t, "direct") for t in ts]
+            else:
+                plan_v = [(t, "direct") for t in goto_layout.pick_targets(rng, L)]
+            variants = []
+            for vi, (t, mode) in enumerate(plan_v):
+                o = L["objects"][t]
+                sd = goto_layout.standoff(o["model"])
+                nm = sector_of.get(t)
+                if nm is not None:
+                    text, k = goto_layout.render_sector(nm, rng)
+                    k = f"{nm}_{k}"
+                else:
+                    text, k = goto_layout.render(mode, o["model"], rng)
+                if mode == "direct":
+                    og = {"goal": "point", "x": o["x"], "y": o["y"],
+                          "standoff_m": sd, "target_speed": v_t}
+                    path_m = o["dist"]
+                else:
+                    og = {"goal": "lane_point", "lane": L["ego"]["lane"],
+                          "x": o["x"], "y": o["y"], "standoff_m": sd,
+                          "target_speed": v_t}
+                    path_m = L["lane_gap_m"]
+                to = round(path_m / max(v_t, 0.5) * 2.0 + 15.0, 1)
+                variants.append({
+                    "cf_variant_id": f"v{vi}",
+                    "intent_id": "goto_object",
+                    "instruction": text,
+                    "template": f"goto_{mode}_{k}",
+                    "intent_slots": {
+                        # sector mode: the instruction's varying quantity is the
+                        # SECTOR, not the noun — measure_cmi reads --slot goal
+                        "goal": nm if nm is not None else o["noun"],
+                        "lane": mode if mode == "direct" else L["ego"]["lane"],
+                        "speed_level": level,
+                        "target_speed": v_t,
+                        "target_speed_raw": bank.speed_map_raw[level],
+                        "goto": {"mode": mode, "target": t, "standoff_m": sd,
+                                 "objects": L["objects"], "sector": nm,
+                                 "noun": o["noun"]},
+                    },
+                    "oracle_goal": og,
+                    "timeout_s": to,
+                    "obstacle_specs": L["objects"],
+                })
+            ego = L["ego"]
+            groups.append({"cf_group_id": f"{args.group_prefix}g{gi:04d}",
+                           "kind": "goto_object",
+                           "cf_axis": ("goto_sector" if sectors_mode else
+                                       "goto_mode" if lane_layout else "goto_target"),
+                           "start": {"x": ego["x"], "y": ego["y"],
+                                     "heading": ego["heading"],
+                                     "model_yaw": wrap_pi(ego["model_yaw"]),
+                                     "lane": ego["lane"],
+                                     "lane_index": ego["lane_index"],
+                                     "lateral_m": 0.0},
+                           "variants": variants})
 
     # --- direct-to-zone: the shortest-path axis -------------------------
     #
@@ -891,17 +1131,27 @@ class Collector(Node):
         create/remove ever happens mid-run — that wedged the world once.
         Returns True when the world matches the request.
         """
-        want = spec if (spec and spec.get("present")) else None
+        # multi-obstacle runs pass a list of specs (one entity per model)
+        if isinstance(spec, list):
+            want = [o for o in spec if o.get("present")] or None
+        else:
+            want = spec if (spec and spec.get("present")) else None
         if want == self._ob_current:
             return True
+        placed = {o["entity"]: o for o in
+                  (want if isinstance(want, list) else [want] if want else [])}
         ok_all = True
         for model in OB_MODELS:
             entity = f"v9_{model}"
-            if want and want.get("entity") == entity:
-                tx, ty, tyaw = want["x"], want["y"], want["yaw"]
+            if entity in placed:
+                o = placed[entity]
+                tx, ty, tyaw = o["x"], o["y"], o["yaw"]
             else:
                 (tx, ty), tyaw = OB_PARK[model], 0.0
-            ok, msg = set_model_pose(self.gz, entity, tx, ty, tyaw, z=OB_Z)
+            # parked members go 30 m under the plane: at (60+8i, 60) they still
+            # peeked over the horizon as dots in the go-to-object frames (2026-10-03)
+            ok, msg = set_model_pose(self.gz, entity, tx, ty, tyaw,
+                                     z=OB_Z if entity in placed else -30.0)
             if not ok:
                 self.get_logger().error(
                     f"obstacle teleport failed ({entity}): {msg}")
@@ -911,9 +1161,9 @@ class Collector(Node):
         try:
             os.makedirs(os.path.dirname(OB_REGISTRY), exist_ok=True)
             with open(OB_REGISTRY, "w") as f:
-                json.dump([{"entity": want["entity"], "model": want["model"],
-                            "x": want["x"], "y": want["y"],
-                            "lane": want["lane"]}] if want else [], f)
+                json.dump([{"entity": o["entity"], "model": o["model"],
+                            "x": o["x"], "y": o["y"], "lane": o.get("lane")}
+                           for o in placed.values()], f)
         except OSError as e:
             self.get_logger().warn(f"obstacle registry write failed: {e}")
         return ok_all
@@ -961,8 +1211,13 @@ class Collector(Node):
 
         self._halt_driver()
         self._spin(0.3)
-        if "obstacle_spec" in variant or self._ob_current:
-            if not self._set_obstacle(variant.get("obstacle_spec")):
+        if "obstacle_specs" in variant:
+            ob_req = variant["obstacle_specs"]
+        else:
+            ob_req = variant.get("obstacle_spec")
+        if "obstacle_spec" in variant or "obstacle_specs" in variant \
+                or self._ob_current:
+            if not self._set_obstacle(ob_req):
                 row["termination"] = "obstacle_failed"
                 row["episode"] = None
                 return row
@@ -1061,6 +1316,15 @@ class Collector(Node):
         avoid_lane = variant.get("avoid_lane")
         avoid_phase = "approach" if avoid_lane else None
         ob = variant.get("obstacle_spec") or {}
+        # multi-obstacle run: its own swerve queue below; the single-obstacle
+        # state machine stays off (it reads `ob`, which is empty here)
+        m_obs = variant.get("obstacle_specs") or []
+        m_queue = sorted((o for o in m_obs if o["in_our_lane"]),
+                         key=lambda o: o.get("ahead_m", 0.0))
+        m_cur = m_queue[0] if m_queue else None
+        m_phase, m_done = "approach", 0
+        if m_obs:
+            avoid_phase = None
         v_tier = float(variant["intent_slots"].get("target_speed") or 1.4)
         # brake distance at the oracle's slew + the standstill gap
         stop_at_m = v_tier * v_tier / (2.0 * OB_ACCEL) + OB_STOP_MARGIN_M
@@ -1144,10 +1408,49 @@ class Collector(Node):
                         {"cmd": "event", "kind": "avoid_return",
                          "data": {"behind_m": round(behind, 2)}})))
                     avoid_phase = "returned"
+            if m_obs:
+                if self.tf and any(math.hypot(self.tf[0] - o["x"],
+                                              self.tf[1] - o["y"]) < 2.0
+                                   for o in m_obs):
+                    termination, detail = "collision", \
+                        "ego within 2 m of an obstacle"
+                    break
+                if m_cur is not None:
+                    fwd, behind = self._ob_arc_gap(m_cur)
+                    if m_phase == "approach" and fwd is not None \
+                            and 0.0 < fwd <= m_cur.get("trigger_m",
+                                                      OB_SWERVE_TRIGGER_M):
+                        self.goal_pub.publish(String(data=json.dumps(
+                            {**variant["oracle_goal"], "lane": avoid_lane,
+                             "lane_ramp_m": m_cur.get("ramp_m",
+                                                      OB_SWERVE_RAMP_M)})))
+                        self.rec_pub.publish(String(data=json.dumps(
+                            {"cmd": "event", "kind": "avoid_go",
+                             "data": {"fwd_m": round(fwd, 2), "swerve": True,
+                                      "to_lane": avoid_lane,
+                                      "entity": m_cur["entity"],
+                                      "ramp_m": m_cur.get("ramp_m",
+                                                          OB_SWERVE_RAMP_M)}})))
+                        m_phase = "passing"
+                    elif m_phase == "passing" and behind is not None \
+                            and m_cur.get("back_m", OB_RETURN_BEHIND_M) \
+                            <= behind < 40.0:
+                        self.goal_pub.publish(String(data=json.dumps(
+                            {**variant["oracle_goal"],
+                             "lane_ramp_m": m_cur.get("ramp_m",
+                                                      OB_SWERVE_RAMP_M)})))
+                        self.rec_pub.publish(String(data=json.dumps(
+                            {"cmd": "event", "kind": "avoid_return",
+                             "data": {"behind_m": round(behind, 2),
+                                      "entity": m_cur["entity"]}})))
+                        m_done += 1
+                        m_cur = (m_queue[m_done] if m_done < len(m_queue)
+                                 else None)
+                        m_phase = "approach"
             # Off-ring guard exemptions: parking leaves the ring by design,
             # and direct_zone cuts across the infield by definition.
             if (self.ring_pts and self.tf
-                    and variant["intent_id"] not in ("park_bay", "direct_zone")):
+                    and variant["intent_id"] not in ("park_bay", "direct_zone", "goto_object")):
                 x, y = self.tf[0], self.tf[1]
                 d_ring = min(math.hypot(px - x, py - y)
                              for px, py in self.ring_pts)
@@ -1208,13 +1511,19 @@ class Collector(Node):
         st = self._await_recorder("idle", timeout=40.0, needs="n_frames") or {}
         row["termination"] = termination
         row["detail"] = detail
-        if avoid_lane:
+        if avoid_lane and not m_obs:
             # "returned" is the only healthy end state for a v1 episode; a
             # window that ends mid-"passing" clipped the return leg.
             row["avoid_phase_end"] = avoid_phase
             if avoid_phase != "returned" and termination == "success":
                 termination = "success"  # keep, but flag for review
                 row["detail"] = (detail + f" (avoid_phase={avoid_phase})")
+        if m_obs:
+            # every queued swerve must have come back before the window ended
+            row["avoid_phase_end"] = f"returned {m_done}/{len(m_queue)}"
+            if m_done < len(m_queue) and termination == "success":
+                row["detail"] = (detail + f" (multi returned {m_done}/"
+                                 f"{len(m_queue)})")
         row["duration_s"] = round(time.monotonic() - t0, 2)
         row["n_frames"] = st.get("n_frames")
         row["dropped"] = st.get("dropped")
@@ -1342,6 +1651,10 @@ def main():
     p.add_argument("--ob-fixed-index", type=int, default=None,
                    help="put every obstacle at this lane index (starts 20-30 m "
                         "upstream). lane2 frac 0.35 = 142 (bottom straight)")
+    p.add_argument("--ob-start-window", default=None,
+                   help="near,far metres upstream of --ob-fixed-index where "
+                        "starts are drawn (default 20,30). lane2 70 + 20,23 = "
+                        "straight-only approach on the left side")
     p.add_argument("--ob-stop-margin", type=float, default=None,
                    help="override OB_STOP_MARGIN_M (centre-to-centre standstill "
                         "gap, default 12.0). 'hard' demos (2026-09-23): 9.0")
@@ -1350,6 +1663,50 @@ def main():
                         "accel_limit param, default 0.55). 'hard' demos: 1.5 "
                         "— the 0.55 ramp gave only -0.28 m/s per 3 s chunk, "
                         "too faint for the action expert (r29/r30 probes)")
+    p.add_argument("--goto-groups", type=int, default=0,
+                   help="go-to-object layouts (2026-10-03): 3-4 objects in view, "
+                        "two variants per layout (different targets, or "
+                        "straight vs follow-the-lane for a lane target)")
+    p.add_argument("--goto-split", default="train", choices=["train", "heldout", "all"],
+                   help="which goto_layout.FLEET split the layouts draw from "
+                        "(the fleet itself is --obstacle-models)")
+    p.add_argument("--goto-sectors", action="store_true",
+                   help="2026-10-07: three-way direction practice — one object per\n"
+                        "camera sector (left/ahead/right), narrow bearing bands, the\n"
+                        "sentence names the sector and never the object. Every group\n"
+                        "issues all three commands from the same start.")
+    p.add_argument("--goto-v2", action="store_true",
+                   help="2026-10-05: 2-4 objects at 6-10 m, >= 10 deg apart, all reachable, "
+                        "every object the target once per layout (complete set), direct only")
+    p.add_argument("--goto-lane-frac", type=float, default=0.3,
+                   help="share of layouts that are lane-target pairs")
+    p.add_argument("--multi-groups", type=int, default=0,
+                   help="multi-obstacle runs (2026-10-02): start in either "
+                        "lane, --multi-count obstacles ahead in random lanes, "
+                        "direct swerve around each one in our lane. v0 = same "
+                        "start on a clear track, v1 = obstacles placed")
+    p.add_argument("--multi-count", type=int, default=3,
+                   help="obstacles per run (capped at the fleet size: one "
+                        "entity per model, and at what fits in one 142 m lap)")
+    p.add_argument("--multi-gap", default="36,46",
+                   help="lo,hi index-metres between obstacles (lane1 is ~10 % shorter). >= 36 so "
+                        "the swerve-back (<= 8 m behind + <= 13 m ramp) ends "
+                        "before the next <= 14 m trigger")
+    p.add_argument("--multi-trigger", default="9,14",
+                   help="lo,hi swerve start distance (centre arc, m), drawn "
+                        "per obstacle — human-like spread")
+    p.add_argument("--multi-ramp", default="6,13",
+                   help="lo,hi lane-change ramp (m) per obstacle; hi is also "
+                        "capped at (trigger - 4.6) / 0.6")
+    p.add_argument("--multi-back", default="4,8",
+                   help="lo,hi metres past the obstacle before swerving back")
+    p.add_argument("--multi-chain-p", type=float,
+                   default=float(os.environ.get("MULTI_CHAIN_P") or 0.0),
+                   help="probability an obstacle is chained to the previous "
+                        "one: other lane, short gap (next trigger + 4..7 m), "
+                        "so the lane change is timed by an obstacle")
+    p.add_argument("--multi-ours-p", type=float, default=0.5,
+                   help="probability each obstacle sits in our lane")
     p.add_argument("--obstacle-v1-only", action="store_true",
                    help="obstacle groups emit only the avoidance variant "
                         "(v1) — repair collection after the stop audit")
@@ -1416,6 +1773,8 @@ def main():
             p.error("--obstacle-models is empty")
         set_obstacle_fleet(fleet)
 
+    for k in ("multi_trigger", "multi_ramp", "multi_back"):
+        setattr(args, k, tuple(float(v) for v in getattr(args, k).split(",")))
     rng = random.Random(args.seed)
     with open(PATHS_FILE, "r", encoding="utf-8") as f:
         paths = json.load(f)

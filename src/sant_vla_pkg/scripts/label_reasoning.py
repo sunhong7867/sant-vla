@@ -181,6 +181,21 @@ def frame_facts(rows, k, core, lanes, zone_idx, ep):
 
     ob_fact = None
     ob = ep.get("obstacle")
+    if ep.get("obstacles"):
+        # multi-obstacle run (2026-10-02): narrate the obstacle that matters
+        # now — the nearest one not yet left behind (8 m past covers the
+        # swerve-back of the one we just passed)
+        # While the ego is still in the other lane (swerving around /
+        # returning from an obstacle) that obstacle stays the subject even
+        # past -8 m — otherwise the return leg was narrated as "passing" the
+        # NEXT obstacle 30 m ahead (pilot 2026-10-03).
+        floor = -20.0 if lane_actual != lane else -8.0
+        best = None
+        for o in ep["obstacles"]:
+            a = lanes[o["lane"]].arc_ahead(x, y, hx, hy, o["index"])
+            if a > floor and (best is None or a < best[0]):
+                best = (a, o)
+        ob = best[1] if best else None
     if ob and ob.get("present"):
         ob_arc = lanes[ob["lane"]].arc_ahead(x, y, hx, hy, ob["index"])
         # gap_m is what an onlooker (and the camera) sees: center distance
@@ -195,6 +210,19 @@ def frame_facts(rows, k, core, lanes, zone_idx, ep):
                    * (1 if ob_arc >= 0 else -1),
                    "visible": bool(ob_arc > 0.0
                                    and bearing <= CAM_HALF_FOV)}
+
+    goto_fact = None
+    g = ep.get("goto")
+    if g:
+        # go-to-object (2026-10-03): bearing / distance to the named target
+        o = g["objects"][g["target"]]
+        dx, dy = o["x"] - x, o["y"] - y
+        brg = math.degrees(((math.atan2(dy, dx) - heading + math.pi)
+                            % (2 * math.pi)) - math.pi)
+        goto_fact = {"noun": o["noun"], "mode": g["mode"],
+                     "dist_m": round(math.hypot(dx, dy), 2),
+                     "gap_m": round(math.hypot(dx, dy) - g["standoff_m"], 2),
+                     "bearing_deg": round(brg, 1)}
 
     facts = {
         "v_mps": round(v_now, 2), "v_plan_end_mps": round(v_end, 2),
@@ -216,6 +244,8 @@ def frame_facts(rows, k, core, lanes, zone_idx, ep):
         "target_v_mps": round(ep["target_v"], 2) if ep["target_v"] else None,
         "target_raw": ep["target_raw"],
     }
+    if goto_fact is not None:
+        facts["goto"] = goto_fact
     return facts
 
 
@@ -256,8 +286,19 @@ def discrete_key(f):
     else:
         gbucket = int(gd // GOAL_BUCKET_M)
     phase = obstacle_phase(f)
+    gt = f.get("goto")
+    if gt:
+        # one segment per (direction, stopping) state of the target
+        return (gt["mode"], goto_phase(gt))
     near = f["near_zone"] if gbucket is None and phase is None else None
     return (f["trend"], f["turn"], f["curv"], gbucket, near, phase)
+
+
+def goto_phase(gt):
+    if gt["gap_m"] < 1.2:
+        return "stopping"
+    b = gt["bearing_deg"]
+    return "left" if b > 12 else "right" if b < -12 else "ahead"
 
 
 # --------------------------------------------------------------- sentence
@@ -277,6 +318,17 @@ def compose(f, ep):
     lane_w = LANE_WORD.get(f["lane"], f["lane"])
     actual_w = LANE_WORD.get(f.get("lane_actual", f["lane"]))
     other_w = "outer" if lane_w == "inner" else "inner"
+
+    gt = f.get("goto")
+    if gt:
+        gp = goto_phase(gt)
+        if gp == "stopping":
+            return f"Stopping in front of the {gt['noun']}."
+        if gt["mode"] == "lane":
+            return f"Following the {lane_w} lane to the {gt['noun']}."
+        where = {"ahead": "straight ahead", "left": "ahead on the left",
+                 "right": "ahead on the right"}[gp]
+        return f"Heading to the {gt['noun']} {where}."
 
     phase = obstacle_phase(f)
     gd = f["goal_arc_m"]
@@ -350,11 +402,17 @@ def label_episode(ep_dir, core, lanes, zone_s):
     with open(os.path.join(ep_dir, "meta.json")) as f:
         meta = json.load(f)
     slots = meta.get("intent_slots") or {}
-    ep = {"goal": slots.get("goal"), "lane": slots.get("lane"),
+    lane_slot = slots.get("lane")
+    if lane_slot not in ("lane1", "lane2"):
+        lane_slot = None     # goto "direct" episodes have no lane
+    ep = {"goal": slots.get("goal"), "lane": lane_slot,
           "speed_level": slots.get("speed_level"),
           "target_v": slots.get("target_speed"),
           "target_raw": slots.get("target_speed_raw"),
-          "obstacle": slots.get("obstacle")}
+          "obstacle": slots.get("obstacle"),
+          "goto": slots.get("goto"),
+          "obstacles": [o for o in (slots.get("obstacles") or [])
+                        if o.get("present")]}
     rows = [json.loads(l) for l in
             open(os.path.join(ep_dir, "resampled_10hz.jsonl"))]
     if not rows:

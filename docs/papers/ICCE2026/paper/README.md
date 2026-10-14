@@ -49,7 +49,7 @@
 ## 빌드
 
 ```bash
-cd docs/ICCE2026/paper
+cd docs/papers/ICCE2026/paper
 python3 scripts/build_language_figures.py
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```

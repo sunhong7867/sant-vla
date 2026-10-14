@@ -8,11 +8,11 @@ instruction alone, that streams are joinable, that the language axis is balanced
 silently at least once in this project's history:
 
 * the aisle sharing broke to a single point and nothing reported it
-  (docs/ver/20260728_1906 section 4.1)
+  (docs/experiments/log/20260728_1906 section 4.1)
 * every pose timestamp was 0.0 while the frame counts looked healthy
-  (docs/ver/20260728_1713)
+  (docs/experiments/log/20260728_1713)
 * two recorders wrote one session and both episodes had plausible meta.json
-  (docs/ver, first collection smoke test)
+  (docs/experiments/log, first collection smoke test)
 
 So this reads the session back off disk and checks it, and exits non-zero if a
 gate fails. Run it after every collection, before resampling.
@@ -40,7 +40,7 @@ import os
 import statistics
 import sys
 
-G1_FLOOR_M = 0.095      # measured reset noise floor, docs/ver/20260728_1453
+G1_FLOOR_M = 0.095      # measured reset noise floor, docs/experiments/log/20260728_1453
 MIN_RATIO = 5.0         # a pair must beat the floor by this much to count
 SHARED_TOL_M = 0.30     # two runs count as "together" within this distance
 TARGET_HZ = 30.0
@@ -425,7 +425,7 @@ def main():
                 # Comparing shape over the raw tracks makes a slow run a strict
                 # prefix of a fast one and Frechet then returns the leftover
                 # length, which once reported 12.15 m for two runs down an
-                # identical line (docs/ver/20260728_1821 section 4.1).
+                # identical line (docs/experiments/log/20260728_1821 section 4.1).
                 ds = frechet(truncate_to(A, common), truncate_to(B, common))
                 sa = members[a]["meta"].get("intent_slots", {})
                 sb = members[b]["meta"].get("intent_slots", {})
@@ -433,7 +433,7 @@ def main():
                 # length. Both runs of a speed pair drive the same route to the
                 # same bay, so their arc lengths agree to within a few cm and
                 # the arc-length metric reports ~0 for a change that halved the
-                # journey. The 12.68 m figure in docs/ver/20260728_1821 came
+                # journey. The 12.68 m figure in docs/experiments/log/20260728_1821 came
                 # from a fixed 14 s window, where the faster run simply got
                 # further — that framing does not exist here.
                 da, db = members[a]["dur_s"], members[b]["dur_s"]
@@ -482,7 +482,11 @@ def main():
         # slots as "none".
         # A "zone" group (direct-to-zone, v8) varies the goal slot, which the
         # slot classifier reports under its historical name "ordinal".
-        expected = {"floor": "none", "zone": "ordinal"}
+        # go-to-object (2026-10-03): a target pair varies the goal noun
+        # ("ordinal" in slot terms); a mode pair varies straight vs lane.
+        expected = {"floor": "none", "zone": "ordinal",
+                    "goto_target": "ordinal", "goto_mode": "lane",
+                    "goto_sector": "ordinal"}
         mismatch = [r for r in pairs if r["declared_axis"] and r["axis"] !=
                     expected.get(r["declared_axis"], r["declared_axis"])]
         print(f"  {len(pairs)} pairs from {len(groups)} groups")
@@ -499,7 +503,11 @@ def main():
         # *supposed* to leave shape at the floor — that orthogonality is the
         # claim, so failing it here would penalise the corpus for being correct.
         shape_axes = {"ordinal", "lane", "goal", "mixed"}
-        gated = [r for r in pairs if r["axis"] in shape_axes]
+        # goto_mode pairs on a straight stretch legitimately share one path
+        # (straight-at-the-target == along-the-lane there), so they are not
+        # shape-gated; the curved ones are what the T2 evaluation measures.
+        gated = [r for r in pairs if r["axis"] in shape_axes
+                 and r["declared_axis"] != "goto_mode"]
         weak = [r for r in gated if r["ratio"] < args.min_ratio]
         if weak:
             cf_ok = False

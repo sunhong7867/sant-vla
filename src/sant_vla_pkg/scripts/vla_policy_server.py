@@ -131,7 +131,21 @@ def main():
     p.add_argument("--reasoning-log", default="",
                    help="jsonl file to append {req, task, reasoning} rows "
                         "(for probes)")
+    p.add_argument("--situation-from-reasoning", action="store_true",
+                   help="r40+: map the decoded reasoning to a fixed situation "
+                        "phrase (reasoning_dataset.situation_of) and append it "
+                        "to the ACTION task. Needs a checkpoint trained with "
+                        "train_reasoning.py --situation-prompt. Implies "
+                        "--reasoning-every 1 unless set")
+    p.add_argument("--situation-tokens", type=int, default=12,
+                   help="decode length for the situation decode (the phase is "
+                        "readable from the first few tokens; 60 took 1-2 s)")
+    p.add_argument("--situation-hold-s", type=float, default=3.0,
+                   help="keep a non-clear phase this long after its last "
+                        "detection (per-frame recall ~45%% at 10-14 m, r38)")
     args = p.parse_args()
+    if args.situation_from_reasoning and args.reasoning_every <= 0:
+        args.reasoning_every = 1
 
     if not args.checkpoint and not args.random_init:
         print("give --checkpoint, or --random-init to test the path without one",
@@ -255,6 +269,25 @@ def main():
     # forward, so the action pass waits at most one decode step (~30 ms).
     reasoning = {"text": "", "req": -1}
     r_slot = []
+    # situation state: last non-clear phrase and when it was last detected
+    situation = {"phrase": "", "t_last": -1e9}
+    if args.situation_from_reasoning:
+        if args.reasoning_every <= 0:   # checkpoint had no reasoning head
+            print("--situation-from-reasoning needs a reasoning head — off",
+                  file=sys.stderr)
+            args.situation_from_reasoning = False
+        else:
+            from reasoning_vla.reasoning_dataset import (
+                SITUATION_CLEAR, situation_of)
+            situation["phrase"] = SITUATION_CLEAR
+            print(f"situation prompt ON: decode {args.situation_tokens} "
+                  f"tokens, hold {args.situation_hold_s:.1f} s")
+
+    def current_situation():
+        if time.monotonic() - situation["t_last"] <= args.situation_hold_s:
+            return situation["phrase"]
+        return SITUATION_CLEAR
+
     if args.reasoning_every > 0:
         import json as _json
         import threading
@@ -278,14 +311,23 @@ def main():
                          "task": [task]}
                     b = preproc(b)
                     with torch.inference_mode():
-                        text = policy.generate_reasoning(b)[0]
+                        text = policy.generate_reasoning(
+                            b, max_new_tokens=(args.situation_tokens
+                                               if args.situation_from_reasoning
+                                               else 60))[0]
                     reasoning["text"], reasoning["req"] = text, rid
+                    row = {"req": rid, "t": round(time.time(), 2),
+                           "task": task, "reasoning": text}
+                    if args.situation_from_reasoning:
+                        ph = situation_of(text)
+                        if ph != SITUATION_CLEAR:
+                            situation["phrase"] = ph
+                            situation["t_last"] = time.monotonic()
+                        row["situation"] = current_situation()
                     if args.reasoning_log:
                         with open(args.reasoning_log, "a") as f:
                             f.write(_json.dumps(
-                                {"req": rid, "task": task,
-                                 "reasoning": text},
-                                ensure_ascii=False) + "\n")
+                                row, ensure_ascii=False) + "\n")
                 except Exception as e:   # never take the server down
                     print(f"reasoning decode failed: {e}", file=sys.stderr)
 
@@ -301,8 +343,13 @@ def main():
         while True:
             req = msgpack.unpackb(sock.recv(), raw=False)
             t0 = time.monotonic()
+            act_task = req.get("task", "")
+            if args.situation_from_reasoning and act_task:
+                # the reasoning worker keeps reading the RAW task (it was
+                # trained on it); only the action pass gets the phrase
+                act_task = f"{act_task} {current_situation()}"
             a = infer(req["jpeg"], req.get("state", zero_state),
-                      req.get("task", ""), req.get("seed", 0))
+                      act_task, req.get("seed", 0))
             rlat.append((time.monotonic() - t0) * 1000.0)
             rep = {"actions": [[float(x) for x in row] for row in a]}
             if args.reasoning_every > 0:
@@ -315,12 +362,14 @@ def main():
                 if reasoning["req"] >= 0:
                     rep["reasoning"] = reasoning["text"]
                     rep["reasoning_req"] = reasoning["req"]
+                if args.situation_from_reasoning:
+                    rep["situation"] = current_situation()
             sock.send(msgpack.packb(rep, use_bin_type=True))
             served += 1
             if served % 20 == 0:
                 w = rlat[-20:]
                 print(f"served {served}  lat {sum(w) / len(w):.1f} ms  "
-                      f"task={req.get('task', '')[:48]!r}")
+                      f"task={act_task[:72]!r}")
     except KeyboardInterrupt:
         if rlat:
             rl = sorted(rlat)

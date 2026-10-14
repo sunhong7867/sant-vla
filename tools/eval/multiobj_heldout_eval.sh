@@ -21,6 +21,8 @@ N=${N:-3}
 # 감독 데모용이라 시연 정지선(중심 12 m + 제동거리) 안쪽에서 출발해 버린다 —
 # 정책은 첫 프레임부터 "가까운 장애물"만 본다(r28 첫 실행에서 발견, 2026-09-23).
 START_OFF=${START_OFF:-0.17}
+SPEED=${SPEED:-slowly}   # avoidance_trial --speed (slowly / "at a normal speed" 등 지시문 속도 절)
+TRIAL_EXTRA=${TRIAL_EXTRA:-}   # 예: --oracle-situation (좌표 정답 상황 문구, r40+)
 OUT=$WS/eval_out/course/multiobj_eval
 mkdir -p "$OUT" "$OUT/trials"
 LOG=$OUT/$TAG.jsonl
@@ -40,7 +42,7 @@ for model in ${MODELS//,/ }; do
       echo "[eval] $(date +%H:%M:%S) $model @ $spot #$k"
       sf=$(python3 -c "print(max(0.0, float('${spot#*:}') - $START_OFF))")
       python3 "$WS/tools/eval/avoidance_trial.py" --models "$model" --obstacles "$spot" \
-        --start-frac "$sf" --no-supervisor --timeout 150 > "$OUT/${TAG}_last_trial.log" 2>&1
+        --start-frac "$sf" --speed "$SPEED" --no-supervisor --timeout 150 ${TRIAL_EXTRA:-} > "$OUT/${TAG}_last_trial.log" 2>&1
       cp "$OUT/${TAG}_last_trial.log" "$OUT/trials/${TAG}_${model}_${spot/:/_}_$k.log"
       python3 - "$OUT/${TAG}_last_trial.log" "$model" "$spot" "$k" "$TAG" >> "$LOG" <<'PY'
 import json, sys

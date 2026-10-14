@@ -2,7 +2,7 @@
 
 작성 2026-08-28. 구현: `chat_gui_node.py`의 회피 감독(`_avoid_check` 일대),
 시험: `tools/eval/avoidance_trial.py`. 변경 이력·실측 근거는
-`docs/ver/20260828_1617_obstacle-avoidance-and-reasoning-fixes.md`.
+`docs/experiments/log/20260828_1617_obstacle-avoidance-and-reasoning-fixes.md`.
 
 ### 2026-09-10: 회피 후 옆 차선 차량에 의한 오정지 수정
 
@@ -37,9 +37,9 @@ ring-lane 반사실 그룹(같은 시작 포즈, lane1/lane2 문장 쌍)으로 �
 VLA에게 말로 시키는 것"이다. 이는 최단거리 직행(navigator 위임)과 함께
 이 데모의 서빙 계층 합성(zero lane-touch 때 확립) 철학의 연장이다.
 "주행은 SmolVLA인데 해설은 왜 qwen인가"라는 짝 질문은
-[package_roles_and_pure_vla_rationale.md](package_roles_and_pure_vla_rationale.md) §4,
+[package_roles_and_pure_vla_rationale.md](../../guides/package_roles_and_pure_vla_rationale.md) §4,
 스택 전체의 코드/VLA 책임 지도는
-[code_vs_vla_responsibilities.md](code_vs_vla_responsibilities.md) 참조.
+[code_vs_vla_responsibilities.md](../../guides/code_vs_vla_responsibilities.md) 참조.
 
 ## 1. 왜 이 구조인가 — 실측이 강제한 역할 분담
 

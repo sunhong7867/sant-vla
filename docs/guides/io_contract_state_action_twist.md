@@ -2,7 +2,7 @@
 
 작성 2026-09-12. 짝 문서: 스택 전체 책임 분담은
 [code_vs_vla_responsibilities.md](code_vs_vla_responsibilities.md),
-직행 위임 결정은 [ver/20260824_1138](ver/20260824_1138_direct-nav-architecture-decision.md).
+직행 위임 결정은 [ver/20260824_1138](../experiments/log/20260824_1138_direct-nav-architecture-decision.md).
 
 이 문서가 답하는 질문: **"학습 입력(속도·yaw rate·조향·정지시간), 정책 출력
 (3초 경로 dx/dy/dyaw), 구동 명령(선속도·각속도)이 왜 다 다른가? 하나로
@@ -20,21 +20,21 @@
 
 | | 형태 | 정의 위치 | 층 |
 |---|---|---|---|
-| **observation.state** | `float32[3..6]` — speed m/s, yaw rate rad/s, steer rad (+ bearing·dist, +standstill_s) | [to_lerobot.py:19](../src/sant_vla_pkg/scripts/to_lerobot.py#L19), [:248-253](../src/sant_vla_pkg/scripts/to_lerobot.py#L248-L253) | 관측 (고유수용감각) |
-| **action** | `float32[3]` × 30 — ego-frame SE(2) 델타 `[dx_m, dy_m, dyaw_rad]` | [to_lerobot.py:20](../src/sant_vla_pkg/scripts/to_lerobot.py#L20), [:254-255](../src/sant_vla_pkg/scripts/to_lerobot.py#L254-L255) | 계획 (궤적) |
-| **`/cmd_vel`** | `geometry_msgs/Twist` — `linear.x`, `angular.z` | [vla_bridge_node.py:804-806](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L804-L806) | 구동 (액추에이터) |
+| **observation.state** | `float32[3..6]` — speed m/s, yaw rate rad/s, steer rad (+ bearing·dist, +standstill_s) | [to_lerobot.py:19](../../src/sant_vla_pkg/scripts/to_lerobot.py#L19), [:248-253](../../src/sant_vla_pkg/scripts/to_lerobot.py#L248-L253) | 관측 (고유수용감각) |
+| **action** | `float32[3]` × 30 — ego-frame SE(2) 델타 `[dx_m, dy_m, dyaw_rad]` | [to_lerobot.py:20](../../src/sant_vla_pkg/scripts/to_lerobot.py#L20), [:254-255](../../src/sant_vla_pkg/scripts/to_lerobot.py#L254-L255) | 계획 (궤적) |
+| **`/cmd_vel`** | `geometry_msgs/Twist` — `linear.x`, `angular.z` | [vla_bridge_node.py:804-806](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L804-L806) | 구동 (액추에이터) |
 
 `chunk_len=30`, `rate_hz=10` → 한 청크가 정확히 **3.0초**를 덮는다
-([vla_bridge_node.py:214-215](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L214-L215)).
+([vla_bridge_node.py:214-215](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L214-L215)).
 ZMQ 와이어 계약은 `-> {jpeg, state, task, seed, req}` / `<- {actions: [[dx,dy,dyaw], ...]}`
-([:11-12](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L11-L12)).
+([:11-12](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L11-L12)).
 
 ---
 
 ## 2. 사실 확인: state와 action은 이미 같은 양이다
 
 리샘플러가 둘을 **같은 SE(2) 델타 하나에서** 만든다
-([resample_episodes.py:334-350](../src/sant_vla_pkg/scripts/resample_episodes.py#L334-L350)):
+([resample_episodes.py:334-350](../../src/sant_vla_pkg/scripts/resample_episodes.py#L334-L350)):
 
 ```python
 dx  =  dxw*cos(h) + dyw*sin(h)
@@ -51,8 +51,8 @@ action을 시간으로 나눈 것"이고, 서빙에서도 대칭이다:
 
 | 방향 | 변환 | 위치 |
 |---|---|---|
-| odom → state | `steer = atan2(ω·L, v)` (자전거 모델 역산, L=2.86 m) | [vla_bridge_node.py:472-476](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L472-L476) |
-| action → Twist | `v = dx/dt`, `ω = dyaw/dt` | [vla_bridge_node.py:633-634](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L633-L634) |
+| odom → state | `steer = atan2(ω·L, v)` (자전거 모델 역산, L=2.86 m) | [vla_bridge_node.py:472-476](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L472-L476) |
+| action → Twist | `v = dx/dt`, `ω = dyaw/dt` | [vla_bridge_node.py:633-634](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L633-L634) |
 
 state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도한 프록시**다.
 그래서 "세 표현"이 아니라 "하나의 (v, ω)에 대한 세 시점"이라고 읽는 쪽이
@@ -69,7 +69,7 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 ## 3. 왜 출력을 (v, 조향)으로 통일하면 안 되는가 — 핵심 근거
 
 **출력이 ego-frame 델타여야 곡률 k = dyaw/dx 가 속도와 분리된다.**
-[vla_bridge_node.py:636-639](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L636-L639)
+[vla_bridge_node.py:636-639](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L636-L639)
 주석이 이 원칙을 명시한다:
 
 > The action's path geometry lives in its curvature k = ω/v. Any speed shaping
@@ -81,14 +81,14 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 
 | 셰이핑 | 하는 일 | 위치 |
 |---|---|---|
-| `speed_scale` | 전역 속도 배율 | [:640](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L640) |
-| `max_speed` 클램프 | 물리 상한 (기본 2.0, 데모 2.25) | [:644](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L644) |
-| `speed_slew` | 틱당 가감속 제한 | [:645-650](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L645-L650) |
-| `curv_slow_alat` | 횡가속 한계 기반 코너 감속 `v ≤ √(a_lat/|k|)` | [:676-684](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L676-L684) |
-| `_speed_cap_ahead` | 예측 경로 전방을 미리 보고 **코너 진입 전** 제동 | [:690-698](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L690-L698) |
+| `speed_scale` | 전역 속도 배율 | [:640](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L640) |
+| `max_speed` 클램프 | 물리 상한 (기본 2.0, 데모 2.25) | [:644](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L644) |
+| `speed_slew` | 틱당 가감속 제한 | [:645-650](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L645-L650) |
+| `curv_slow_alat` | 횡가속 한계 기반 코너 감속 `v ≤ √(a_lat/|k|)` | [:676-684](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L676-L684) |
+| `_speed_cap_ahead` | 예측 경로 전방을 미리 보고 **코너 진입 전** 제동 | [:690-698](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L690-L698) |
 
 그리고 이 전부가 끝난 뒤 마지막 줄이 `w = k * v`
-([:685](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L685)) — 속도를 아무리
+([:685](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L685)) — 속도를 아무리
 깎아도 **같은 선**을 그린다.
 
 만약 정책이 (속도, 조향각)을 직접 뱉었다면 위 다섯 개 중 어느 하나만
@@ -96,7 +96,7 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 
 ### 실측된 음성 결과 — 이 원칙을 어겼을 때
 
-[vla_bridge_node.py:625-632](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L625-L632)
+[vla_bridge_node.py:625-632](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L625-L632)
 에 기록된 사고:
 
 - `v = hypot(dx, dy)/dt`로 **횡방향 성분까지 속도에 접어 넣었더니** 턴 구간
@@ -115,8 +115,8 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 ### 4-1. 이미지에 안 보이는 것을 넣는 자리가 state다
 
 `standstill_s`(정지 경과 초, cap 5)는 **누적 히스토리**다
-([to_lerobot.py:139-142](../src/sant_vla_pkg/scripts/to_lerobot.py#L139-L142),
-[vla_bridge_node.py:462-470](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L462-L470)):
+([to_lerobot.py:139-142](../../src/sant_vla_pkg/scripts/to_lerobot.py#L139-L142),
+[vla_bridge_node.py:462-470](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L462-L470)):
 
 > the v9 watch-then-avoid GO trigger, **unobservable from image+[v, w, steer]**
 
@@ -125,8 +125,8 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 못한 원인이 이것이었고, 그래서 채널이 추가됐다.
 
 같은 이유로 골 조건부 체크포인트(v8g+)는 `[bearing_to_goal_rad, dist_to_goal_m]`
-2채널을 state에 붙인다([to_lerobot.py:125-129](../src/sant_vla_pkg/scripts/to_lerobot.py#L125-L129),
-[vla_bridge_node.py:196-197](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L196-L197)).
+2채널을 state에 붙인다([to_lerobot.py:125-129](../../src/sant_vla_pkg/scripts/to_lerobot.py#L125-L129),
+[vla_bridge_node.py:196-197](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L196-L197)).
 **전부 입력 전용이고 출력에는 대응물이 없다.** 델타로 통일하면 이들을 넣을
 자리 자체가 사라진다.
 
@@ -139,8 +139,8 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 | r8+ | 4 | v, ω, steer, standstill_s |
 
 브릿지가 파라미터로 이 조합을 맞춘다
-([:183-197](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L183-L197),
-[:869-877](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L869-L877)).
+([:183-197](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L183-L197),
+[:869-877](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L869-L877)).
 입력은 **버전마다 늘어나는 슬롯**이고 출력은 **항상 3차원 고정**이다 —
 이 비대칭 자체가 두 계약이 분리돼야 하는 실무적 증거다.
 
@@ -149,7 +149,7 @@ state의 3채널 중 조향은 **실제 센서가 아니라 v, ω에서 유도�
 ## 5. 왜 출력을 순간 명령으로 통일하면 안 되는가 — 청크 스플라이싱
 
 새 청크는 큐의 겹치는 꼬리와 **선형 램프로 블렌딩**된다
-([vla_bridge_node.py:143-157](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L143-L157),
+([vla_bridge_node.py:143-157](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L143-L157),
 `splice_overlap=5`):
 
 ```python
@@ -158,7 +158,7 @@ w = (i + 1) / (n + 1)      # 0 -> 1 across the overlap
 
 이게 없으면 `chunk_len` 틱마다 조향이 튀고, 그 트위치가 **`D_same`
 (재현성 노이즈 플로어)를 부풀린다** — 모든 divergence 수치의 분모다
-([:34-38](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L34-L38)).
+([:34-38](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L34-L38)).
 
 상대 변위 시퀀스는 두 예측을 섞어도 기하학적으로 의미가 있다(두 경로의
 가중 평균 = 중간 경로). **순간 (v, ω) 명령열은 그렇게 섞으면 물리적 의미가
@@ -166,7 +166,7 @@ w = (i + 1) / (n + 1)      # 0 -> 1 across the overlap
 표현을 요구한다.
 
 덤: 델타 시퀀스이기 때문에 브릿지가 경로를 **적분해서 앞을 내다볼 수** 있다
-— pure pursuit / preview 곡률([:725-800](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L725-L800)),
+— pure pursuit / preview 곡률([:725-800](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L725-L800)),
 전방 감속(`_speed_cap_ahead`). 순간 명령열로는 불가능한 연산이다.
 
 ---
@@ -177,12 +177,12 @@ w = (i + 1) / (n + 1)      # 0 -> 1 across the overlap
 `ackermann_cmd_adapter_node`가 Twist를 조향각/구동으로 바꾼다
 ([code_vs_vla_responsibilities.md §1](code_vs_vla_responsibilities.md)).
 브릿지는 이 변환의 유일한 소유자이고, 평가 중 `/cmd_vel`을 만지는 건
-브릿지뿐이다([:1](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L1)).
+브릿지뿐이다([:1](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L1)).
 
 주의: 시뮬 twist 인터페이스에서 `angular.z`는 **조향각이 아니라 yaw rate**다.
 "조향 유지"를 ω 유지로 구현했다가 v=0 상태에서 차가 계속 회전해 리셋 구간에
 **0.15 m 크리프**가 측정됐고, 그래서 워치독은 v·ω **둘 다 0**을 낸다
-([:615-620](../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L615-L620)).
+([:615-620](../../src/sant_vla_pkg/sant_vla_pkg/vla_bridge_node.py#L615-L620)).
 
 ---
 
@@ -208,7 +208,7 @@ w = (i + 1) / (n + 1)      # 0 -> 1 across the overlap
   코드 어디에도 강제돼 있지 않다. 어서션을 넣을 가치가 있다.
 - **state dim 협상이 수동이다.** `force_zero_steer_state` / `standstill_state`
   / 골 채널을 파라미터로 맞춰야 한다. 체크포인트 메타데이터에서 자동 판정하는
-  경로가 [vla_policy_server.py:211-214](../src/sant_vla_pkg/scripts/vla_policy_server.py#L211-L214)
+  경로가 [vla_policy_server.py:211-214](../../src/sant_vla_pkg/scripts/vla_policy_server.py#L211-L214)
   에 일부 있으나 브릿지 쪽은 아직 수동이다.
 
 ## 재현 — 계약 확인 명령어

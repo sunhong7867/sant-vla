@@ -52,7 +52,7 @@ from sant_vla_pkg.gz_reset import SimResetter  # noqa: E402
 
 DEFAULT_START = (-12.30, -22.16, 1.112)
 
-# Geometry from extract_track_paths.py / docs/ver/20260728_2115.
+# Geometry from extract_track_paths.py / docs/experiments/log/20260728_2115.
 BAYS = {"bay1": -9.36, "bay2": -5.72, "bay3": -2.09, "bay4": 1.54}
 BAY_X_OPEN, BAY_X_BACK = 0.81, 6.47
 BAY_HALF_WIDTH = 3.63 / 2.0

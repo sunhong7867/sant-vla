@@ -97,19 +97,37 @@ def mi(pairs):
     return h, max(0.0, h + corr)
 
 
+# 2026-10-05: an episode's meta records the DECLARED axis ("goto_target",
+# "goto_mode", "zone", "floor"), while finalize_corpus.sh asks for the canonical
+# slot axes (ordinal / lane / speed). verify_corpus.py maps one onto the other
+# before comparing; this script compared the raw value, so every goto session
+# matched nothing and all three axes printed "no resampled episodes ... run
+# resample_episodes.py first" even with 68 resampled episodes present — and the
+# finalize run still reported done. Same table as verify_corpus.py.
+AXIS_ALIAS = {"floor": "none", "zone": "ordinal",
+              "goto_target": "ordinal", "goto_mode": "lane",
+              "goto_sector": "ordinal"}
+
+
 def load_session(sess, axis_filter):
     eps = []
     for d in sorted(os.listdir(sess)):
-        if not d.startswith("ep_"):
-            continue
+        # 2026-10-05: accept a PACKED corpus too, not just a raw session. Packed
+        # episode dirs are named "<session>__ep_0000", so the old "ep_" prefix
+        # test silently skipped every one of them — which is why the g1 corpus
+        # the rp runs trained on had never been measured. The meta/resampled
+        # pair below is the real admission test; the prefix was only a shortcut.
         base = os.path.join(sess, d)
+        if not os.path.isdir(base):
+            continue
         mp, rp = os.path.join(base, "meta.json"), os.path.join(base, "resampled_10hz.jsonl")
         if not (os.path.exists(mp) and os.path.exists(rp)):
             continue
         meta = json.load(open(mp, encoding="utf-8"))
         if not meta.get("valid"):
             continue
-        if axis_filter and meta.get("cf_axis") != axis_filter:
+        ax = meta.get("cf_axis")
+        if axis_filter and AXIS_ALIAS.get(ax, ax) != axis_filter:
             continue
         rows = [json.loads(l) for l in open(rp, encoding="utf-8") if l.strip()]
         if rows:
@@ -147,8 +165,18 @@ def main():
     for sd in sessions:
         eps.extend(load_session(sd, args.axis))
     if not eps:
-        print(f"no resampled episodes in {', '.join(sessions)} — "
-              "run resample_episodes.py first", file=sys.stderr)
+        # 2026-10-05: say WHICH of the two it is. The old message always blamed
+        # a missing resample, which is what hid the axis-alias bug above: the
+        # session had all 68 resampled episodes and the real cause was that no
+        # episode sits on the requested axis.
+        present = sum(len(load_session(sd, "")) for sd in sessions)
+        if present:
+            print(f"no episodes on axis={args.axis} in {', '.join(sessions)} "
+                  f"({present} resampled episode(s) present on other axes) — "
+                  "nothing to measure for this claim", file=sys.stderr)
+        else:
+            print(f"no resampled episodes in {', '.join(sessions)} — "
+                  "run resample_episodes.py first", file=sys.stderr)
         return 1
 
     yq = math.radians(args.yaw_q)

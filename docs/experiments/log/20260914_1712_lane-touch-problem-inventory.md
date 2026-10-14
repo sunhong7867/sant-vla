@@ -44,5 +44,5 @@
    (r16 레시피: v9 액션 제외 유지, v10 액션 포함)
 5. lane_probe 매트릭스 + heldout 언어 평가 게이트
 
-관련: `docs/reasoning_versions.md` §3.5, 메모리
+관련: `docs/experiments/reports/reasoning_versions.md` §3.5, 메모리
 `r11-lane-centering-regression`.

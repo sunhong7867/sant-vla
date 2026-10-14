@@ -30,12 +30,18 @@ echo "############ 2/4  resample to 10 Hz ############"
 for sess in "${SESSIONS[@]}"; do
   echo "--- $sess"
   # -90 deg is measured, not assumed: straight-line runs from four headings gave
-  # -90.00 with sd 0.00 (docs/ver/20260728_1713 section 7). tf is the stream the
+  # -90.00 with sd 0.00 (docs/experiments/log/20260728_1713 section 7). tf is the stream the
   # action labels are built from; the CLI fallback is 15 Hz and lags.
   # RESAMPLE_EXTRA: optional overrides (e.g. "--max-interp-err-m 0.06" for
   # gap-tolerant corpora like v9 — see the constant in resample_episodes.py)
+  # POSE_SOURCE (2026-10-02): "cli" = the ego's own PosePublisher stream
+  # (/model/ego_vehicle/pose, 50 Hz, sim-stamped, drained in full by the
+  # recorder). On the tripilot session it starts moving a steady 0.19-0.36 s
+  # after the first command while tf trails by 0.26-0.77 s with ~60% repeated
+  # stamps, and tf holes rejected 6/9 episodes vs 3/9 (camera gaps) for cli.
+  # Default stays tf so old sessions re-finalize as before.
   python3 "$S/resample_episodes.py" --session "$sess" \
-      --yaw-offset-deg -90 --pose-source tf ${RESAMPLE_EXTRA:-}
+      --yaw-offset-deg -90 --pose-source "${POSE_SOURCE:-tf}" ${RESAMPLE_EXTRA:-}
 done
 
 echo

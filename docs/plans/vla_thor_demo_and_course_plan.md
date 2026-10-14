@@ -1,6 +1,6 @@
 # SmolVLA 기반 Thor 실차 데모 및 단기강좌 후속 계획서
 
-> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](../experiments/log/README.md) 참조.
 
 > **목표:** 먼저 1인이 로비 현수막 트랙에서 1/5 크기 유아용 전동차를 자연어로 주행시키는
 > **VLA 직접 제어 데모**를 완성한다. 이후 검증된 모델·인터페이스·데이터를 동결한 뒤,
@@ -18,9 +18,9 @@
 
 관련 문서:
 [시뮬레이션 VLA 계획서](sim_vla_plan.md),
-[SmolVLA v21b-120K 결과](ver/20260731_1226_120k-final-and-raw-speed.md),
-[v3y 데이터·학습 기동 기록](ver/20260731_1731_v3y-yolo-corpus-trained.md),
-[Hesai track localizer 기록](ver/20260727_2311_track-localizer.md),
+[SmolVLA v21b-120K 결과](../experiments/log/20260731_1226_120k-final-and-raw-speed.md),
+[v3y 데이터·학습 기동 기록](../experiments/log/20260731_1731_v3y-yolo-corpus-trained.md),
+[Hesai track localizer 기록](../experiments/log/20260727_2311_track-localizer.md),
 [기존 Qwen 기반 Thor 통합안](vla_ad_nl_integration.md)
 
 ---

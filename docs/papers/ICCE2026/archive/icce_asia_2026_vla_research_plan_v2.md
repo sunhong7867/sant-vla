@@ -2,8 +2,8 @@
 
 > **상태: 2026-09-01에 v3로 대체됨.** 이번 제출은 v2b parking 중심의 이 계획이 아니라
 > v6 하나에서 시스템ㆍ언어ㆍaction commitment를 함께 재수집하는
-> [ICCE-ASIA 2026 VLA 시스템 논문 연구 계획 v3](../icce_asia_2026_system_paper_plan_v3.md)와
-> [v6 50-run matrix](../icce_asia_2026_v6_eval_matrix.csv)를 공식 protocol로 사용한다.
+> [ICCE-ASIA 2026 VLA 시스템 논문 연구 계획 v3](v3_instrumented_protocol/icce_asia_2026_system_paper_plan_v3.md)와
+> [v6 50-run matrix](v3_instrumented_protocol/icce_asia_2026_v6_eval_matrix.csv)를 공식 protocol로 사용한다.
 > 아래 내용은 semantic-suffix 주제의 결정 이력을 보존하기 위한 문서다.
 
 ## 0. 최종 결정

@@ -61,7 +61,7 @@ fast 문장을 말해도 이 속도로 캡되어 fast 미검증 문제도 함께
 
 - ~~fast 문장에서는 무접촉 미검증~~ → max_speed 캡으로 해소 (추기 참조)
 - 시뮬 차량이 실비율보다 큼(폭 55% vs 실제 ~47%) → 실차는 마진 더 큼
-  ([스케일 노트](../sim_scale_calibration_note.md))
+  ([스케일 노트](../reports/sim_scale_calibration_note.md))
 - 실차 전이 시 preview/셰이핑 파라미터 재검증 필요 (Ackermann 실기 특성)
 
 ## 재현

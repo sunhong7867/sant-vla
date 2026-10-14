@@ -24,7 +24,7 @@ v8g(목표 조건화: state 5D = [v, ω, δ, goal_bearing, goal_dist]) 60K 체�
 
 ## 서빙 인프라 버그 3건 수정 (이번 프로브를 이틀 막은 것들)
 
-1. **서버 워밍업 상태 차원 하드코딩** — [vla_policy_server.py](../../src/nav_vla_pkg/scripts/vla_policy_server.py)
+1. **서버 워밍업 상태 차원 하드코딩** — [vla_policy_server.py](../../../src/sant_vla_pkg/scripts/vla_policy_server.py)
    워밍업이 3D 고정 → 5D 정규화기와 충돌로 기동 크래시. config.input_features는
    smolvla_base의 가짜 메타데이터(state=[6], 유령 카메라 5개)라 못 믿는다 —
    **정규화 통계 safetensors에서 차원을 읽도록** 수정.

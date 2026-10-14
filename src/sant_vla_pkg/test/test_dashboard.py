@@ -292,3 +292,153 @@ def test_fresh_preview_uses_observation_pose_and_stop_clears_it(monkeypatch):
         assert "plan" not in telemetry.snapshot()
     finally:
         cleanup()
+
+
+@pytest.fixture
+def lecture_window(tmp_path):
+    pytest.importorskip("PySide6")
+    from PySide6.QtWidgets import QApplication
+    from sant_vla_pkg.driving_dashboard import DashboardWindow
+    app = QApplication.instance() or QApplication([])
+    sent, published, twists, parsed = [], [], [], []
+    node = SimpleNamespace(
+        _track_lanes={"lane1": [(0, 0), (10, 0), (10, 10), (0, 10)]},
+        zones={}, current_lane="lane1", control_backend="smolvla", _vla_mode="idle",
+        _avoid_obstacles=[], latest_pose=None, latest_pose_time=None,
+        event_q=queue.Queue(), status_q=queue.Queue(), lecture_mode=True, avoid_enable=True,
+        avoid_obstacle_file=str(tmp_path / "obstacles.json"),
+        dispatch_smolvla_instruction=lambda text, **kw: sent.append(text) or "전송 완료",
+        vla_instruction_pub=SimpleNamespace(publish=lambda msg: published.append(msg.data)),
+        create_publisher=lambda *_a: SimpleNamespace(publish=lambda t: twists.append((t.linear.x, t.angular.z))),
+        parse_command=lambda text: parsed.append(text) or (None, 0.0, "no parser in test"),
+    )
+    ui = DashboardWindow(node, Telemetry(), launch_gazebo=False)
+    yield ui, SimpleNamespace(sent=sent, published=published, twists=twists, parsed=parsed, node=node), app
+    ui.close()
+    app.processEvents()
+
+
+def _place_goto(ui):
+    import random
+    from sant_vla_pkg import goto_layout as G
+    layout = G.sector_layout_at(random.Random(3), 0.0, 0.0, 0.0, ["go_dog", "ob_box", "go_dino_3"])
+    ui.goto_objects = layout["objects"]
+    return {o["sector"]: o for o in layout["objects"]}
+
+
+def test_sector_command_goes_to_policy_without_the_parser(lecture_window):
+    ui, io, app = lecture_window
+    _place_goto(ui)
+    ui.send("왼쪽 물체로 가줘")
+    app.processEvents()
+    assert io.sent == [""] and io.published == ["Go to the object on the left."]
+    assert io.parsed == [] and io.node.avoid_enable is False and ui.goto_run is not None
+
+
+def test_goto_target_follows_the_car_when_it_moved_after_placement(lecture_window):
+    import math
+    ui, io, app = lecture_window
+    by = _place_goto(ui)                       # placed facing heading 0 (gz yaw pi/2)
+    ui.goto_origin = (0.0, 0.0, math.pi / 2)
+    ui.bev.pose = (0.0, 0.0, math.pi / 2 + math.radians(40))   # turned 40 deg left since
+    ui.dispatch_goto("right", "test")
+    app.processEvents()
+    assert ui.goto_run["target"] is by["left"]  # now 20 deg right of the nose
+    assert "움직였" not in ui.chat_log[-1] and '&quot;Go to the object on the right.&quot;' in ui.chat_log[-1]
+    assert "현재 위치 기준" in ui.event_log[-1]          # logged, not shown as a chat warning
+
+
+def test_course_command_still_uses_the_parser_when_props_are_placed(lecture_window):
+    ui, io, app = lecture_window
+    _place_goto(ui)
+    ui.send("1차선으로 바꿔")
+    for _ in range(50):
+        app.processEvents()
+        if io.parsed:
+            break
+    assert io.parsed == ["1차선으로 바꿔"] and io.published == []
+
+
+def test_goto_watch_judges_the_stop_like_the_closed_loop_eval(lecture_window):
+    import time
+    from sant_vla_pkg import goto_layout as G
+    ui, io, _ = lecture_window
+    by = _place_goto(ui)
+    ui.dispatch_goto("right", "test")
+    t = by["right"]
+    d = G.EGO_HALF_LEN + t["r"] + 1.2            # 1.2 m bumper gap, straight back toward the start
+    ux, uy = t["x"] / math.hypot(t["x"], t["y"]), t["y"] / math.hypot(t["x"], t["y"])
+    stop = (t["x"] - ux * d, t["y"] - uy * d, 0.0)
+    now = time.monotonic()
+    ui.goto_watch((0.0, 0.0, 0.0), now)
+    for k in range(6):
+        ui.goto_watch(stop, now + 1 + k)
+    assert ui.goto_run is None and io.sent[-1] == ""
+    assert "도착 판정: 성공" in "".join(ui.chat_log)
+
+
+def test_manual_drive_only_while_the_front_camera_has_focus(lecture_window):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    ui, io, app = lecture_window
+    ui.show()
+    ui.activateWindow()
+    app.processEvents()
+    QTest.mouseClick(ui.camera, Qt.LeftButton)
+    app.processEvents()
+    assert ui.camera.hasFocus() and ui.manual_timer.isActive() and io.sent[-1] == ""
+    QTest.keyPress(ui.camera, Qt.Key_W)
+    for _ in range(10):
+        ui.manual_tick()
+    assert io.twists[-1][0] == pytest.approx(1.0)       # 2 m/s^2 for 0.5 s
+    QTest.keyPress(ui.camera, Qt.Key_A)
+    ui.manual_tick()
+    assert io.twists[-1][1] > 0                          # A = left = +yaw rate
+    QTest.mouseClick(ui.entry, Qt.LeftButton)            # click elsewhere ends it
+    app.processEvents()
+    assert not ui.camera.hasFocus() and not ui.manual_timer.isActive()
+    assert io.twists[-1] == (0.0, 0.0)
+    QTest.keyPress(ui.entry, Qt.Key_W)                   # typing W in chat does not drive
+    assert not ui.manual_timer.isActive()
+
+
+def test_named_object_goes_through_the_vlm_and_a_stale_answer_is_dropped(lecture_window, monkeypatch):
+    from PySide6.QtGui import QImage
+    from sant_vla_pkg import goto_command
+    ui, io, app = lecture_window
+    _place_goto(ui)
+    ui.camera.frame = QImage(64, 48, QImage.Format_RGB888)
+    calls = []
+    monkeypatch.setattr(goto_command, "vlm_sector",
+                        lambda host, model, jpeg, text: calls.append(text) or ("right", "VLM: test", 0.1))
+    ui.send("공룡으로 가줘")
+    for _ in range(100):
+        app.processEvents()
+        if io.published:
+            break
+    assert calls == ["공룡으로 가줘"] and io.published == ["Go to the object on the right."]
+    ui.on_goto_ready(ui.generation - 1, "old", "left", "stale")   # an older answer must not drive
+    assert io.published == ["Go to the object on the right."]
+
+
+def test_held_keys_survive_x11_repeating_only_the_last_key(lecture_window):
+    import time
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    ui, io, app = lecture_window
+    ui.show()
+    ui.activateWindow()
+    app.processEvents()
+    QTest.mouseClick(ui.camera, Qt.LeftButton)
+    app.processEvents()
+    QTest.keyPress(ui.camera, Qt.Key_W)
+    QTest.keyPress(ui.camera, Qt.Key_A)
+    ui.camera.held[Qt.Key_W] = time.monotonic() - 5   # W stopped auto-repeating long ago
+    ui.camera.held[Qt.Key_A] = time.monotonic() - 5
+    for _ in range(20):
+        ui.manual_tick()
+    v, w = io.twists[-1]
+    assert v == pytest.approx(2.0) and w > 0           # still accelerating and still steering
+    QTest.keyRelease(ui.camera, Qt.Key_A)
+    ui.manual_tick()
+    assert io.twists[-1][1] == 0.0

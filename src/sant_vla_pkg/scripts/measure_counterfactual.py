@@ -60,7 +60,7 @@ from tf2_msgs.msg import TFMessage  # noqa: E402
 from sant_vla_pkg.gz_pose import query_world_pose, resolve_gz_bin  # noqa: E402
 from sant_vla_pkg.gz_reset import SimResetter, _load_zone  # noqa: E402
 
-G1_FLOOR_M = 0.095      # measured reset noise floor, docs/ver/20260728_1453
+G1_FLOOR_M = 0.095      # measured reset noise floor, docs/experiments/log/20260728_1453
 
 
 def frechet(P, Q):

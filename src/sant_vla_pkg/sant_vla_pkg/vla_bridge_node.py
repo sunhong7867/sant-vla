@@ -433,6 +433,10 @@ class VlaBridge(Node):
 
         self._goal_lock = threading.Lock()
         self._goal_xy = None      # (x, y) world, or None = no goal
+        # 2026-10-12 point-goal primitive: an ego-relative goal "rel:<bearing_rad>,<dist_m>"
+        # (perception output: VLM box -> bearing, LiDAR -> distance). Needs no
+        # pose fix; fed to the state channel verbatim.
+        self._goal_rel = None
         self._goal_label = ""
         self._pose_stream = None
         if self.goal_conditioning or self.display_preview_period > 0:
@@ -530,14 +534,23 @@ class VlaBridge(Node):
     def _goal_cb(self, msg):
         """Set or clear the navigation goal for goal-conditioned checkpoints.
 
-        Accepts a zone name from the zones table, "x,y" world coordinates, or
-        ""/"none" to clear. The goal only fills two state dims — the sentence
-        still decides the behaviour; this is geometry, not intent.
+        Accepts a zone name from the zones table, "x,y" world coordinates,
+        "rel:<bearing_rad>,<dist_m>" (ego-relative, 2026-10-12 — the real-track
+        form: no global pose, the numbers come from the camera/LiDAR goal
+        node), or ""/"none" to clear. The goal only fills two state dims — the
+        sentence still decides the behaviour; this is geometry, not intent.
         """
         raw = msg.data.strip()
-        goal, label = None, ""
+        goal, label, rel = None, "", None
         if raw and raw.lower() != "none":
-            if raw in self._zones:
+            if raw.lower().startswith("rel:"):
+                try:
+                    b, d = (float(v) for v in raw[4:].split(","))
+                    rel, label = (b, d), "rel"
+                except ValueError:
+                    self.get_logger().warn(f"bad relative goal '{raw}' — ignored")
+                    return
+            elif raw in self._zones:
                 goal, label = self._zones[raw], raw
             else:
                 try:
@@ -547,10 +560,12 @@ class VlaBridge(Node):
                     self.get_logger().warn(f"unknown goal '{raw}' — ignored")
                     return
         with self._goal_lock:
-            changed = goal != self._goal_xy
-            self._goal_xy, self._goal_label = goal, label
+            # log on kind/label changes only — "rel:" updates arrive at 10 Hz
+            changed = (goal != self._goal_xy) or (label != self._goal_label) \
+                or ((rel is None) != (self._goal_rel is None))
+            self._goal_xy, self._goal_label, self._goal_rel = goal, label, rel
         if changed:
-            self.get_logger().info(f"goal -> {label or 'none'} {goal or ''}")
+            self.get_logger().info(f"goal -> {label or 'none'} {goal or rel or ''}")
 
     def _goal_state_dims(self):
         """[bearing, dist] for the current goal, or [0, 0] when none is set.
@@ -561,7 +576,10 @@ class VlaBridge(Node):
         the inference rather than feed a false (0, 0) "no goal" state.
         """
         with self._goal_lock:
-            goal = self._goal_xy
+            goal, rel = self._goal_xy, self._goal_rel
+        if rel is not None:
+            b = (rel[0] + math.pi) % (2 * math.pi) - math.pi
+            return [b, max(0.0, rel[1])]
         if goal is None:
             return [0.0, 0.0]
         pose = self._pose_stream.latest if self._pose_stream else None

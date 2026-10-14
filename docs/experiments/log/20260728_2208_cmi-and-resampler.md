@@ -1,7 +1,7 @@
 # 2026-07-28 22:08 — 조건부 상호정보 + 리샘플러 격자 원점 수정
 
 > 앞선 문서: [21:40 수집 드라이버](20260728_2140_collection-driver.md)
-> 계획: [sim_vla_plan.md](../sim_vla_plan.md) §5.6 GATE G2
+> 계획: [sim_vla_plan.md](../../plans/sim_vla_plan.md) §5.6 GATE G2
 
 G2의 마지막 미측정 항목인 `I(action ; instruction | obs)`를 만들었다. 만드는 과정에서
 리샘플러 버그 1건과 **지표 설계 오류 2건**이 나왔다.
@@ -127,7 +127,7 @@ shuffled control    0.520 b     ← 연관을 완전히 파괴한 대조군이 �
 | `scripts/measure_cmi.py` | 신규 |
 | `scripts/resample_episodes.py` | 격자 원점을 모든 스트림 교집합 이후로 |
 | `scripts/collect_corpus.py` | 명령 발행 시점에 `settled` 이벤트 발행 |
-| `docs/sim_vla_plan.md` | §5.6 GATE G2 표를 실측값으로 갱신 |
+| `docs/plans/sim_vla_plan.md` | §5.6 GATE G2 표를 실측값으로 갱신 |
 
 ---
 

@@ -316,7 +316,7 @@ r28 신호정지 실패와 동일한 구조적 한계.
 강좌 테스트 자산을 주행 모델과 분리: 서버 `runs/course/`, `data/course/`, `logs/course/`,
 `code/course/`; 로컬 `data_course_multiobj/`, `eval_out/course/`, `server/code/course/`.
 r32 최종(08:31) 프로브: hard dv −0.15 / 반사실 −0.06 m — 불변. 색인과 정리 이력은
-[docs/course/README.md](../course/README.md).
+[course_assets_index.md](course_assets_index.md).
 
 ## 2026-09-28 — 직접 차선변경 시연 (swerve), 위치 고정, r26 에서 1 h resume
 

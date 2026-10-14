@@ -46,6 +46,68 @@ RESAMPLED = "resampled_10hz.jsonl"
 CAM_KEY = "observation.images.front"
 
 
+SECTOR_ENTER_DEG = 8.0      # 섹터 중심(ahead) 진입 임계
+SECTOR_EXIT_DEG = 11.0      # 이탈 임계 (히스테리시스)
+
+
+def _wrap(a):
+    return math.atan2(math.sin(a), math.cos(a))
+
+
+def sector_tasks(meta, rows, enter=SECTOR_ENTER_DEG, exit_=SECTOR_EXIT_DEG):
+    """Per-frame sentence from the target's CURRENT sector, or None.
+
+    2026-10-08: the sector corpus labels a whole episode with the sector the
+    target started in. Once the car turns and the target reaches the centre of
+    the view, the correct reactive command is "ahead" — 23% of the 50,706
+    frames in packed_sec disagree with their episode label (right->ahead 12.0%,
+    left->ahead 11.4%). Serving re-queries the VLM in closed loop, so the
+    policy must map the CURRENT sector to an action; the episode-level label
+    teaches the opposite on exactly those frames.
+
+    Hysteresis (enter 8 deg, leave 11 deg) stops the label flickering at the
+    boundary. The wording is drawn once per (episode, sector) from a seed on the
+    episode id, so across a run only the SECTOR changes, never the phrasing —
+    otherwise the sentence itself becomes per-frame noise.
+    """
+    g = (meta.get("intent_slots") or {}).get("goto") or {}
+    if not g.get("sector") or "objects" not in g or g.get("target") is None:
+        return None
+    try:
+        t = g["objects"][int(g["target"])]
+    except (IndexError, TypeError):
+        return None
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    try:
+        from sant_vla_pkg.goto_layout import SECTOR_TEMPLATES
+    except ImportError:
+        return None
+    import random
+    rng = random.Random(str(meta.get("cf_group_id")) + str(meta.get("cf_variant_id")))
+    wording = {nm: rng.choice(pool) for nm, pool in SECTOR_TEMPLATES.items()}
+    out = []
+    cur = g["sector"]
+    for r in rows:
+        if r.get("heading") is None or r.get("x") is None:
+            out.append(wording[cur])
+            continue
+        b = math.degrees(_wrap(math.atan2(t["y"] - r["y"], t["x"] - r["x"]) - r["heading"]))
+        if cur == "ahead":
+            if b > exit_:
+                cur = "left"
+            elif b < -exit_:
+                cur = "right"
+        else:
+            if abs(b) < enter:
+                cur = "ahead"
+            elif b > enter:
+                cur = "left"
+            elif b < -enter:
+                cur = "right"
+        out.append(wording[cur])
+    return out
+
+
 def import_lerobot():
     """Return LeRobotDataset across the import paths different versions use."""
     tried = []
@@ -140,6 +202,12 @@ def main():
                    help="append standstill_s (seconds at rest, cap 5) to "
                         "observation.state — the v9 watch-then-avoid GO "
                         "trigger, unobservable from image+[v,w,steer]")
+    p.add_argument("--sector-per-frame", action="store_true",
+                   help="2026-10-08: relabel each frame with the sector the target "
+                        "is in AT THAT FRAME (goto_layout.SECTOR_TEMPLATES), instead "
+                        "of the sector it started in. Required for closed-loop VLM "
+                        "re-querying: 23%% of packed_sec frames disagree with their "
+                        "episode label. Non-sector episodes keep meta['instruction'].")
     p.add_argument("--no-videos", action="store_true",
                    help="store frames as images instead of encoded video")
     p.add_argument("--video-backend", default="pyav",
@@ -176,7 +244,7 @@ def main():
             # direct_zone ONLY. ring_goal (follow the lane to a zone) had goal
             # labels in v8g and taught the opposite mapping — bearing points
             # sideways/backwards while the car lane-follows — diluting the 41
-            # direct episodes' "steer toward bearing" signal (docs/ver/
+            # direct episodes' "steer toward bearing" signal (docs/experiments/log/
             # 20260824_1138). ring_goal now reads (0, 0): zone words without a
             # vector mean "not a beeline".
             if meta.get("intent_id") in ("direct_zone",):
@@ -205,7 +273,7 @@ def main():
         # demonstrations' GO trigger (pass after a 2.5 s watch) and the
         # "watching" narration are both functions of THIS quantity, and it
         # is invisible in image+`[v, w, steer]` — the r6 live demo stopped
-        # behind the parked car forever (docs/ver/20260907_2123).
+        # behind the parked car forever (docs/experiments/log/20260907_2123).
         still_dims = 1
         for _name, _base, _meta, rows, _d in eps:
             still = 0.0
@@ -266,6 +334,7 @@ def main():
     lerobot_ep = 0   # actual dataset episode index; terminal copies shift it
     for ep_i, (name, base, meta, rows, _drop) in enumerate(eps):
         task = meta.get("instruction") or ""
+        per_frame = sector_tasks(meta, rows) if args.sector_per_frame else None
         hold = []
         # Pad only episodes that actually END stopped (state[0] is speed in
         # m/s; arrivals ramp to ~0). Cruise episodes are cut by duration while
@@ -280,7 +349,9 @@ def main():
             hold = [{"frame": last["frame"],
                      "state": hold_state,
                      "action": [0.0, 0.0, 0.0]}] * args.hold_frames
-        for r in rows + hold:
+        for fi, r in enumerate(rows + hold):
+            # hold frames repeat the last row, so they keep the last sector
+            tsk = task if per_frame is None else per_frame[min(fi, len(per_frame) - 1)]
             img_p = os.path.join(base, r["frame"])
             img = np.asarray(Image.open(img_p).convert("RGB"))
             frame = {
@@ -293,9 +364,9 @@ def main():
             # Older releases accepted `task=` positionally; the TypeError fallback
             # covers those without making the common path depend on an exception.
             try:
-                ds.add_frame({**frame, "task": task})
+                ds.add_frame({**frame, "task": tsk})
             except TypeError:
-                ds.add_frame(frame, task=task)
+                ds.add_frame(frame, task=tsk)
         # 0.4.4: save_episode(self, episode_data=None, parallel_encoding=...)
         try:
             ds.save_episode()

@@ -3,7 +3,7 @@
 작성 2026-08-06 밤. v7 판정은 내일(08-07) 아침. 근거 코드:
 `track_localizer_pkg/`(측위), `tools/lidar_alignment_gui/`(정합 GUI),
 `tools/eval/`(프로브), `train_smolvla.sh`, VLA_AD `serial_sender_node.py` 등.
-이 문서는 [vla_thor_demo_and_course_plan.md](../vla_thor_demo_and_course_plan.md)
+이 문서는 [vla_thor_demo_and_course_plan.md](../../plans/vla_thor_demo_and_course_plan.md)
 (2026-07-31)의 D0~D7 게이트 체계와 §2 VLA-only 원칙을 **계승**하고,
 2026-08-06 기준 현황·실행 순서·Hesai→Thor 연결 상세에 대해 우선한다.
 [navvla_vs_vlaad_comparison.md](navvla_vs_vlaad_comparison.md) §8의 2~6주
@@ -61,16 +61,16 @@
 
 | 항목 | 07-31 상태 | 현재 | 근거 |
 |---|---|---|---|
-| 시뮬 폐루프 | v21b RR 0.14, 목표 미달 | **v6-60K 이탈 0/8, 데모 확정**. v7(DAgger 44포즈) 60K 학습 중, 내일 아침 판정 | [ver/20260806_0140](../ver/20260806_0140_v6-eval-demo-final.md), [ver/20260806_1045](../ver/20260806_1045_dagger-cycle1-launch.md) |
+| 시뮬 폐루프 | v21b RR 0.14, 목표 미달 | **v6-60K 이탈 0/8, 데모 확정**. v7(DAgger 44포즈) 60K 학습 중, 내일 아침 판정 | [ver/20260806_0140](../log/20260806_0140_v6-eval-demo-final.md), [ver/20260806_1045](../log/20260806_1045_dagger-cycle1-launch.md) |
 | 언어 접지 | 링 형상 4.8× | 반사실 차선 분리 **2.51 m / 27×** 확보 | `ver/20260804_1056` |
 | 언어 일반화 | paraphrase 0/8 | 동일 (미학습 표현 미전이 +0.36 m) — 파서 하이브리드 또는 D4 heldout 설계로 대응 | `ver/20260804_1056` |
-| 트랙 재정합 도구 | **없음** | **LiDAR BEV Studio 완성** (~3,900줄, 4점 정합 + '최종 확인' 워크플로) — 단 실측 미검증 | [tools/lidar_alignment_gui/](../../tools/lidar_alignment_gui/) |
-| Hesai 측위 | 합성 검증만 | 동일 (코드 존재, 실측 0회). heading 코너 피크 17°/1.3 s — 기능 6 차단 조건 유효 | [track_pose_node.py](../../src/track_localizer_pkg/track_localizer_pkg/track_pose_node.py), `track_localizer.yaml` 주석 |
+| 트랙 재정합 도구 | **없음** | **LiDAR BEV Studio 완성** (~3,900줄, 4점 정합 + '최종 확인' 워크플로) — 단 실측 미검증 | [tools/lidar_alignment_gui/](../../../tools/lidar_alignment_gui/) |
+| Hesai 측위 | 합성 검증만 | 동일 (코드 존재, 실측 0회). heading 코너 피크 17°/1.3 s — 기능 6 차단 조건 유효 | [track_pose_node.py](../../../src/track_localizer_pkg/track_localizer_pkg/track_pose_node.py), `track_localizer.yaml` 주석 |
 | Thor 기존 주행 | 시연자/베이스라인 | **3커맨드로 트랙 주행 확인** (2026-08-06, 사용자) — D1 기준선 절반 확보 | 사용자 실주행 |
 | Thor SmolVLA | 미착수 | 동일 | — |
 | 실차 state 발행기 | 신규 필요 | 동일 | — |
 | VLA_AD 저장소 | 단일 | 원본 `~/hoon/VLA_AD` / 작업 사본 `~/hong/VLA_AD` 분리, 사본은 분석 산출물 정리됨 | `navvla_vs_vlaad_comparison.md` 부록 |
-| 학습 레시피 | 1회 검증 | `train_smolvla.sh` **6회 검증** (v3y→v6), SW서버 3090, 60K ≈ 8.5 h | [servers.md](../servers.md), `ver/` 연대기 |
+| 학습 레시피 | 1회 검증 | `train_smolvla.sh` **6회 검증** (v3y→v6), SW서버 3090, 60K ≈ 8.5 h | [servers.md](../../guides/servers.md), `ver/` 연대기 |
 
 미해소 실측 항목 (D0 대상): serial baud 115200(코드) vs 9600(Arduino 소스)
 불일치, MCU command timeout 유무, steering ±7의 실제 각도, 휠베이스 54 cm
@@ -91,7 +91,7 @@ bash tools/eval/ring_map_probe.sh $SP/ckpt_v7_60k y7b
 python3 tools/eval/compare_segments.py y6v_map.json v6 y7a_map.json v7
 ```
 
-판정 기준 ([ver/20260806_1045](../ver/20260806_1045_dagger-cycle1-launch.md)):
+판정 기준 ([ver/20260806_1045](../log/20260806_1045_dagger-cycle1-launch.md)):
 DAgger 선별에 쓰인 치우침 구간들의 |편차| 감소 + 이탈 0/8 유지 + 양 차선
 중앙값 비악화.
 
@@ -147,7 +147,7 @@ Thor ──USB serial 115200(확정 필요)──► Arduino ──► 조향 �
 | BEV 크롭 + 바닥 RANSAC + 높이 게이트 | 구현 완료 | **게이트 0.03~0.35 m는 저상 RC 기준 — 1/5 전동차 실루엣으로 재측정 필수.** 이 대역은 서 있는 사람 다리와 겹친다 (`track_localizer.yaml` 주석) |
 | 4점 정합 (현수막 ↔ LiDAR) | **BEV Studio로 도구화 완료** | `./lidar_gui.sh` → 4점 클릭 → '최종 확인' → homography 저장. 매 설치 재정합, calibration ID 기록 |
 | CTRV UKF 추적 + heading | 구현 완료, 합성 검증만 | `min_speed 0.35 m/s` 이하 heading hold + invalid 플래그(`covariance[35]`), coast 0.5 s 후 발행 중단 + estop |
-| 정확도 검증 | **실측 0회** | [validate_track_pose.py](../../src/track_localizer_pkg/scripts/validate_track_pose.py): static <5 cm / heading RMS <3° / 3 m 룩어헤드에서 5° = 횡 26 cm라는 근거까지 내장 |
+| 정확도 검증 | **실측 0회** | [validate_track_pose.py](../../../src/track_localizer_pkg/scripts/validate_track_pose.py): static <5 cm / heading RMS <3° / 3 m 룩어헤드에서 5° = 횡 26 cm라는 근거까지 내장 |
 | lap_monitor | **신규 필요** | pose → 진행률·완료 횟수만 계산. "두 바퀴" 해석 금지 (의미는 정책이 배운다, §5) |
 
 ### 4.3 전송 계층과 시간 동기
@@ -341,14 +341,14 @@ calibration ID + rosbag. 논문 실험: 실차 반사실 (≥ 0.5 m), A0 vs VLA-
     → scp → SW서버 ~/sunhong/nav-vla/data/<pack>
     → to_lerobot.py → train_smolvla.sh (3090, 60K ≈ 8.5 h, batch 8)
     → checkpoint scp → Thor $SP/ckpt_<tag>
-    → wheels-up 스모크 → 실차 프로브 → docs/ver/ 기록
+    → wheels-up 스모크 → 실차 프로브 → docs/experiments/log/ 기록
 ```
 
 - 사이클당 약 1주 (수집 2~3일 + 학습 하룻밤 + 평가 1일).
 - 시뮬 v6/v7 체크포인트는 **warm-start 재료로만** 쓴다. 1세대 계약이 동일해
   가능하고, 처음부터보다 표현이 앞서 있다는 가정은 첫 사이클에서 from-scratch
   대조 1회로 확인한다.
-- 모든 사이클은 `docs/ver/`에 음성 결과 포함 기록 (기존 원칙).
+- 모든 사이클은 `docs/experiments/log/`에 음성 결과 포함 기록 (기존 원칙).
 
 ---
 
@@ -388,7 +388,7 @@ calibration ID + rosbag. 논문 실험: 실차 반사실 (≥ 0.5 m), A0 vs VLA-
 - **한국어 범위** — D0에서 동결. bilingual 코퍼스는 일정에 별도 항목
 - **논문 매핑** — 시뮬 결과(nav-vla)와 실차 결과가 한 편인지 두 편인지,
   VLA_AD Access 플랜과의 관계 미정
-- v7 결과 (내일 아침) → 이 문서 §3 분기 실행 후 `docs/ver/`에 기록
+- v7 결과 (내일 아침) → 이 문서 §3 분기 실행 후 `docs/experiments/log/`에 기록
 - `validate_track_pose.py` 실측 0회 — D2가 첫 실행
 - 현수막 비강체 왜곡의 실측 크기 미지 — 홀드아웃 잔차가 첫 데이터.
   국소 > 5 cm면 구간별 정합 승격 (§4.6 결함 3)
@@ -397,13 +397,13 @@ calibration ID + rosbag. 논문 실험: 실차 반사실 (≥ 0.5 m), A0 vs VLA-
 
 ## 11. 관련 문서
 
-- 게이트 원문·기능 정의: [vla_thor_demo_and_course_plan.md](../vla_thor_demo_and_course_plan.md)
+- 게이트 원문·기능 정의: [vla_thor_demo_and_course_plan.md](../../plans/vla_thor_demo_and_course_plan.md)
 - 두 저장소 비교·결함 목록: [navvla_vs_vlaad_comparison.md](navvla_vs_vlaad_comparison.md)
-- 파이프라인·판정: [vla_training_comparison.md](../vla_training_comparison.md)
-- 한계: [generalization_limits_and_questions.md](../generalization_limits_and_questions.md)
-- 서버·격리 규칙: [servers.md](../servers.md)
-- 측위 최초 기록: [ver/20260727_2311_track-localizer.md](../ver/20260727_2311_track-localizer.md)
-- 연대기: [ver/README.md](../ver/README.md)
+- 파이프라인·판정: [vla_training_comparison.md](../reports/vla_training_comparison.md)
+- 한계: [generalization_limits_and_questions.md](../reports/generalization_limits_and_questions.md)
+- 서버·격리 규칙: [servers.md](../../guides/servers.md)
+- 측위 최초 기록: [ver/20260727_2311_track-localizer.md](../log/20260727_2311_track-localizer.md)
+- 연대기: [ver/README.md](../log/README.md)
 
 ---
 

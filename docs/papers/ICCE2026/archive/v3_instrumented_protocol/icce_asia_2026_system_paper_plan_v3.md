@@ -150,12 +150,12 @@ policy가 ROS 2 차량 폐루프에서 보이는 plan-to-motion 전달과 deploy
 
 로컬 근거:
 
-- [v6 학습 provenance](../ver/20260805_1640_v5-demo-speed-shaping-v6.md)
-- [v6 과거 평가](../ver/20260806_0140_v6-eval-demo-final.md)
-- [v3y A3 언어 평가](../ver/20260804_1056_y5j-junction-pack-a3-driving.md)
-- [카메라 불일치 진단](../ver/20260803_1223_camera-mismatch-resolved.md)
-- [데이터 오염 진단](../ver/20260804_1830_cruise-off-ring-poison-found.md)
-- [전체 파이프라인](../vla_training_comparison.md)
+- [v6 학습 provenance](../../../../experiments/log/20260805_1640_v5-demo-speed-shaping-v6.md)
+- [v6 과거 평가](../../../../experiments/log/20260806_0140_v6-eval-demo-final.md)
+- [v3y A3 언어 평가](../../../../experiments/log/20260804_1056_y5j-junction-pack-a3-driving.md)
+- [카메라 불일치 진단](../../../../experiments/log/20260803_1223_camera-mismatch-resolved.md)
+- [데이터 오염 진단](../../../../experiments/log/20260804_1830_cruise-off-ring-poison-found.md)
+- [전체 파이프라인](../../../../experiments/reports/vla_training_comparison.md)
 
 중요한 표현 교정:
 

@@ -1,6 +1,6 @@
 # nav-vla / VLA_AD — VLA 성숙도 진단 및 실차 VLA 로드맵
 
-> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](ver/README.md) 참조.
+> **스냅샷 주의 (2026-08-24 부기):** 이 문서는 2026-08-07 이전 시점 기준이다. 이후 변경 — v8/v8g 방향·직행 축, "직행은 좌표 내비 위임, v8g는 순항+반응형 전담" 결정(08-24) — 은 [ver/README.md](../experiments/log/README.md) 참조.
 
 > 질문: (1) 지금은 VLM인가, 단순 LLM 명령 파서인가? (2) VLA까지 가려면 무엇이 필요한가?
 > (3) 알파마요 말고 다른 VLA 모델을 쓰는 게 나은가? (4) 아니면 지금 학습데이터를 VLA용으로
@@ -142,7 +142,7 @@ reasoning 라벨러 + 평가 심판으로 강등한다. 어떤 파운데이션 V
 ### 액션 공간은 **미터 단위 ego-frame waypoint**로 확정 (BEV 픽셀 ✕, 정규화 조향 ✕)
 
 - *정규화 조향은 전이되지 않는다.* κ = tan δ / L. 시뮬 `wheel_base=2.86`
-  ([ackermann_cmd_adapter_node.py:23](../src/simulation_pkg/simulation_pkg/ackermann_cmd_adapter_node.py#L23)),
+  ([ackermann_cmd_adapter_node.py:23](../../src/simulation_pkg/simulation_pkg/ackermann_cmd_adapter_node.py#L23)),
   실차 **54 cm**. 같은 `steer_norm=0.3`이 시뮬에선 반경 14.6 m, 실차에선 **2.75 m**.
   학습된 시각-곡률 연관 전체에 5.3배 오차가 박힌다.
 - *BEV 픽셀은 교정 전까지 사용 불가.* 살아있는 캘리브 파일 3개가 `bev_px_per_cm`를
@@ -209,7 +209,7 @@ reasoning 라벨러 + 평가 심판으로 강등한다. 어떤 파운데이션 V
 ### P4 — 학습 (13~22주)
 - 트렁크 + ACT식 청크 헤드, 지평 감쇠 가중 L1, 보조 **`arrived` 로짓**.
   *멈출 때를 스스로 결정 못 하는 VLA는 루프를 닫은 게 아니다* — 지금은 GT pose 기하 340줄
-  ([policy_node.py:702-739](../src/sant_vla_pkg/sant_vla_pkg/policy_node.py#L702-L739))이 그 판단을 한다.
+  ([policy_node.py:702-739](../../src/sant_vla_pkg/sant_vla_pkg/policy_node.py#L702-L739))이 그 판단을 한다.
 - P2 이후 두 도메인이 공유하는 명령 축에 한해 sim:real co-train.
 - **컴퓨트는 빌려라.** 개발 노트북은 RTX 4060 Laptop(VRAM 8 GB) — 3B 모델을 448px로
   LoRA 학습 불가이고, 같은 GPU에서 Gazebo 폐루프와 3B 추론서버를 함께 돌리면 OOM.
@@ -262,7 +262,7 @@ A-governor-only(현 VLA_AD) / A-full. 학습본 vs 미학습 패러프레이즈 
 | 619 에피소드 코퍼스를 *명령 조건부* 학습데이터로 쓰는 것 | 독립 pose+heading 셀 ~1,128개(셀당 68.5회 재방문), 전 프레임의 31%가 cruise 4개, 619/619 성공, 영어 템플릿 182개. **차선유지 warm-start와 음성 결과 어블레이션 용도로만** |
 
 ### 방향과 무관하게 고칠 버그
-- [policy_node.py:455](../src/sant_vla_pkg/sant_vla_pkg/policy_node.py#L455) — `if self.task_type == "direct" and pose:`
+- [policy_node.py:455](../../src/sant_vla_pkg/sant_vla_pkg/policy_node.py#L455) — `if self.task_type == "direct" and pose:`
   가 pose가 `None`일 때 **학습 안 된 신경망 분기로 낙하**한다. **fail-closed**(0 발행)로.
 - `action_policy_model.py` OOV — 파싱 실패 명령은 반드시 `none`/`stop`, 절대 `start` 금지.
 - `alpamayo_real_server.py:179-189` — 짧은 시퀀스를 frame 0 복제로 패딩. 진짜 4프레임

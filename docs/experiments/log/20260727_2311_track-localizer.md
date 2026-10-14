@@ -1,8 +1,8 @@
 # 2026-07-27 23:03 — `track_localizer_pkg` 신규 + 패키지 `_pkg` 리네임
 
 > 1주차 목표(§Hesai pose 발행)의 코드 작업. 관련 문서:
-> [vla_readiness_and_roadmap.md](../vla_readiness_and_roadmap.md) §6,
-> [vla_ad_nl_integration.md](../vla_ad_nl_integration.md) §7
+> [vla_readiness_and_roadmap.md](../../plans/vla_readiness_and_roadmap.md) §6,
+> [vla_ad_nl_integration.md](../../plans/vla_ad_nl_integration.md) §7
 
 ---
 

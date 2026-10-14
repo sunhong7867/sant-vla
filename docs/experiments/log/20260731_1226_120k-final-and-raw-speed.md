@@ -40,8 +40,8 @@
 ## 3. 속도 기준을 raw 0–250으로 전환
 
 실차(유아용 전동차)와 구 스택의 속도 단위는 m/s가 아니라 **raw 모터 명령
-0–255**다. 확인 결과 ([motion_planner_node.py](../../src/decision_making_pkg/decision_making_pkg/motion_planner_node.py) 26–33행,
-[speed_control.py](../../src/nav_vla_pkg/nav_vla_pkg/speed_control.py)):
+0–255**다. 확인 결과 ([motion_planner_node.py](../../../src/decision_making_pkg/decision_making_pkg/motion_planner_node.py) 26–33행,
+[speed_control.py](../../../src/sant_vla_pkg/sant_vla_pkg/speed_control.py)):
 
 | 항목 | raw | m/s (raw/255×5) |
 |---|---|---|

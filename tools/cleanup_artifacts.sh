@@ -14,7 +14,7 @@ WS="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 SRV=${VLA_SRV:-autolab_sw@115.145.211.157}
 DO_SERVER=0; DO_SESSIONS=0; DRY=0
 KEEP_SCENE=${KEEP_SCENE:-3}      # 최근 데모 해설 로그 세션 보존 개수
-KEEP_TRIALS=${KEEP_TRIALS:-40}   # 최근 폐루프 트라이얼 로그 보존 개수
+KEEP_TRIALS=${KEEP_TRIALS:-100000}   # 폐루프 트라이얼 로그 보존 개수. 개당 약 5 KB — 40 개 제한이 수집 체인에서 돌며 r46·r47 평가 궤적을 지웠음(2026-10-03)
 
 while [ $# -gt 0 ]; do
   case "$1" in

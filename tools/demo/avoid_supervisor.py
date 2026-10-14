@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Watch-then-avoid supervisor for the reasoning demo (option B).
 
-Division of labour, per docs/code_vs_vla_responsibilities.md: this node
+Division of labour, per docs/guides/code_vs_vla_responsibilities.md: this node
 makes the DISCRETE safety decisions — when to hold, how long to watch,
 when to commit to the pass, which lane — and the VLA does everything
 continuous: the driving itself and the narration of every phase

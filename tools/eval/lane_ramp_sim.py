@@ -10,7 +10,7 @@ Valid for RELATIVE comparisons only (steering step, saturation). The absolute
 clearance is NOT trustworthy: real gz demos moved sideways ~1.5x faster than
 this model, and the margin here is taken in the lane frame, not the ego body
 frame the evaluator uses. Measure clearance on real demos with
-tools/eval/swerve_demo_quality.py. See docs/ver/20260929_1131_lane-ramp-swerve.md.
+tools/eval/swerve_demo_quality.py. See docs/experiments/avoidance/20260929_1131_lane-ramp-swerve.md.
 
     python3 tools/eval/lane_ramp_sim.py          # 3 schemes x 3 speeds
     python3 tools/eval/lane_ramp_sim.py --grid   # trigger x ramp grid

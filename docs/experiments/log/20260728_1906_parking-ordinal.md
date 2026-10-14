@@ -1,7 +1,7 @@
 # 2026-07-28 19:06 — 주차칸 서수 축: non-separable 반사실 확보
 
 > 앞선 문서: [18:21 route_oracle](20260728_1821_route-oracle.md)
-> 계획: [sim_vla_plan.md](../sim_vla_plan.md) §3.2 Tier 1-A
+> 계획: [sim_vla_plan.md](../../plans/sim_vla_plan.md) §3.2 Tier 1-A
 
 route_oracle는 차선(형상 3.64 m)과 속도(스케줄 12.68 m) 축을 확보했지만, 둘 다
 **관측으로 복원 가능한** 축이었다 — 차선 오프셋은 카메라에 보이고 속도는 `observation.state`에 있다.

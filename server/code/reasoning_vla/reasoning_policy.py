@@ -1,6 +1,6 @@
 """SmolVLAPolicy subclass that co-trains a reasoning-text head.
 
-Design (see docs/ver/20260831_2148_reasoning-label-pipeline.md for the label
+Design (see docs/experiments/log/20260831_2148_reasoning-label-pipeline.md for the label
 side):
 
 * The ACTION path is byte-identical to stock SmolVLA. Reasoning is computed
@@ -39,6 +39,13 @@ except ImportError:  # pragma: no cover - layout moved in other versions
     )
 
 REASONING_KEY = "reasoning"
+# Optional raw-task tokens for the reasoning pass only (r40 situation prompt,
+# 2026-09-30): the action pass reads "task + situation phrase", but if the
+# reasoning pass saw that phrase too it would copy it instead of reading the
+# image — the detector would collapse and serving would loop on its own
+# output. Absent -> both passes share the task tokens (r1-r39 behaviour).
+REASONING_LANG_TOKENS = "reasoning_lang_tokens"
+REASONING_LANG_MASK = "reasoning_lang_mask"
 
 
 class ReasoningSmolVLAPolicy(SmolVLAPolicy):
@@ -204,7 +211,14 @@ class ReasoningSmolVLAPolicy(SmolVLAPolicy):
                            / action_weight.sum().clamp(min=1e-8))
 
         # ----- reasoning pass -----
-        ce = self._reasoning_ce(prefix_embs, prefix_pad, prefix_att, texts,
+        if REASONING_LANG_TOKENS in batch:
+            # separate prefix over the RAW task (no situation phrase)
+            r_prefix = m.embed_prefix(
+                images, img_masks, batch[REASONING_LANG_TOKENS],
+                batch[REASONING_LANG_MASK], state=state)
+        else:
+            r_prefix = (prefix_embs, prefix_pad, prefix_att)
+        ce = self._reasoning_ce(*r_prefix, texts,
                                 weights=batch.get("reasoning_weight"))
 
         total = action_loss + self.ce_weight * ce
@@ -233,8 +247,10 @@ class ReasoningSmolVLAPolicy(SmolVLAPolicy):
         m = self.model
         images, img_masks = self.prepare_images(batch)
         state = self.prepare_state(batch)
-        lang_tokens = batch[OBS_LANGUAGE_TOKENS]
-        lang_masks = batch[OBS_LANGUAGE_ATTENTION_MASK]
+        lang_tokens = batch.get(REASONING_LANG_TOKENS,
+                                batch[OBS_LANGUAGE_TOKENS])
+        lang_masks = batch.get(REASONING_LANG_MASK,
+                               batch[OBS_LANGUAGE_ATTENTION_MASK])
         prefix_embs, prefix_pad, prefix_att = m.embed_prefix(
             images, img_masks, lang_tokens, lang_masks, state=state)
 

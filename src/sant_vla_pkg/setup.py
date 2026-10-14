@@ -30,6 +30,7 @@ setup(
         'console_scripts': [
             'route_oracle_node = sant_vla_pkg.route_oracle_node:main',
             'vla_bridge_node = sant_vla_pkg.vla_bridge_node:main',
+            'goal_from_scene_node = sant_vla_pkg.goal_from_scene_node:main',
             'episode_recorder_node = sant_vla_pkg.episode_recorder_node:main',
             'gz_reset = sant_vla_pkg.gz_reset:main',
             'zone_capture_gui_node = sant_vla_pkg.zone_capture_gui_node:main',
