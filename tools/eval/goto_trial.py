@@ -211,10 +211,12 @@ def make_trials(tier, n, seed, paths):
     want = 2 * n if tier == "P2" else n          # P2: n scenes x (main, alt)
     while len(out) < want and guard < n * 50:
         guard += 1
-        if tier in ("P2", "P4s"):
+        if tier in ("P2", "P4s", "P4t"):
             # same generator as S3 (K=3 at 6-10 m, >= 10 deg apart, all reachable);
             # P2: the sentence never names anything — the goal channel carries the target.
             # P4s: held-out shapes, the sentence names the shape for the VLM.
+            # P4t (2026-10-15): P2's trained objects, goal from the camera only (VLM box -> bearing,
+            # LiDAR -> distance); gz coordinates are used for judging, never as the policy's goal.
             L = G.sample_layout(rng, paths, SHAPES if tier == "P4s" else TRAIN, n_obj=(3, 3),
                                 dist=(6.0, 10.0), min_sep_deg=10.0, all_usable=True, tries=3000)
             if L is None:
@@ -224,7 +226,7 @@ def make_trials(tier, n, seed, paths):
             for arm, t in arms:
                 o = L["objects"][t]
                 out.append({"layout": L, "target": t, "mode": "direct",
-                            "sentence": f"Go to the {o['noun']}." if tier == "P4s" else "Target.",
+                            "sentence": f"Go to the {o['noun']}." if tier in ("P4s", "P4t") else "Target.",
                             "goal_xy": (o["x"], o["y"]), "gate": G.standoff(o["model"]),
                             "arm": arm, "set": len(out) // 2})
             continue
@@ -588,7 +590,7 @@ def run_trial(ros, gz, stream, all_models, tr, paths, timeout, rewrite, img_dir,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tier", required=True, choices=["T1", "T2", "T3a", "T3b", "T3c", "T4", "E", "S2", "S3", "S4", "SEC",
-                                                        "P2", "P3a", "P3b", "P4s", "P4b", "P4l"])
+                                                        "P2", "P3a", "P3b", "P4s", "P4t", "P4b", "P4l"])
     ap.add_argument("--goal-mode", default="none", choices=["none", "rel", "zero", "vlm"],
                     help="rel: publish the ego-relative goal of the trial's goal point at 10 Hz on "
                          "/vla_goal and hold inside the standoff (point-goal primitive); zero: pin the "
@@ -612,7 +614,7 @@ def main():
     paths = json.loads(TRACK_PATHS.read_text())
     trials = make_trials(a.tier, a.n, a.seed + {"T1": 0, "T2": 1, "T3a": 2, "T3b": 3, "T3c": 5, "T4": 4, "E": 6, "S2": 7, "S3": 8, "S4": 9, "SEC": 10,
                                                 "P2": 11, "P3a": 12, "P3b": 13,
-                                                "P4s": 14, "P4b": 15, "P4l": 16}[a.tier], paths)
+                                                "P4s": 14, "P4t": 11, "P4b": 15, "P4l": 16}[a.tier], paths)
     if a.tier == "P2" and a.goal_mode == "zero":
         trials = [t for t in trials if t["arm"] == "main"]       # floor: same scenes, main arm only
     if a.tier.startswith("P") and a.goal_mode == "none":
